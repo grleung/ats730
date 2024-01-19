@@ -36,7 +36,7 @@ BINDIR = $(MODELDIR)/bin
 # the executable compiled in this bin directory will be named after the .f90 program file
 PROGRAM = MAC
 # EXE: executable name to link into run directory; can be the same as PROGRAM or not
-EXE = MAC.exe
+EXE = /HW1/MAC.exe
 
 # type "make" to compile the code (compiles all)
 # after compiling, link the executable (named after the PROGRAM.f90 file) into the run 
@@ -56,10 +56,11 @@ all: $(PROGRAM)
 # all the object files compiled in the previous step; in this step,
 # additional pre-compiled libraries of can be added.
 
-model_vars.o: constants.o
+model_vars.o: grid_constants.o
 grid.o: grid_constants.o model_vars.o
 base_state.o: grid.o constants.o grid_constants.o model_vars.o
-$(PROGRAM): base_state.o grid.o constants.o grid_constants.o model_vars.o
+io.o: model_vars.o grid_constants.o
+$(PROGRAM):  io.o base_state.o grid.o constants.o grid_constants.o model_vars.o
 
 # ======================================================================
 # general rules, these should not require modification

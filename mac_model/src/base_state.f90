@@ -44,13 +44,14 @@ module base_state
         enddo
 
         ! base state exner function (non-dimensionalized pressure, pi)
+        ! let's calculate both at u grids and w grids (which will be useful later)
 
         ! we know the surface pressure so can calculate PI for the surface (z=0 on w grid)
         ! this would just be (psurf/p00)**(rd/cp) (see definition of PI in HW1)
-
         piwb(2) = (psurf/p00)**(rd/cp)
+
         ! but the grid for PI is offset by half a delta z (which is zun - zwn), 
-        ! so we must adjust to get PI(z=2) rather than PI(surf) 
+        ! so we must integrate vertically to get PI(z=2) rather than PI(surf) 
         ! using the hydrostatic equation (see HW1) in terms of PI and thetav
         pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zun(2)-zwn(2)))
 
@@ -61,6 +62,7 @@ module base_state
         ! for each vertical level, subtract dPI/dz * dz where dz = zun(iz) - zun(iz-1)
         ! and dPI/dz is inversely proportional to the average thetav between the two levels
         ! being integrated over (see hydrostatic equation as in HW1)
+        ! note that we are basically assuming thvb scales linearly with height in between the scalar levels
         do iz = 3,nz
             pib(iz) = pib(iz-1) - (g/(cp*(thvb(iz-1)+thvb(iz))/2)) * (zun(iz)-zun(iz-1))
             piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz))) * (zwn(iz)-zwn(iz-1))
@@ -101,9 +103,10 @@ module base_state
         enddo
 
         ! base state air density on w grid
+
         ! though we have the form for density as above, remember that the w grid is offset
-        ! from the u/scalar grid, so we don't actually have the values of pi and thv 
-        ! at the right height levels
+        ! from the u/scalar grid, so we need to use the piwb we calculated earlier
+
         ! for thv, we can assume it scales linearlly between levels and use the average
         ! between the value at iz and the next level like earlier integrating the exner function
         ! but pi doesn't scale linearly, so this isn't a good assumption
@@ -113,7 +116,6 @@ module base_state
         enddo
         rhowb(1) = rhowb(2)
 
-        print*,rhowb
 
     end subroutine init_base_state
 
