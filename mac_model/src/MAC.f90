@@ -2,12 +2,16 @@ program MAC
 
     ! This file contains the MAC program
 
-    ! Get the 'hello_world' module
-    use hello_world
+    ! Get the initialization subroutines
+    use grid, only: init_grid
+    use base_state, only: init_base_state
 
     implicit none
 
-    ! Call the 'hello_world_subroutine' subroutine
-    call hello_world_subroutine
+    ! First, let's setup
+    call init_grid 
+    
+    ! Call base state initialization
+    call init_base_state
 
 end program MAC

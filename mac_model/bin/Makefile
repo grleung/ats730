@@ -1,4 +1,4 @@
-# Makefile example -- modified by Leah and Nick
+# Makefile -- modified by Bee from Leah and Nick's example
 
 # A simple hand-made makefile for a package including applications
 # built from Fortran 90 sources, taking into account the usual
@@ -56,8 +56,10 @@ all: $(PROGRAM)
 # all the object files compiled in the previous step; in this step,
 # additional pre-compiled libraries of can be added.
 
-hello_world.o: constants.o 
-$(PROGRAM): constants.o hello_world.o
+model_vars.o: constants.o
+grid.o: grid_constants.o model_vars.o
+base_state.o: grid.o constants.o grid_constants.o model_vars.o
+$(PROGRAM): base_state.o grid.o constants.o grid_constants.o model_vars.o
 
 # ======================================================================
 # general rules, these should not require modification
