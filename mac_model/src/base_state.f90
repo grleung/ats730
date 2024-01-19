@@ -8,25 +8,15 @@ module base_state
 
     subroutine init_base_state()
 
-        ! Use the 'constants' module in order to get the physical constants
-        use constants, only: g,cp
+        use constants, only: g,cp,rd,p00,cv
         use grid_constants, only: nz, ztr, ttr, thtr, psurf
-        use model_vars, only: zun, zwn, tb, thb
+        use model_vars, only: zun, zwn, tb, thb, rvb, thvb, pib, piwb, pb, rsatb, rhb, satfracb,rhoub,rhowb
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
 
-        ! print statement to check what's happening
-        print*,'Gravity'
-        print*,g
-
-        ! print statement to check we are getting right model heights
-        print*,'zwn'
-        print*,zwn
-
-        ! set the potential temperature to be equal to the WK sounding given
-        thb(1) = 0. ! this level is fictitious
+        ! base state potential temperature to be equal to the WK sounding given
         do iz = 2,nz
             if (zun(iz) <= ztr) then
                 thb(iz) = 300. + 43.*(zun(iz)/ztr)**1.25
@@ -34,10 +24,96 @@ module base_state
                 thb(iz) = thtr * EXP((g*(zun(iz)-ztr))/(ttr*cp))
             endif
         enddo
+        thb(1) = thb(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
 
-        ! print statement to check we are getting right values
-        print*,'thb'
-        print*,thb
+        ! base state water vapor mixing ratio to given
+        do iz = 2,nz
+            if (zun(iz) <= 4000.) then
+                rvb(iz) = 1.61E-2 - 3.375E-6*zun(iz)
+            else if (zun(iz) <= 8000.) then
+                rvb(iz) = 2.6E-3 - 6.5E-7*(zun(iz) - 4000.)
+            else 
+                rvb(iz) = 0
+            endif
+        enddo
+        rvb(1) = rvb(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
+
+        ! base state virtual potential temp using the definition of theta_v
+        do iz = 1,nz
+            thvb(iz) = thb(iz) * (1+(0.61*rvb(iz)))
+        enddo
+
+        ! base state exner function (non-dimensionalized pressure, pi)
+
+        ! we know the surface pressure so can calculate PI for the surface (z=0 on w grid)
+        ! this would just be (psurf/p00)**(rd/cp) (see definition of PI in HW1)
+
+        piwb(2) = (psurf/p00)**(rd/cp)
+        ! but the grid for PI is offset by half a delta z (which is zun - zwn), 
+        ! so we must adjust to get PI(z=2) rather than PI(surf) 
+        ! using the hydrostatic equation (see HW1) in terms of PI and thetav
+        pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zun(2)-zwn(2)))
+
+        pib(1) = pib(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
+        piwb(1) = piwb(2)
+
+        ! can do similar (i.e., integrate PI vertically) for the other variables
+        ! for each vertical level, subtract dPI/dz * dz where dz = zun(iz) - zun(iz-1)
+        ! and dPI/dz is inversely proportional to the average thetav between the two levels
+        ! being integrated over (see hydrostatic equation as in HW1)
+        do iz = 3,nz
+            pib(iz) = pib(iz-1) - (g/(cp*(thvb(iz-1)+thvb(iz))/2)) * (zun(iz)-zun(iz-1))
+            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz))) * (zwn(iz)-zwn(iz-1))
+        enddo
+
+        ! base state pressure
+        do iz = 1,nz
+            pb(iz) = p00 * pib(iz)**(cp/rd)
+        enddo
+
+        ! base state temperature
+        do iz = 1,nz
+            tb(iz) = pib(iz)*thb(iz)
+        enddo
+
+        ! base state temperature
+        do iz = 1,nz
+            tb(iz) = pib(iz)*thb(iz)
+        enddo
+
+        ! base state saturation vapor mixing ratio 
+        ! using Teten's equation as written in HW1
+        do iz = 1,nz
+            rsatb(iz) = (380/pb(iz)) * EXP((17.27*(tb(iz)-273.))/(tb(iz)-36.))
+        enddo
+
+        ! base state saturation fraction
+        ! remember RH is just rv/rsat
+        do iz = 1,nz
+            satfracb(iz) = rvb(iz)/rsatb(iz)
+            rhb(iz) = satfracb(iz)*100
+        enddo
+
+        ! base state air density on u/scalar grid
+        ! we can calculate this exactly from the ideal gas law as written in HW1
+        do iz = 1,nz
+            rhoub(iz) = (p00*pib(iz)**(cv/rd))/(rd*thvb(iz))
+        enddo
+
+        ! base state air density on w grid
+        ! though we have the form for density as above, remember that the w grid is offset
+        ! from the u/scalar grid, so we don't actually have the values of pi and thv 
+        ! at the right height levels
+        ! for thv, we can assume it scales linearlly between levels and use the average
+        ! between the value at iz and the next level like earlier integrating the exner function
+        ! but pi doesn't scale linearly, so this isn't a good assumption
+        ! so we also 
+        do iz = 2,nz
+            rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
+        enddo
+        rhowb(1) = rhowb(2)
+
+        print*,rhowb
 
     end subroutine init_base_state
 

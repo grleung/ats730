@@ -17,10 +17,13 @@ module model_vars
     real, dimension(nz) :: rvb ! base state water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
     real, dimension(nz) :: thvb ! base state virtual potential temperature [K]
     real, dimension(nz) :: pb ! base state pressure [Pa]
-    real, dimension(nz) :: pib ! base state non-dimensional pressure [no units]
+    real, dimension(nz) :: pib ! base state non-dimensional pressure on u-grid [no units]
+    real, dimension(nz) :: piwb ! base state non-dimensional pressure on w-grid [no units]
     real, dimension(nz) :: rhoub ! base state air density at u/scalar levels [kg/m3]
     real, dimension(nz) :: rhowb ! base state air density at w levels[kg/m3]
+    real, dimension(nz) :: satfracb ! base state saturation fraction [frac]
     real, dimension(nz) :: rhb ! base state relative humidity [%]
+    real, dimension(nz) :: rsatb ! base state saturation mixing ratio [kg/kg]
     
     
 
