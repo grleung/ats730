@@ -46,7 +46,7 @@ module base_state
         ! base state exner function (non-dimensionalized pressure, pi)
         ! let's calculate both at u grids and w grids (which will be useful later)
 
-        ! we know the surface pressure so can calculate PI for the surface (z=0 on w grid)
+        ! we know the surface pressure so can calculate PI for the surface (z=2 on w grid)
         ! this would just be (psurf/p00)**(rd/cp) (see definition of PI in HW1)
         piwb(2) = (psurf/p00)**(rd/cp)
 
@@ -56,16 +56,16 @@ module base_state
         pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zun(2)-zwn(2)))
 
         pib(1) = pib(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
-        piwb(1) = piwb(2)
+        piwb(1) = piwb(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
 
-        ! can do similar (i.e., integrate PI vertically) for the other variables
+        ! can do similar (i.e., integrate PI vertically) for the other levels
         ! for each vertical level, subtract dPI/dz * dz where dz = zun(iz) - zun(iz-1)
         ! and dPI/dz is inversely proportional to the average thetav between the two levels
         ! being integrated over (see hydrostatic equation as in HW1)
         ! note that we are basically assuming thvb scales linearly with height in between the scalar levels
         do iz = 3,nz
             pib(iz) = pib(iz-1) - (g/(cp*(thvb(iz-1)+thvb(iz))/2)) * (zun(iz)-zun(iz-1))
-            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz))) * (zwn(iz)-zwn(iz-1))
+            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz-1))) * (zwn(iz)-zwn(iz-1))
         enddo
 
         ! base state pressure

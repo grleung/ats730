@@ -1,6 +1,6 @@
 V34 :0x24 model_vars
 49 /home/gleung/ats730/mac_model//src/model_vars.f90 S624 0
-01/19/2024  10:20:34
+01/26/2024  09:47:56
 use grid_constants private
 enduse
 D 58 23 9 1 11 26 0 0 0 0 0
