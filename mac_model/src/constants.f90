@@ -9,6 +9,7 @@ module constants
         ,   rd      =    287.       & ! dry air gas constant [J/kgK]
         ,   cp      =    1004.      & ! dry air specific heat capacity at constant pressure [J/kgK]
         ,   cv      =    cp - rd    & ! dry air specific heat capacity at constant volume [J/kgK]
-        ,   p00     =    1.e5         ! reference pressure [Pa]
+        ,   p00     =    1.e5       & ! reference pressure [Pa]
+        ,   lv      =    2.5e6        ! latent heat of vaporization [J/kg] 
 
 end module constants

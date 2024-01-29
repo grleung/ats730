@@ -29,19 +29,19 @@ module model_vars
 
     ! parcel thermodynamic variables
     real, dimension(nz)  :: &
-            tp          & ! parcel temperature ("t" for temperature) [K]
-        ,   thp         & ! parcel potential temperature ("th" for theta) [K]
-        ,   rvp         & ! parcel water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
-        ,   thvp        & ! parcel virtual potential temperature [K]
-        ,   pp          & !  parcel pressure [Pa]
-        ,   pip         & !  parcel non-dimensional pressure on u-grid [no units]
-        ,   piwp        & !  parcel non-dimensional pressure on w-grid [no units]
+            tp          & !  parcel temperature ("t" for temperature) [K]
+        ,   thp         & !  parcel potential temperature ("th" for theta) [K]
+        ,   rvp         & !  parcel water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
+        ,   thvp        & !  parcel virtual potential temperature [K]
         ,   rhoup       & !  parcel air density at u/scalar levels [kg/m3]
         ,   satfracp    & !  parcel saturation fraction [frac]
         ,   rhp         & !  parcel relative humidity [%]
         ,   rsatp         !  parcel saturation mixing ratio [kg/kg]
     
-    real                 :: capep     !  parcel CAPE [J/kg]
-    
+    real                 :: &
+            capep       & !  parcel CAPE [J/kg]
+        ,   lclp        & !  parcel lifted condensation level [in model levels, u-grid]
+        ,   elp           !  parcel equlibirum level [in model levels, u-grid]
+
 
 end module model_vars
