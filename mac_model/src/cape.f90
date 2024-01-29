@@ -8,7 +8,7 @@ module cape
 
     subroutine calculate_parcel_cape()
 
-        use constants, only: cp,lv
+        use constants, only: g,cp,lv
         use grid_constants, only: nz, ztr, ttr, thtr, psurf, rvpsurf
         use model_vars, only: zun, thb, rvb, thvb, pib, pb          &  ! base state variables
                             , thp, rvp, thvp, tp, rsatp             &  ! parcel state variables
@@ -58,11 +58,22 @@ module cape
             thvp(iz) = calc_thv(thp(iz),rvp(iz))
             thvdiff(iz) = thvp(iz) - thvb(iz)
 
-            if ((thvdiff(iz)>0) .and. (thvdiff(iz-1)<0)) then
-                lclp = iz-1
-            else if ((thvdiff(iz)<0) .and. (thvdiff(iz-1)>0) )then
-                elp = iz-1
+            ! to calculate CAPE, check theta_v difference between parcel and base state
+            ! when parcel is positively buoyant (thvdiff>0) then it contributes to CAPE
+            if (thvdiff(iz) > 0 ) then
+                ! if this is the first time the parcel is positively buoyant, save as LCL
+                if (lclp == 0) then 
+                    lclp = iz-1
+                endif
+
+                !add to CAPE
+                capep = capep + g*(thvdiff(iz)/thvb(iz)) * (zun(iz)-zun(iz-1))
             end if
+            
+            ! the first time that parcel is negatively buoyant after LCL is the EL
+            if ((lclp>0) .and. (elp==0) .and. thvdiff(iz)<=0) then
+                elp = iz-1
+            endif
 
             ! lift parcel dry adiabatically to next level
             thp(iz+1) = thp(iz)
