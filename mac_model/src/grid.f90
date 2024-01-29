@@ -24,19 +24,13 @@ module grid
         do iz = 2,nz
             dzn(iz) = dzn(iz-1)*dzrat
         enddo
-
-        ! print*,'dzn'
-        ! print*,dzn
-
+        
         ! Set up the vertical heights of the w grid
         zwn(1) = -dzn(1) ! this is a fictitious point that is one grid spacing below surface
         zwn(2) = 0. ! model surface 
         do iz = 3,nz
             zwn(iz) = zwn(iz-1)+dzn(iz)
         enddo
-
-        ! print*,'zwn'
-        ! print*,zwn
 
         ! Set up the vertical heights of the scalar/u grid
         ! do this by interpolating between the heights of the w grid
@@ -45,11 +39,5 @@ module grid
             zun(iz) = (zwn(iz)+zwn(iz+1))/2
         enddo
         zun(nz) = zun(nz-1)+dzn(nz-1) 
-
-        ! print*,'zun'
-        ! print*,zun
-
-        return
-
     end subroutine init_grid
 end module grid
