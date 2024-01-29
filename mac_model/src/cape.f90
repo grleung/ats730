@@ -12,7 +12,7 @@ module cape
         use grid_constants, only: nz, ztr, ttr, thtr, psurf, rvpsurf
         use model_vars, only: zun, thb, rvb, thvb, pib, pb          &  ! base state variables
                             , thp, rvp, thvp, tp, rsatp             &  ! parcel state variables
-                            , lclp, elp, capep                         ! parcel sounding parameters
+                            , thvdiff, lclp, elp, capep               ! parcel sounding parameters
         use thermo_functions, only: calc_rsat, calc_satfrac, calc_thv
 
         implicit none
@@ -25,10 +25,6 @@ module cape
         ! and theta (thp) as equal to base state theta at iz=2
         thp(2) = thb(2)
         rvp(2) = rvpsurf
-
-        ! set the fictitious points to just be same as first real level
-        thp(1) = thp(2)
-        rvp(1) = rvp(2)
 
         do iz = 2, nz ! loop through vertical levels as parcel is being lifted
             ! for unsaturated parcels, just lift dry adiabatically (conserve theta and rv)
@@ -43,12 +39,6 @@ module cape
 
             ! if parcel is saturated, then need to do saturation adjustment
             if (rvp(iz) >= rsatp(iz)) then
-                ! if this is first time parcel is saturated,
-                ! record the LCL as being the last model level (actually is somewhere
-                ! between last model level and this level, because we aren't
-                ! raising it continuously)
-                if (lclp==0.0) lclp = iz-1
-
                 ! account for change in parcel temp due to latent heat from condensation
                 phi = rsatp(iz) * (17.27*237.*lv)/(cp*(tp(iz)-36.)**2) 
 
@@ -66,21 +56,26 @@ module cape
 
             ! calculate virtual potential temp (thv)
             thvp(iz) = calc_thv(thp(iz),rvp(iz))
+            thvdiff(iz) = thvp(iz) - thvb(iz)
 
-            print'(1I2,6F10.3)', iz, zun(iz), thp(iz), thvp(iz), thvp(iz)-thvb(iz), rvp(iz)*1000, rsatp(iz)*1000
+            if ((thvdiff(iz)>0) .and. (thvdiff(iz-1)<0)) then
+                lclp = iz-1
+            else if ((thvdiff(iz)<0) .and. (thvdiff(iz-1)>0) )then
+                elp = iz-1
+            end if
 
             ! lift parcel dry adiabatically to next level
             thp(iz+1) = thp(iz)
             rvp(iz+1) = rvp(iz)
         enddo 
 
-        print*, 'LCL is between', zun(lclp), zun(lclp+1)
-        
         ! set the fictitious points to just be same as first real level
+        thp(1) = thp(2)
+        rvp(1) = rvp(2)
         tp(1) = tp(2)
         rsatp(1) = rsatp(2)
-        
-        
+        thvp(1) = thvp(2)
+        thvdiff(1) = thvdiff(2)
 
     end subroutine calculate_parcel_cape
 

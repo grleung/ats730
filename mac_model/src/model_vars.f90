@@ -33,9 +33,7 @@ module model_vars
         ,   thp         & !  parcel potential temperature ("th" for theta) [K]
         ,   rvp         & !  parcel water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
         ,   thvp        & !  parcel virtual potential temperature [K]
-        ,   rhoup       & !  parcel air density at u/scalar levels [kg/m3]
-        ,   satfracp    & !  parcel saturation fraction [frac]
-        ,   rhp         & !  parcel relative humidity [%]
+        ,   thvdiff     & !  parcel perturbation virtual potential temperature [K]
         ,   rsatp         !  parcel saturation mixing ratio [kg/kg]
     
     real                 :: &
