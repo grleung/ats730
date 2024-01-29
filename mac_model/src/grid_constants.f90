@@ -10,11 +10,12 @@ module grid_constants
             nz      =    40     ! number of vertical (z) levels
 
     real, parameter :: &
-            dz0     =   700.    & ! depth of first vertical level [m]
-        ,   dzrat   =   1.      & ! ratio of subsequent vertical levels, for now keep all constant
-        ,   ztr     =   12000.  & ! height of tropopause [m]
-        ,   ttr     =   213.  & ! temperature of tropopause [K]
-        ,   thtr     =   343.  & ! theta of tropopause [K]
-        ,   psurf     =   96500.   ! surface pressure [Pa]
+            dz0       =   700.    & ! depth of first vertical level [m]
+        ,   dzrat     =   1.      & ! ratio of subsequent vertical levels, for now keep all constant
+        ,   ztr       =   12000.  & ! height of tropopause [m]
+        ,   ttr       =   213.    & ! temperature of tropopause [K]
+        ,   thtr      =   343.    & ! theta of tropopause [K]
+        ,   psurf     =   96500.  & ! surface pressure [Pa]
+        ,   rvpsurf   =   11.5E-3   ! parcel water vapor mixing ratio at first real level [kg/kg]
         
 end module grid_constants

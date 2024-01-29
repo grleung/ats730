@@ -30,4 +30,21 @@ module io
 
     end subroutine write_base_state
 
+    subroutine write_parcel_traj (filename)
+        use grid_constants, only: nz
+        use model_vars, only: zun, thp, rvp, capep
+
+        implicit none
+        
+        character(len=*) :: filename ! the subroutine takes the filename as an argument
+        integer :: iz ! counter for z-coordinate
+
+        ! open the output file we want to write to
+        open(unit = 1, file=filename)
+
+
+        close(1)
+
+    end subroutine write_parcel_traj
+
 end module io

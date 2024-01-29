@@ -58,9 +58,10 @@ all: $(PROGRAM)
 
 model_vars.o: grid_constants.o
 grid.o: grid_constants.o model_vars.o
-base_state.o: grid.o constants.o grid_constants.o model_vars.o
+base_state.o: thermo_functions.o grid.o constants.o grid_constants.o model_vars.o
+cape.o: base_state.o grid.o constants.o grid_constants.o model_vars.o
 io.o: model_vars.o grid_constants.o
-$(PROGRAM):  io.o base_state.o grid.o constants.o grid_constants.o model_vars.o
+$(PROGRAM):  io.o base_state.o grid.o constants.o grid_constants.o model_vars.o cape.o thermo_functions.o
 
 # ======================================================================
 # general rules, these should not require modification

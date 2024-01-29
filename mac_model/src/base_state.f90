@@ -1,6 +1,6 @@
 module base_state
 
-    ! This module driver contains the driver_subroutine
+    ! This module contains the subroutine to calculate the base state.
 
     implicit none
 
@@ -11,12 +11,13 @@ module base_state
         use constants, only: g,cp,rd,p00,cv
         use grid_constants, only: nz, ztr, ttr, thtr, psurf
         use model_vars, only: zun, zwn, tb, thb, rvb, thvb, pib, piwb, pb, rsatb, rhb, satfracb,rhoub,rhowb
+        use thermo_functions, only: calc_thv, calc_rsat, calc_satfrac
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
 
-        ! base state potential temperature to be equal to the WK sounding given
+        ! set base state potential temperature to be equal to the WK sounding given
         do iz = 2,nz
             if (zun(iz) <= ztr) then
                 thb(iz) = 300. + 43.*(zun(iz)/ztr)**1.25
@@ -26,7 +27,7 @@ module base_state
         enddo
         thb(1) = thb(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
 
-        ! base state water vapor mixing ratio to given
+        ! set base state water vapor mixing ratio to given
         do iz = 2,nz
             if (zun(iz) <= 4000.) then
                 rvb(iz) = 1.61E-2 - 3.375E-6*zun(iz)
@@ -40,7 +41,7 @@ module base_state
 
         ! base state virtual potential temp using the definition of theta_v
         do iz = 1,nz
-            thvb(iz) = thb(iz) * (1+(0.61*rvb(iz)))
+            thvb(iz) = calc_thv(thb(iz), rvb(iz)) 
         enddo
 
         ! base state exner function (non-dimensionalized pressure, pi)
@@ -77,22 +78,17 @@ module base_state
         do iz = 1,nz
             tb(iz) = pib(iz)*thb(iz)
         enddo
-
-        ! base state temperature
-        do iz = 1,nz
-            tb(iz) = pib(iz)*thb(iz)
-        enddo
-
+        
         ! base state saturation vapor mixing ratio 
         ! using Teten's equation as written in HW1
         do iz = 1,nz
-            rsatb(iz) = (380/pb(iz)) * EXP((17.27*(tb(iz)-273.))/(tb(iz)-36.))
+            rsatb(iz) = calc_rsat(tb(iz),pb(iz))
         enddo
 
         ! base state saturation fraction
         ! remember RH is just rv/rsat
         do iz = 1,nz
-            satfracb(iz) = rvb(iz)/rsatb(iz)
+            satfracb(iz) = calc_satfrac(rvb(iz),rsatb(iz))
             rhb(iz) = satfracb(iz)*100
         enddo
 
@@ -114,6 +110,7 @@ module base_state
         do iz = 2,nz
             rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
         enddo
+
         rhowb(1) = rhowb(2)
 
 

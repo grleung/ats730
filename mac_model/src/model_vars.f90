@@ -7,24 +7,41 @@ module model_vars
     implicit none
 
     ! grid coordinate variables
-    real, dimension(nz) :: dzn ! deltaZ (level depth) of the w ("momentum") grid [m]
-    real, dimension(nz) :: zun ! physical height of u/scalar ("u" for u) grid [m]
-    real, dimension(nz) :: zwn ! physical height of vertical velocity ("w" for w) grid [m]
+    real, dimension(nz)  :: &
+            dzn    & !  deltaZ (level depth) of the w ("momentum") grid [m]
+        ,   zun    & !  physical height of u/scalar ("u" for u) grid [m]
+        ,   zwn      !  physical height of vertical velocity ("w" for w) grid [m]
 
     ! base state thermodynamic variables
-    real, dimension(nz) :: tb ! base state temperature ("t" for temperature) [K]
-    real, dimension(nz) :: thb ! base state potential temperature ("th" for theta) [K]
-    real, dimension(nz) :: rvb ! base state water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
-    real, dimension(nz) :: thvb ! base state virtual potential temperature [K]
-    real, dimension(nz) :: pb ! base state pressure [Pa]
-    real, dimension(nz) :: pib ! base state non-dimensional pressure on u-grid [no units]
-    real, dimension(nz) :: piwb ! base state non-dimensional pressure on w-grid [no units]
-    real, dimension(nz) :: rhoub ! base state air density at u/scalar levels [kg/m3]
-    real, dimension(nz) :: rhowb ! base state air density at w levels[kg/m3]
-    real, dimension(nz) :: satfracb ! base state saturation fraction [frac]
-    real, dimension(nz) :: rhb ! base state relative humidity [%]
-    real, dimension(nz) :: rsatb ! base state saturation mixing ratio [kg/kg]
+    real, dimension(nz)  :: &
+            tb          & !  base state temperature ("t" for temperature) [K]
+        ,   thb         & !  base state potential temperature ("th" for theta) [K]
+        ,   rvb         & !  base state water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
+        ,   thvb        & !  base state virtual potential temperature [K]
+        ,   pb          & !  base state pressure [Pa]
+        ,   pib         & !  base state non-dimensional pressure on u-grid [no units]
+        ,   piwb        & !  base state non-dimensional pressure on w-grid [no units]
+        ,   rhoub       & !  base state air density at u/scalar levels [kg/m3]
+        ,   rhowb       & !  base state air density at w levels[kg/m3]
+        ,   satfracb    & !  base state saturation fraction [frac]
+        ,   rhb         & !  base state relative humidity [%]
+        ,   rsatb         !  base state saturation mixing ratio [kg/kg]
+
+    ! parcel thermodynamic variables
+    real, dimension(nz)  :: &
+            tp          & ! parcel temperature ("t" for temperature) [K]
+        ,   thp         & ! parcel potential temperature ("th" for theta) [K]
+        ,   rvp         & ! parcel water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
+        ,   thvp        & ! parcel virtual potential temperature [K]
+        ,   pp          & !  parcel pressure [Pa]
+        ,   pip         & !  parcel non-dimensional pressure on u-grid [no units]
+        ,   piwp        & !  parcel non-dimensional pressure on w-grid [no units]
+        ,   rhoup       & !  parcel air density at u/scalar levels [kg/m3]
+        ,   satfracp    & !  parcel saturation fraction [frac]
+        ,   rhp         & !  parcel relative humidity [%]
+        ,   rsatp         !  parcel saturation mixing ratio [kg/kg]
     
+    real                 :: capep     !  parcel CAPE [J/kg]
     
 
 end module model_vars
