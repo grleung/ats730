@@ -6,7 +6,7 @@ module io
 
     contains
 
-    subroutine read_namelist
+    subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
         use grid_constants, only: nz,dz0,rvpsurf,base_out,base_outpath,parcel_out,parcel_outpath
 
@@ -17,7 +17,7 @@ module io
         namelist /parcel/ rvpsurf
         namelist /grid/ nz,dz0
 
-        open(unit=1, file='test.nml',action='read')
+        open(unit=1, file='Namelist',action='read')
 
         !read each namelist group
         read(1,nml=output)

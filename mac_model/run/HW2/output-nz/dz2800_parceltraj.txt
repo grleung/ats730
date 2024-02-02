@@ -1,0 +1,15 @@
+           Initial parcel potential temperature at   1.40km is:  302.93    K
+        Initial parcel water vapor mixing ratio at   1.40km is:    11.5 g/kg
+   LFC falls between  -1.40 km and   1.40   km
+    EL falls between   9.80 km and  12.60   km
+ CAPE is    2088.660     J/kg
+         k        ht       rvP       thP      thvP  thv_diff
+                [km]   [kg/kg]       [K]       [K]       [K]
+         2      1.40     11.50    302.93    305.06      0.02
+         3      4.20      5.23    321.16    322.19     10.14
+         4      7.00      2.02    331.53    331.94      9.89
+         5      9.80      0.35    337.59    337.66      4.28
+         6     12.60      0.02    338.93    338.94    -13.62
+         7     15.40      0.00    339.04    339.04    -61.79
+         8     18.20      0.00    339.04    339.04   -116.67
+         9     21.00      0.00    339.04    339.04   -179.06

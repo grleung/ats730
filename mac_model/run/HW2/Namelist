@@ -1,0 +1,13 @@
+&output
+ base_out = .False.
+ base_outpath = ''
+ parcel_out = .True.
+ parcel_outpath = 'output-rv/rvp70_parceltraj.txt'
+/
+&parcel
+ rvpsurf = .0140
+/
+&grid
+ nz = 40
+ dz0= 700
+/
