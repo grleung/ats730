@@ -113,7 +113,9 @@ module base_state
             do iz = 3,nz-1
                 pib(ix,iz) = pib(ix,iz-1) - (g/(cp*(thvb(ix,iz-1)+thvb(ix,iz))/2)) * (zsn(iz)-zsn(iz-1))
                 piwb(ix,iz) = piwb(ix,iz-1) - (g/(cp*thvb(ix,iz-1))) * (zwn(iz)-zwn(iz-1))
+            enddo
 
+            do iz=2,nz-1
                 ! base state pressure
                 pb(ix,iz) = p00 * pib(ix,iz)**(cp/rd)
 
