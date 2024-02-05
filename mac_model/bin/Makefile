@@ -56,13 +56,13 @@ all: $(PROGRAM)
 # all the object files compiled in the previous step; in this step,
 # additional pre-compiled libraries of can be added.
 
-model_vars.o: grid_constants.o
-grid.o: grid_constants.o model_vars.o
-mem.o: grid_constants.o model_vars.o
-base_state.o: thermo_functions.o grid.o constants.o grid_constants.o model_vars.o
-cape.o: base_state.o grid.o constants.o grid_constants.o model_vars.o
-io.o: model_vars.o grid_constants.o 
-$(PROGRAM):  io.o base_state.o grid.o constants.o grid_constants.o model_vars.o cape.o thermo_functions.o mem.o
+model_vars.o: run_constants.o
+grid.o: run_constants.o model_vars.o
+mem.o: run_constants.o model_vars.o
+base_state.o: thermo_functions.o grid.o constants.o run_constants.o model_vars.o
+cape.o: base_state.o grid.o constants.o run_constants.o model_vars.o
+io.o: model_vars.o run_constants.o 
+$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o
 
 # ======================================================================
 # general rules, these should not require modification

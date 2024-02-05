@@ -1,0 +1,22 @@
+$output
+base_out = .True.,
+base_outpath = 'hw1_output.txt',
+parcel_out = .False.,
+parcel_outpath = 'hw2_output.txt',
+/
+
+$base
+wk_flag = .False.,
+dn_flag = .True.,
+/
+
+$parcel
+rvpsurf=11.5E-3,
+/
+
+$grid
+nz=29,
+nx=29,
+dz0=700.,
+dx=1000.,
+/

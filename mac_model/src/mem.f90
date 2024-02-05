@@ -1,5 +1,5 @@
 module mem
-    use grid_constants, only: nz
+    use run_constants, only: nz,nx
     use model_vars
     
     implicit none
@@ -7,21 +7,29 @@ module mem
     contains
 
     subroutine allocate_mem
+        ! grid arrays
         allocate (dzn(nz))
-        allocate (zun(nz))
+        allocate (zsn(nz))
         allocate (zwn(nz))
-        allocate (tb(nz))
-        allocate (thb(nz))
-        allocate (rvb(nz))
-        allocate (thvb(nz))
-        allocate (pb(nz))
-        allocate (pib(nz))
-        allocate (piwb(nz))
-        allocate (rhoub(nz))
-        allocate (rhowb(nz))
-        allocate (satfracb(nz))
-        allocate (rhb(nz))
-        allocate (rsatb(nz))
+        allocate (dxn(nx))
+        allocate (xsn(nx))
+        allocate (xun(nx))
+
+        ! base state arrays
+        allocate (tb(nx,nz))
+        allocate (thb(nx,nz))
+        allocate (rvb(nx,nz))
+        allocate (thvb(nx,nz))
+        allocate (pb(nx,nz))
+        allocate (pib(nx,nz))
+        allocate (piwb(nx,nz))
+        allocate (rhoub(nx,nz))
+        allocate (rhowb(nx,nz))
+        allocate (satfracb(nx,nz))
+        allocate (rhb(nx,nz))
+        allocate (rsatb(nx,nz))
+
+        ! parcel arrays
         allocate (tp(nz))
         allocate (thp(nz))
         allocate (rvp(nz))
@@ -31,21 +39,29 @@ module mem
     end subroutine allocate_mem
 
     subroutine deallocate_mem
+        ! grid arrays
         deallocate (dzn(nz))
-        deallocate (zun(nz))
+        deallocate (zsn(nz))
         deallocate (zwn(nz))
-        deallocate (tb(nz))
-        deallocate (thb(nz))
-        deallocate (rvb(nz))
-        deallocate (thvb(nz))
-        deallocate (pb(nz))
-        deallocate (pib(nz))
-        deallocate (piwb(nz))
-        deallocate (rhoub(nz))
-        deallocate (rhowb(nz))
-        deallocate (satfracb(nz))
-        deallocate (rhb(nz))
-        deallocate (rsatb(nz))
+        deallocate (dxn(nx))
+        deallocate (xsn(nx))
+        deallocate (xun(nx))
+
+        ! base state arrays
+        deallocate (tb(nx,nz))
+        deallocate (thb(nx,nz))
+        deallocate (rvb(nx,nz))
+        deallocate (thvb(nx,nz))
+        deallocate (pb(nx,nz))
+        deallocate (pib(nx,nz))
+        deallocate (piwb(nx,nz))
+        deallocate (rhoub(nx,nz))
+        deallocate (rhowb(nx,nz))
+        deallocate (satfracb(nx,nz))
+        deallocate (rhb(nx,nz))
+        deallocate (rsatb(nx,nz))
+
+        ! parcel arrays
         deallocate (tp(nz))
         deallocate (thp(nz))
         deallocate (rvp(nz))

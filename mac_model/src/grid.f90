@@ -5,16 +5,15 @@ module grid
 
     subroutine init_grid()
 
-        use grid_constants, only: nz, dz0, dzrat
-        use model_vars, only: dzn, zun, zwn
+        use run_constants, only: nz, dz0, dzrat, nx, dx
+        use model_vars, only: dzn, zsn, zwn, dxn, xsn, xun
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
+        integer :: ix ! counter for x-coordinate
 
-        ! print statement to check what's happening
-        ! print*,'nz'
-        ! print*,nz
+        ! set up z-coordinate
 
         ! Set up the delta z's for each vertical level from 1 to nz
         ! depending on the initial delta z (dz0) and stretch ratio (dzrat)
@@ -36,8 +35,32 @@ module grid
         ! do this by interpolating between the heights of the w grid
         ! note that ztn(1) and ztn(nz) are fictitious points anyway
         do iz = 1,nz
-            zun(iz) = (zwn(iz)+zwn(iz+1))/2
+            zsn(iz) = (zwn(iz)+zwn(iz+1))*0.5
         enddo
-        zun(nz) = zun(nz-1)+dzn(nz-1) 
+        zsn(nz) = zsn(nz-1)+dzn(nz-1) 
+
+
+        ! set up x-coordinate
+
+        ! grid spacing is just evenly spaced in horizontal
+        do ix = 1,nx
+            dxn(ix) = dx
+        enddo
+
+        ! set up horizontal location of u grid, which is staggered with the scalar grid
+        xun(1) = -dxn(1) !this is a fictitious point that is one grid spacing to the west of the boundary (may change for PBC)
+        xun(2) = 0.
+        do ix = 3,nx
+            xun(ix) = xun(ix-1)+dxn(ix)
+        enddo
+
+
+        ! set up horizontal location of scalar/w grid
+        ! by interpolating between u-grid locations
+        do ix = 1,nx
+            xsn(ix) = (xun(ix)+xun(ix+1))*0.5
+        enddo
+        xsn(nx) = xsn(nx-1)+dxn(nx-1)
+        
     end subroutine init_grid
 end module grid

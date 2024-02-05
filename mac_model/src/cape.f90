@@ -9,8 +9,8 @@ module cape
     subroutine calculate_parcel_cape()
 
         use constants, only: g,cp,lv
-        use grid_constants, only: nz, ztr, ttr, thtr, psurf, rvpsurf
-        use model_vars, only: zun, thb, rvb, thvb, pib, pb          &  ! base state variables
+        use run_constants, only: nz, ztr, ttr, thtr, psurf, rvpsurf
+        use model_vars, only: zsn, thb, rvb, thvb, pib, pb          &  ! base state variables
                             , thp, rvp, thvp, tp, rsatp             &  ! parcel state variables
                             , thvdiff, lclp, elp, capep               ! parcel sounding parameters
         use thermo_functions, only: calc_rsat, calc_satfrac, calc_thv
@@ -23,7 +23,7 @@ module cape
         ! parcel starts at the lowest real scalar point (iz=2 on u-grid)
         ! set the initial parcel vapor mixing ratio (rvp) as given rvpsurf 
         ! and theta (thp) as equal to base state theta at iz=2
-        thp(2) = thb(2)
+        thp(2) = thb(2,2)
         rvp(2) = rvpsurf
 
         do iz = 2, nz ! loop through vertical levels as parcel is being lifted
@@ -34,8 +34,8 @@ module cape
             ! note that by definition of parcel, we assume parcel instantaneously adjusts 
             ! to the environmental pressure, so we can just use base state PI and pressure
             ! to calculate the parcel temp/rsat
-            tp(iz) = pib(iz) * thp(iz)
-            rsatp(iz) = calc_rsat(tp(iz), pb(iz))
+            tp(iz) = pib(2,iz) * thp(iz)
+            rsatp(iz) = calc_rsat(tp(iz), pb(2,iz))
 
             ! if parcel is saturated, then need to do saturation adjustment
             if (rvp(iz) >= rsatp(iz)) then
@@ -46,17 +46,17 @@ module cape
                 c = (rvp(iz) - rsatp(iz))/(1+phi) 
 
                 ! raise temp by latent heat from condensing c amount of water
-                thp(iz) = thp(iz) + (lv/(cp*pib(iz)))*c
+                thp(iz) = thp(iz) + (lv/(cp*pib(2,iz)))*c
                 ! reduce water vapor mixing ratio by amount water condensed
                 rvp(iz) = rvp(iz) - c 
                 ! make sure temp is consistent with new theta and rv
-                tp(iz) = pib(iz) * thp(iz)
+                tp(iz) = pib(2,iz) * thp(iz)
 
             end if
 
             ! calculate virtual potential temp (thv)
             thvp(iz) = calc_thv(thp(iz),rvp(iz))
-            thvdiff(iz) = thvp(iz) - thvb(iz)
+            thvdiff(iz) = thvp(iz) - thvb(2,iz)
 
             ! to calculate CAPE, check theta_v difference between parcel and base state
             ! when parcel is positively buoyant (thvdiff>0) then it contributes to CAPE
@@ -67,7 +67,7 @@ module cape
                 endif
 
                 !add to CAPE
-                capep = capep + g*(thvdiff(iz)/thvb(iz)) * (zun(iz)-zun(iz-1))
+                capep = capep + g*(thvdiff(iz)/thvb(2,iz)) * (zsn(iz)-zsn(iz-1))
             end if
             
             ! the first time that parcel is negatively buoyant after LCL is the EL

@@ -1,19 +1,20 @@
 module model_vars
 
-    use grid_constants, only: nz
-
     ! This module is where we will declare all the shared arrays 
     
     implicit none
 
     ! grid coordinate variables
     real, allocatable, dimension(:)  :: &
-            dzn    & !  deltaZ (level depth) of the w ("momentum") grid [m]
-        ,   zun    & !  physical height of u/scalar ("u" for u) grid [m]
-        ,   zwn      !  physical height of vertical velocity ("w" for w) grid [m]
+            dzn    & !  deltaZ (level depth) of the w  grid [m]
+        ,   zsn    & !  physical height of u/scalar ("s" for scalar) grid [m]
+        ,   zwn    & !  physical height of vertical velocity ("w" for w) grid [m]
+        ,   dxn    & !  deltaX of the u grid [m]
+        ,   xsn    & !  physical horizontal position of scalar ("s" for scalar) grid [m]
+        ,   xun      !  physical horizontal position of horizontal velocity ("u" for u) grid [m]
 
     ! base state thermodynamic variables
-    real, allocatable, dimension(:)  :: &
+    real, allocatable, dimension(:,:)  :: &
             tb          & !  base state temperature ("t" for temperature) [K]
         ,   thb         & !  base state potential temperature ("th" for theta) [K]
         ,   rvb         & !  base state water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
