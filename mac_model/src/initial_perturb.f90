@@ -29,29 +29,31 @@ module initial_perturb
             enddo
         enddo
         
-        !construct pressure perturbation field
+        !construct pressure perturbation field to be in balance with theta perturbation
         do ix = 2, nx - 1
+            ! assume that perturbation pressure is 0 near top of model domain
             pip(ix,nz-1) = 0.
 
+            ! integrate downward: dpi/dz = g/cp * thp/thb^2
             do iz = nz-2,2,-1
                 pip(ix,iz) = pip(ix,iz+1) - (g/cp)*(thp(ix,iz)/thb(iz)**2)*(zsn(iz-1)-zsn(iz))
             enddo 
         enddo 
 
+        ! set fictitious points for zero gradient
         do iz = 2,nz-2
             pip(1,iz) = pip(2,iz)
             pip(nz,iz) = pip(nz-1,iz)
             thp(1,iz) = thp(2,iz)
             thp(nz,iz) = thp(nz-1,iz)
         enddo
-        
+
+        !calculate perturbaiton pressure in Pa
         do iz = 1,nz
             do ix = 1,nx
                 pp(ix,iz) = pip(ix,iz)*cp*rhoub(iz)*thvb(iz)
             enddo
         enddo
-
-        print*,pp(:,2)
 
     end subroutine init_perturb
 
