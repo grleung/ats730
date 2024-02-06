@@ -39,5 +39,13 @@ module run_constants
     logical :: &
             base_out = .False.   &
         ,   parcel_out = .False. 
+
+    ! perturbation settings
+    real :: &
+            radx = 0.       &   ! horizontal radius of perturbation [m]
+        ,   radz = 0.       &   ! vertical radius of perturbation [m]
+        ,   amp = 0.        &   ! thermal amplitude [K]
+        ,   zcnt = 0.       &   ! center of thermal [m above ground]
+        ,   xcnt = 0.           ! center of termal [m from W side of domain]
         
 end module run_constants

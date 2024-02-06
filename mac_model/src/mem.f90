@@ -16,26 +16,35 @@ module mem
         allocate (xun(nx))
 
         ! base state arrays
-        allocate (tb(nx,nz))
-        allocate (thb(nx,nz))
-        allocate (rvb(nx,nz))
-        allocate (thvb(nx,nz))
-        allocate (pb(nx,nz))
-        allocate (pib(nx,nz))
-        allocate (piwb(nx,nz))
-        allocate (rhoub(nx,nz))
-        allocate (rhowb(nx,nz))
-        allocate (satfracb(nx,nz))
-        allocate (rhb(nx,nz))
-        allocate (rsatb(nx,nz))
+        allocate (tb(nz))
+        allocate (thb(nz))
+        allocate (rvb(nz))
+        allocate (thvb(nz))
+        allocate (pb(nz))
+        allocate (pib(nz))
+        allocate (piwb(nz))
+        allocate (rhoub(nz))
+        allocate (rhowb(nz))
+        allocate (satfracb(nz))
+        allocate (rhb(nz))
+        allocate (rsatb(nz))
 
         ! parcel arrays
-        allocate (tp(nz))
-        allocate (thp(nz))
-        allocate (rvp(nz))
-        allocate (thvp(nz))
+        allocate (tpcl(nz))
+        allocate (thpcl(nz))
+        allocate (rvpcl(nz))
+        allocate (thvpcl(nz))
         allocate (thvdiff(nz))
-        allocate (rsatp(nz))
+        allocate (rsatpcl(nz))
+
+        ! prognostic variable arrays
+        allocate (thp(nx,nz))
+        allocate (rvp(nx,nz))
+        allocate (pip(nx,nz))
+        allocate (up(nx,nz))
+        allocate (wp(nx,nz))
+        allocate (pp(nx,nz))
+
     end subroutine allocate_mem
 
     subroutine deallocate_mem
@@ -48,26 +57,35 @@ module mem
         deallocate (xun(nx))
 
         ! base state arrays
-        deallocate (tb(nx,nz))
-        deallocate (thb(nx,nz))
-        deallocate (rvb(nx,nz))
-        deallocate (thvb(nx,nz))
-        deallocate (pb(nx,nz))
-        deallocate (pib(nx,nz))
-        deallocate (piwb(nx,nz))
-        deallocate (rhoub(nx,nz))
-        deallocate (rhowb(nx,nz))
-        deallocate (satfracb(nx,nz))
-        deallocate (rhb(nx,nz))
-        deallocate (rsatb(nx,nz))
+        deallocate (tb(nz))
+        deallocate (thb(nz))
+        deallocate (rvb(nz))
+        deallocate (thvb(nz))
+        deallocate (pb(nz))
+        deallocate (pib(nz))
+        deallocate (piwb(nz))
+        deallocate (rhoub(nz))
+        deallocate (rhowb(nz))
+        deallocate (satfracb(nz))
+        deallocate (rhb(nz))
+        deallocate (rsatb(nz))
 
         ! parcel arrays
-        deallocate (tp(nz))
-        deallocate (thp(nz))
-        deallocate (rvp(nz))
-        deallocate (thvp(nz))
+        deallocate (tpcl(nz))
+        deallocate (thpcl(nz))
+        deallocate (rvpcl(nz))
+        deallocate (thvpcl(nz))
         deallocate (thvdiff(nz))
-        deallocate (rsatp(nz))
+        deallocate (rsatpcl(nz))
+
+        ! prognostic variable arrays
+        deallocate (thp(nx,nz))
+        deallocate (rvp(nx,nz))
+        deallocate (pip(nx,nz))
+        deallocate (up(nx,nz))
+        deallocate (wp(nx,nz))
+        deallocate (pp(nx,nz))
+        
     end subroutine deallocate_mem
 
 

@@ -9,6 +9,7 @@ program MAC
     use base_state, only: init_base_state
     use cape, only: calculate_parcel_cape
     use io, only: read_namelist, write_parcel_traj, write_base_state
+    use initial_perturb, only: init_perturb
 
     implicit none
     
@@ -22,11 +23,13 @@ program MAC
     ! Call base state initialization
     call init_base_state
     ! Write output to a simple text file
-    !call write_base_state
+    call write_base_state
 
     ! Calculate parcel CAPE
-    !call calculate_parcel_cape
-    !call write_parcel_traj
+    call calculate_parcel_cape
+    call write_parcel_traj
+
+    call init_perturb
 
     call deallocate_mem
 

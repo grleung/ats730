@@ -11,7 +11,7 @@ module cape
         use constants, only: g,cp,lv
         use run_constants, only: nz, ztr, ttr, thtr, psurf, rvpsurf
         use model_vars, only: zsn, thb, rvb, thvb, pib, pb          &  ! base state variables
-                            , thp, rvp, thvp, tp, rsatp             &  ! parcel state variables
+                            , thpcl, rvpcl, thvpcl, tpcl, rsatpcl             &  ! parcel state variables
                             , thvdiff, lclp, elp, capep               ! parcel sounding parameters
         use thermo_functions, only: calc_rsat, calc_satfrac, calc_thv
 
@@ -23,8 +23,8 @@ module cape
         ! parcel starts at the lowest real scalar point (iz=2 on u-grid)
         ! set the initial parcel vapor mixing ratio (rvp) as given rvpsurf 
         ! and theta (thp) as equal to base state theta at iz=2
-        thp(2) = thb(2,2)
-        rvp(2) = rvpsurf
+        thpcl(2) = thb(2)
+        rvpcl(2) = rvpsurf
 
         do iz = 2, nz ! loop through vertical levels as parcel is being lifted
             ! for unsaturated parcels, just lift dry adiabatically (conserve theta and rv)
@@ -34,29 +34,29 @@ module cape
             ! note that by definition of parcel, we assume parcel instantaneously adjusts 
             ! to the environmental pressure, so we can just use base state PI and pressure
             ! to calculate the parcel temp/rsat
-            tp(iz) = pib(2,iz) * thp(iz)
-            rsatp(iz) = calc_rsat(tp(iz), pb(2,iz))
+            tpcl(iz) = pib(iz) * thpcl(iz)
+            rsatpcl(iz) = calc_rsat(tpcl(iz), pb(iz))
 
             ! if parcel is saturated, then need to do saturation adjustment
-            if (rvp(iz) >= rsatp(iz)) then
+            if (rvpcl(iz) >= rsatpcl(iz)) then
                 ! account for change in parcel temp due to latent heat from condensation
-                phi = rsatp(iz) * (17.27*237.*lv)/(cp*(tp(iz)-36.)**2) 
+                phi = rsatpcl(iz) * (17.27*237.*lv)/(cp*(tpcl(iz)-36.)**2) 
 
                 ! actual amount condensed accounting for latent heat
-                c = (rvp(iz) - rsatp(iz))/(1+phi) 
+                c = (rvpcl(iz) - rsatpcl(iz))/(1+phi) 
 
                 ! raise temp by latent heat from condensing c amount of water
-                thp(iz) = thp(iz) + (lv/(cp*pib(2,iz)))*c
+                thpcl(iz) = thpcl(iz) + (lv/(cp*pib(iz)))*c
                 ! reduce water vapor mixing ratio by amount water condensed
-                rvp(iz) = rvp(iz) - c 
+                rvpcl(iz) = rvpcl(iz) - c 
                 ! make sure temp is consistent with new theta and rv
-                tp(iz) = pib(2,iz) * thp(iz)
+                tpcl(iz) = pib(iz) * thpcl(iz)
 
             end if
 
             ! calculate virtual potential temp (thv)
-            thvp(iz) = calc_thv(thp(iz),rvp(iz))
-            thvdiff(iz) = thvp(iz) - thvb(2,iz)
+            thvpcl(iz) = calc_thv(thpcl(iz),rvpcl(iz))
+            thvdiff(iz) = thvpcl(iz) - thvb(iz)
 
             ! to calculate CAPE, check theta_v difference between parcel and base state
             ! when parcel is positively buoyant (thvdiff>0) then it contributes to CAPE
@@ -67,7 +67,7 @@ module cape
                 endif
 
                 !add to CAPE
-                capep = capep + g*(thvdiff(iz)/thvb(2,iz)) * (zsn(iz)-zsn(iz-1))
+                capep = capep + g*(thvdiff(iz)/thvb(iz)) * (zsn(iz)-zsn(iz-1))
             end if
             
             ! the first time that parcel is negatively buoyant after LCL is the EL
@@ -76,16 +76,16 @@ module cape
             endif
 
             ! lift parcel dry adiabatically to next level
-            thp(iz+1) = thp(iz)
-            rvp(iz+1) = rvp(iz)
+            thpcl(iz+1) = thpcl(iz)
+            rvpcl(iz+1) = rvpcl(iz)
         enddo 
 
         ! set the fictitious points to just be same as first real level
-        thp(1) = thp(2)
-        rvp(1) = rvp(2)
-        tp(1) = tp(2)
-        rsatp(1) = rsatp(2)
-        thvp(1) = thvp(2)
+        thpcl(1) = thpcl(2)
+        rvpcl(1) = rvpcl(2)
+        tpcl(1) = tpcl(2)
+        rsatpcl(1) = rsatpcl(2)
+        thvpcl(1) = thvpcl(2)
         thvdiff(1) = thvdiff(2)
 
     end subroutine calculate_parcel_cape
