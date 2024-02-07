@@ -36,7 +36,7 @@ BINDIR = $(MODELDIR)/bin
 # the executable compiled in this bin directory will be named after the .f90 program file
 PROGRAM = MAC
 # EXE: executable name to link into run directory; can be the same as PROGRAM or not
-EXE = /HW2/MAC.exe
+EXE = /HW3/MAC.exe
 
 # type "make" to compile the code (compiles all)
 # after compiling, link the executable (named after the PROGRAM.f90 file) into the run 
@@ -56,13 +56,13 @@ all: $(PROGRAM)
 # all the object files compiled in the previous step; in this step,
 # additional pre-compiled libraries of can be added.
 
-model_vars.o: run_constants.o
 grid.o: run_constants.o model_vars.o
 mem.o: run_constants.o model_vars.o
-base_state.o: thermo_functions.o grid.o constants.o run_constants.o model_vars.o
-cape.o: base_state.o grid.o constants.o run_constants.o model_vars.o
+base_state.o: thermo_functions.o constants.o run_constants.o model_vars.o
+cape.o: constants.o run_constants.o model_vars.o thermo_functions.o
+initial_perturb.o : constants.o run_constants.o thermo_functions.o model_vars.o grid.o
 io.o: model_vars.o run_constants.o 
-$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o
+$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o initial_perturb.o
 
 # ======================================================================
 # general rules, these should not require modification

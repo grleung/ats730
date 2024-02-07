@@ -3,6 +3,8 @@ $output
  base_outpath = 'hw3_base_state.txt'
  parcel_out = .False.
  parcel_outpath = ''
+ var_out = .True.
+ var_outpath = 'task1/hw3_timestep1.txt'
 /
 
 $grid

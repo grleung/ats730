@@ -38,11 +38,11 @@ module mem
         allocate (rsatpcl(nz))
 
         ! prognostic variable arrays
-        allocate (thp(nx,nz))
-        allocate (rvp(nx,nz))
-        allocate (pip(nx,nz))
-        allocate (up(nx,nz))
-        allocate (wp(nx,nz))
+        allocate (thp(nx,nz,3))
+        allocate (rvp(nx,nz,3))
+        allocate (pip(nx,nz,3))
+        allocate (up(nx,nz,3))
+        allocate (wp(nx,nz,3))
         allocate (pp(nx,nz))
 
     end subroutine allocate_mem
@@ -79,11 +79,11 @@ module mem
         deallocate (rsatpcl(nz))
 
         ! prognostic variable arrays
-        deallocate (thp(nx,nz))
-        deallocate (rvp(nx,nz))
-        deallocate (pip(nx,nz))
-        deallocate (up(nx,nz))
-        deallocate (wp(nx,nz))
+        deallocate (thp(nx,nz,3))
+        deallocate (rvp(nx,nz,3))
+        deallocate (pip(nx,nz,3))
+        deallocate (up(nx,nz,3))
+        deallocate (wp(nx,nz,3))
         deallocate (pp(nx,nz))
         
     end subroutine deallocate_mem

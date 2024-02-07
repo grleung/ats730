@@ -9,14 +9,14 @@ module io
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
         use run_constants, only: nz,dz0,nx,dx,rvpsurf &
-                                ,base_out,base_outpath,parcel_out,parcel_outpath &
+                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath &
                                 ,wk_flag,dn_flag   &
                                 ,radx,radz,amp,zcnt,xcnt
 
         implicit none 
 
         ! define namelists
-        namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath
+        namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath
         namelist /grid/ nz,nx,dz0,dx
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
@@ -88,5 +88,54 @@ module io
         endif
 
     end subroutine write_parcel_traj
+
+    subroutine write_current_state
+        use run_constants, only: nz, var_out, var_outpath
+        use model_vars, only: zsn,xsn,thp, pip, pp
+
+        implicit none
+        
+        integer :: iz ! counter for z-coordinate
+        
+        if (var_out) then
+            ! open the output file we want to write to
+            open(unit = 1, file=var_outpath)
+
+            write(1,*) 'coord zsn'
+            write(1, '(1x, *(g0, :, ", "))') zsn(:)
+
+            write(1,*) 'coord xsn'
+            write(1, '(1x, *(g0, :, ", "))') xsn(:)
+
+            write(1,*) 'var THP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') thp(iz,:,1)
+            enddo
+
+            write(1,*) 'var THP_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') thp(iz,:,2)
+            enddo
+
+            write(1,*) 'var PIP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip(iz,:,1)
+            enddo
+
+            write(1,*) 'var PIP_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip(iz,:,2)
+            enddo
+
+
+            write(1,*) 'var PP_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pp(iz,:)
+            enddo
+
+            close(1)
+        endif 
+
+    end subroutine write_current_state
 
 end module io

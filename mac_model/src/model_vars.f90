@@ -44,14 +44,16 @@ module model_vars
            lclp         & !  parcel lifted condensation level [in model levels, u-grid]
         ,   elp           !  parcel equlibirum level [in model levels, u-grid]
 
-    ! prognostic thermodynamic variables (array in nx,nz)
-    real, allocatable, dimension(:,:)  :: &
+    ! prognostic thermodynamic variables (array in nx,nz,3 time dims [past, pres, future])
+    real, allocatable, dimension(:,:,:)  :: &
             thp         & !  perturbation potential temperature ("th" for theta) [K]
         ,   rvp         & !  perturbation water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
         ,   pip         & !  perturbation non-dimensional pressure on u-grid [no units]
-        ,   pp         & !  perturbation  pressure on u-grid [no units]
         ,   up          & !  horizontal velocity [m/s]
         ,   wp            !  vertical velocity [m/s]
+
+     real, allocatable, dimension(:,:) :: &
+           pp         !  perturbation  pressure on u-grid [no units]
 
     contains
 

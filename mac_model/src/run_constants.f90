@@ -34,11 +34,13 @@ module run_constants
     !output settings
     character(len=80) :: & !output paths
             base_outpath = 'hw1_output.txt' &
-        ,   parcel_outpath = 'hw2_output.txt'
+        ,   parcel_outpath = 'hw2_output.txt' &
+        ,   var_outpath = 'hw3_output.txt'
 
     logical :: &
             base_out = .False.   &
-        ,   parcel_out = .False. 
+        ,   parcel_out = .False. &
+        ,   var_out = .False.
 
     ! perturbation settings
     real :: &
