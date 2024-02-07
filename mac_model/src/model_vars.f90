@@ -4,6 +4,8 @@ module model_vars
     
     implicit none
 
+    integer :: it !timestep counter
+
     ! grid coordinate variables
     real, allocatable, dimension(:)  :: &
             dzn    & !  deltaZ (level depth) of the w  grid [m]

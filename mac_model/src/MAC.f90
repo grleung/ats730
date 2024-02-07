@@ -4,16 +4,21 @@ program MAC
 
     ! Get the initialization subroutines
     use grid, only: init_grid
-    use run_constants, only: base_outpath, parcel_outpath
+    use run_constants, only: base_outpath, parcel_outpath,dt,endt
     use mem, only: allocate_mem, deallocate_mem
     use base_state, only: init_base_state
     use cape, only: calculate_parcel_cape
     use io, only: read_namelist, write_parcel_traj, write_base_state,write_current_state
     use initial_perturb, only: init_perturb
+    use advection, only: advect
+    use model_vars, only: it
 
     implicit none
-    
+
+    integer :: nt !  total number of timesteps
+   
     call read_namelist
+    nt = int(endt/dt)
     
     call allocate_mem
 
@@ -29,9 +34,14 @@ program MAC
     call calculate_parcel_cape
     call write_parcel_traj
 
+    ! initialize perturbation from base state
     call init_perturb
 
-    call write_current_state
+    !each timestep
+    do it=1,nt
+        call advect
+        call write_current_state
+    enddo
 
     call deallocate_mem
 

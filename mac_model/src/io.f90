@@ -8,19 +8,19 @@ module io
 
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
-        use run_constants, only: nz,dz0,nx,dx,rvpsurf &
+        use run_constants, only: nz,dz0,nx,dx,pbc,dt,rvpsurf &
                                 ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath &
                                 ,wk_flag,dn_flag   &
-                                ,radx,radz,amp,zcnt,xcnt
+                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
 
         implicit none 
 
         ! define namelists
         namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath
-        namelist /grid/ nz,nx,dz0,dx
+        namelist /grid/ nz,nx,dz0,dx,pbc,dt
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
-        namelist /pert/ radx,radz,amp,zcnt,xcnt
+        namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
         
         open(unit=1, file='Namelist',action='read')
 
@@ -91,15 +91,18 @@ module io
 
     subroutine write_current_state
         use run_constants, only: nz, var_out, var_outpath
-        use model_vars, only: zsn,xsn,thp, pip, pp
+        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,pp
 
         implicit none
         
         integer :: iz ! counter for z-coordinate
-        
+
+        character(len=3) :: timechar
+        write(timechar, '(i3)')it
+
         if (var_out) then
             ! open the output file we want to write to
-            open(unit = 1, file=var_outpath)
+            open(unit = 1, file=trim(var_outpath)//'timestep_'//trim(adjustl(timechar))//'.txt')
 
             write(1,*) 'coord zsn'
             write(1, '(1x, *(g0, :, ", "))') zsn(:)
@@ -117,6 +120,11 @@ module io
                 write(1, '(1x, *(g0, :, ", "))') thp(iz,:,2)
             enddo
 
+            write(1,*) 'var THP_fut'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') thp(iz,:,3)
+            enddo
+
             write(1,*) 'var PIP_past'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') pip(iz,:,1)
@@ -127,6 +135,40 @@ module io
                 write(1, '(1x, *(g0, :, ", "))') pip(iz,:,2)
             enddo
 
+            write(1,*) 'var PIP_fut'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip(iz,:,3)
+            enddo
+
+            write(1,*) 'var UP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') up(iz,:,1)
+            enddo
+
+            write(1,*) 'var UP_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') up(iz,:,2)
+            enddo
+
+            write(1,*) 'var UP_fut'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') up(iz,:,3)
+            enddo
+
+            write(1,*) 'var WP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') wp(iz,:,1)
+            enddo
+
+            write(1,*) 'var WP_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') wp(iz,:,2)
+            enddo
+
+            write(1,*) 'var WP_fut'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') wp(iz,:,3)
+            enddo
 
             write(1,*) 'var PP_pres'
             do iz=1,nz

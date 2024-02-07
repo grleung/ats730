@@ -11,9 +11,15 @@ module run_constants
         ,    nx      =    29     ! number of horizontal (x) points
 
     real :: & ! grid parameters
-            dz0       =   700.    & ! depth of first vertical level [m]
-        ,   dzrat     =   1.      & ! ratio of subsequent vertical levels, for now keep all constant
-        ,   dx        =   1000.     ! width of horizontal grid spacing [m]
+            dz0       =   700.    &  ! depth of first vertical level [m]
+        ,   dzrat     =   1.      &  ! ratio of subsequent vertical levels, for now keep all constant
+        ,   dx        =   1000.   &  ! width of horizontal grid spacing [m]
+        ,   dt        =   3.      &  ! timestep [s]
+        ,   endt      =   300.       ! total integration time
+
+    
+    logical :: &
+            pbc     = .True.    ! use periodic boundaries?
         
     ! base state settings
     real :: & 
@@ -44,10 +50,13 @@ module run_constants
 
     ! perturbation settings
     real :: &
-            radx = 0.       &   ! horizontal radius of perturbation [m]
+            pert_wind=.True.&   ! which variable to perturb, if true then U, if false then THETA
+        ,   radx = 0.       &   ! horizontal radius of perturbation [m]
         ,   radz = 0.       &   ! vertical radius of perturbation [m]
         ,   amp = 0.        &   ! thermal amplitude [K]
         ,   zcnt = 0.       &   ! center of thermal [m above ground]
-        ,   xcnt = 0.           ! center of termal [m from W side of domain]
+        ,   xcnt = 0.       &   ! center of termal [m from W side of domain]
+        ,   cx = 0.         &   ! horizontal advection speed [m/s]
+        ,   cz = 0.             ! vertival advection speed [m/s]
         
 end module run_constants

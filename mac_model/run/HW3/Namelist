@@ -4,14 +4,16 @@ $output
  parcel_out = .False.
  parcel_outpath = ''
  var_out = .True.
- var_outpath = 'task1/hw3_timestep1.txt'
+ var_outpath = 'task2/hw3_output_'
 /
 
 $grid
-nz=29,
-nx=29,
-dz0=700.,
-dx=1000.,
+nz=50,
+nx=50,
+dz0=100.,
+dx=100.,
+pbc=.True.,
+dt = 3.,
 /
 
 $base
@@ -24,9 +26,12 @@ rvpsurf = 0.,
 /
 
 $pert
-radx=10000.,
-radz=1400.,
-amp=2.,
-zcnt=1400.,
-xcnt=13500.,
+pert_wind = .True.,
+radx=1000.,
+radz=1000.,
+amp=10.,
+zcnt=2500.,
+xcnt=2500.,
+cx = 15.,
+cz = 15.,
 /

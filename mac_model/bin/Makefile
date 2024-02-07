@@ -62,7 +62,8 @@ base_state.o: thermo_functions.o constants.o run_constants.o model_vars.o
 cape.o: constants.o run_constants.o model_vars.o thermo_functions.o
 initial_perturb.o : constants.o run_constants.o thermo_functions.o model_vars.o grid.o
 io.o: model_vars.o run_constants.o 
-$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o initial_perturb.o
+advection.o : run_constants.o model_vars.o
+$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o initial_perturb.o advection.o
 
 # ======================================================================
 # general rules, these should not require modification
