@@ -4,7 +4,7 @@ program MAC
 
     ! Get the initialization subroutines
     use grid, only: init_grid
-    use run_constants, only: base_outpath, parcel_outpath,dt,endt
+    use run_constants, only: base_outpath, parcel_outpath,dt,endt,outfreq
     use mem, only: allocate_mem, deallocate_mem
     use base_state, only: init_base_state
     use cape, only: calculate_parcel_cape
@@ -39,11 +39,14 @@ program MAC
     call init_perturb
 
     !each timestep
-    do it=1,201!it=1,nt
+    do it=1,nt
         !call advect
         call tendencies 
-        call write_current_state
 
+        if (modulo(it,outfreq)==0) then
+            call write_current_state
+        endif
+    
         print*,it
     enddo
 

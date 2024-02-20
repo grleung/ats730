@@ -9,14 +9,14 @@ module io
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
         use run_constants, only: nz,dz0,nx,dx,pbc_x, pbc_z,dt,endt,rvpsurf &
-                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath &
+                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq &
                                 ,wk_flag,dn_flag   &
                                 ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
 
         implicit none 
 
         ! define namelists
-        namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath
+        namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq
         namelist /grid/ nz,nx,dz0,dx,pbc_x,pbc_z,dt,endt
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf

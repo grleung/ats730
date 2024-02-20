@@ -131,13 +131,18 @@ module solve_prog
         do ix = 2, nx-1
             do iz = 2, nz-1
                 ! first term in pip-tendency equation: horizontal advection term = -d(u * thp)/dx
-                pip_tend1(ix,iz) = rhoub(iz) * thb(iz) * rdx * (up(ix+1,iz,2)-up(ix,iz,2))
+                ! pip_tend1(ix,iz) = rhoub(iz) * thb(iz) * rdx * (up(ix+1,iz,2)-up(ix,iz,2))
+                pip_tend1(ix,iz) = -((cs**2)*rdx/(cp*thb(iz))) * (up(ix+1,iz,2)-up(ix,iz,2))
 
                 ! second term in pip-tendency equation: vertical advection term = -1/rho * d(rho*w * thp)/dz
-                pip_tend2(ix,iz) = rdz * 0.5 * (rhowb(iz+1)*wp(ix,iz+1,2)*(thp(ix,iz+1,2)+thp(ix,iz,2))       &
-                                        - rhowb(iz)*wp(ix,iz,2)*(thp(ix,iz,2)+thp(ix,iz-1,2)))                                          
+                !pip_tend2(ix,iz) = rdz * 0.5 * (rhowb(iz+1)*wp(ix,iz+1,2)*(thp(ix,iz+1,2)+thp(ix,iz,2))       &
+                !                        - rhowb(iz)*wp(ix,iz,2)*(thp(ix,iz,2)+thp(ix,iz-1,2)))                                          
+                pip_tend2(ix,iz) = -((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thb(iz)**2))) &
+                                * ((rhowb(iz+1)*wp(ix,iz+1,2)*(thb(iz+1)+thb(iz))) &
+                                  -(rhowb(iz)*wp(ix,iz,2)*(thb(iz)+thb(iz-1))))
 
-                pip_tend_total(ix,iz) = -((cs**2) /(rhoub(iz)*cp*(thb(iz)**2))) * (pip_tend1(ix,iz) + pip_tend2(ix,iz))
+                !pip_tend_total(ix,iz) = -((cs**2) /(rhoub(iz)*cp*((thb(iz))**2))) * (pip_tend1(ix,iz) + pip_tend2(ix,iz))
+                pip_tend_total(ix,iz) = pip_tend1(ix,iz)+pip_tend2(ix,iz)
             enddo ! end x loop
         enddo ! end z loop
 
