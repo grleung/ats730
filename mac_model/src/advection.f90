@@ -7,7 +7,7 @@ module advection
     contains
 
     subroutine advect
-        use run_constants, only: nz,nx,dx,dz0,cx,cz,dt,pbc
+        use run_constants, only: nz,nx,dx,dz0,cx,cz,dt,pbc_x,pbc_z
         use model_vars, only:it,zsn,xsn,thb,thvb,rhoub,thp,pip,pp,up,wp
 
         implicit none
@@ -20,8 +20,6 @@ module advection
         rd2x      = (1/(dx+dx))  ! reciprocal of 2dx [1/m]
         rd2z      = (1/(dz0+dz0))  ! reciprocal of 2dz [1/m]
         d2t       = (dt+dt)         ! 2*dt
-
-        
 
         ! loop over real/unique points
         do iz = 2, nz-1
@@ -37,7 +35,7 @@ module advection
 
 
         ! take care of boundaries
-        if (pbc==.True.) then 
+        if (pbc_x==.True.) then 
             do iz = 2,nz-1
                 pip(1,iz,3) = pip(nx-1,iz,3)
                 pip(nx,iz,3) = pip(2,iz,3)
@@ -47,18 +45,7 @@ module advection
                 up(nx,iz,3) = up(2,iz,3)
                 wp(1,iz,3) = wp(nx-1,iz,3)
                 wp(nx,iz,3) = wp(2,iz,3)
-            enddo
-
-            do ix = 1,nx
-                pip(ix,1,3) = pip(ix,nz-1,3)
-                pip(ix,nz,3) = pip(ix, 2,3)
-                thp(ix,1,3) = thp(ix,nz-1,3)
-                thp(ix,nz,3) = thp(ix,2,3)
-                up(ix,1,3) = up(ix,nz-1,3)
-                up(ix,nz,3) = up(ix,2,3)
-                wp(ix,1,3) = wp(ix,nz-1,3)
-                wp(ix,nz,3) = wp(ix,2,3)
-            enddo
+            enddo ! end z loop
         else 
             ! if not using PBCs, just set 1st point to be same as 2nd, last pt to be same as 2nd to last, etc.
             do iz = 2,nz-1
@@ -71,7 +58,22 @@ module advection
                 wp(1,iz,3) = wp(2,iz,3)
                 wp(nx,iz,3) = wp(nx-1,iz,3)
             enddo
+        endif !end x pbc settings
 
+        ! set fictitous points to be equal to first real point
+        if (pbc_z==.True.) then 
+            do ix = 1,nx
+                pip(ix,1,3) = pip(ix,nz-1,3)
+                pip(ix,nz,3) = pip(ix, 2,3)
+                thp(ix,1,3) = thp(ix,nz-1,3)
+                thp(ix,nz,3) = thp(ix,2,3)
+                up(ix,1,3) = up(ix,nz-1,3)
+                up(ix,nz,3) = up(ix,2,3)
+                wp(ix,1,3) = wp(ix,nz-1,3)
+                wp(ix,nz,3) = wp(ix,2,3)
+            enddo ! end x loop
+        else 
+            ! if not using PBCs, just set 1st point to be same as 2nd, last pt to be same as 2nd to last, etc.
             do ix = 1,nx
                 pip(ix,1,3) = pip(ix,2,3)
                 pip(ix,nz,3) = pip(ix, nz-1,3)
@@ -81,8 +83,8 @@ module advection
                 up(ix,nz,3) = up(ix,nz-1,3)
                 wp(ix,1,3) = wp(ix,2,3)
                 wp(ix,nz,3) = wp(ix,nz-1,3)
-            enddo
-        endif 
+            enddo ! end x loop
+        endif ! end z pbc
 
         ! step forward in time
         do iz = 1, nz

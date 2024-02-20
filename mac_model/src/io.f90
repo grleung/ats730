@@ -8,7 +8,7 @@ module io
 
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
-        use run_constants, only: nz,dz0,nx,dx,pbc,dt,rvpsurf &
+        use run_constants, only: nz,dz0,nx,dx,pbc_x, pbc_z,dt,endt,rvpsurf &
                                 ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath &
                                 ,wk_flag,dn_flag   &
                                 ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
@@ -17,7 +17,7 @@ module io
 
         ! define namelists
         namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath
-        namelist /grid/ nz,nx,dz0,dx,pbc,dt
+        namelist /grid/ nz,nx,dz0,dx,pbc_x,pbc_z,dt,endt
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
         namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
@@ -91,7 +91,11 @@ module io
 
     subroutine write_current_state
         use run_constants, only: nz, var_out, var_outpath
-        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,pp
+        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,pp &
+                            ,thp_tend_total,thp_tend1,thp_tend2,thp_tend3 &
+                            ,pip_tend_total,pip_tend1,pip_tend2 &
+                            ,u_tend_total,u_tend1,u_tend2,u_tend3 &
+                            ,w_tend_total, w_tend1,w_tend2,w_tend3,w_tend4
 
         implicit none
         
@@ -110,71 +114,106 @@ module io
             write(1,*) 'coord xsn'
             write(1, '(1x, *(g0, :, ", "))') xsn(:)
 
-            write(1,*) 'var THP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp(iz,:,1)
-            enddo
-
             write(1,*) 'var THP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp(iz,:,2)
-            enddo
-
-            write(1,*) 'var THP_fut'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp(iz,:,3)
-            enddo
-
-            write(1,*) 'var PIP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip(iz,:,1)
+                write(1, '(1x, *(g0, :, ", "))') thp(:,iz,2)
             enddo
 
             write(1,*) 'var PIP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip(iz,:,2)
-            enddo
-
-            write(1,*) 'var PIP_fut'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip(iz,:,3)
-            enddo
-
-            write(1,*) 'var UP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') up(iz,:,1)
+                write(1, '(1x, *(g0, :, ", "))') pip(:,iz,2)
             enddo
 
             write(1,*) 'var UP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') up(iz,:,2)
-            enddo
-
-            write(1,*) 'var UP_fut'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') up(iz,:,3)
-            enddo
-
-            write(1,*) 'var WP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') wp(iz,:,1)
+                write(1, '(1x, *(g0, :, ", "))') up(:,iz,2)
             enddo
 
             write(1,*) 'var WP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') wp(iz,:,2)
+                write(1, '(1x, *(g0, :, ", "))') wp(:,iz,2)
             enddo
 
-            write(1,*) 'var WP_fut'
+            write(1,*) 'var THP_TEND_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') wp(iz,:,3)
+                write(1, '(1x, *(g0, :, ", "))') thp_tend_total(:,iz)
             enddo
 
-            write(1,*) 'var PP_pres'
+            write(1,*) 'var THP_TEND1_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pp(iz,:)
+                write(1, '(1x, *(g0, :, ", "))') thp_tend1(:,iz)
             enddo
 
+            write(1,*) 'var THP_TEND2_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') thp_tend2(:,iz)
+            enddo
+
+            write(1,*) 'var THP_TEND3_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') thp_tend3(:,iz)
+            enddo
+
+            write(1,*) 'var PIP_TEND_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip_tend_total(:,iz)
+            enddo
+
+            write(1,*) 'var PIP_TEND1_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip_tend1(:,iz)
+            enddo
+
+            write(1,*) 'var PIP_TEND2_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip_tend2(:,iz)
+            enddo
+
+            write(1,*) 'var UP_TEND_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') u_tend_total(:,iz)
+            enddo
+
+            write(1,*) 'var UP_TEND1_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') u_tend1(:,iz)
+            enddo
+
+            write(1,*) 'var UP_TEND2_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') u_tend2(:,iz)
+            enddo
+
+            write(1,*) 'var UP_TEND3_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') u_tend3(:,iz)
+            enddo
+
+            write(1,*) 'var WP_TEND_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iz)
+            enddo
+
+            write(1,*) 'var WP_TEND1_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_tend1(:,iz)
+            enddo
+
+            write(1,*) 'var WP_TEND2_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_tend2(:,iz)
+            enddo
+
+            write(1,*) 'var WP_TEND3_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_tend3(:,iz)
+            enddo
+
+            write(1,*) 'var WP_TEND4_pres'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_tend4(:,iz)
+            enddo
+            
             close(1)
         endif 
 

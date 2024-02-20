@@ -57,6 +57,13 @@ module model_vars
      real, allocatable, dimension(:,:) :: &
            pp         !  perturbation  pressure on u-grid [no units]
 
+    ! tendency  variables (array in nx,nz)
+    real, allocatable, dimension(:,:)  :: &
+            u_tend1, u_tend2, u_tend3, u_tend_total         &
+        ,   w_tend1, w_tend2, w_tend3, w_tend4, w_tend_total         &
+        ,   thp_tend1,thp_tend2,thp_tend3,thp_tend_total    &
+        ,   pip_tend1,pip_tend2,pip_tend_total
+
     contains
 
 end module model_vars

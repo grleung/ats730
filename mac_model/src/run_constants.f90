@@ -19,7 +19,8 @@ module run_constants
 
     
     logical :: &
-            pbc     = .True.    ! use periodic boundaries?
+            pbc_x     = .True.    & ! use periodic boundaries for x?
+        ,   pbc_z     = .True.      ! use periodic boundaries for z?
         
     ! base state settings
     real :: & 

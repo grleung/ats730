@@ -13,49 +13,44 @@ module base_state
         use thermo_functions, only: calc_thv, calc_rsat, calc_satfrac
         use model_vars, only:zsn, zwn, thb, rvb, thvb, pib, piwb, rhoub,rhowb,tb,pb,rsatb,rhb,satfracb
     
-
         implicit none
 
         integer :: iz ! counter for z-coordinate
-        integer :: ix ! counter fo x-coordinate
-
+        integer :: ix ! counter for x-coordinate
 
         ! initally, set the base state to be horizontally homogenous
         ! so we just need to loop over all the x values inside the z-loops        
 
         if (wk_flag==.True.) then
             ! use WK sounding
-            ! set base state potential temperature to be equal to the WK sounding given
+            
             do iz = 2,nz-1
+                ! set base state potential temperature to be equal to the WK sounding given
                 if (zsn(iz) <= ztr) then
                     thb(iz) = 300. + 43.*(zsn(iz)/ztr)**1.25
                 else
                     thb(iz) = thtr * EXP((g*(zsn(iz)-ztr))/(ttr*cp))
                 endif
-            enddo
-
+           
                 ! set base state water vapor mixing ratio to given
-            do iz = 2,nz-1
                 if (zsn(iz) <= 4000.) then
                     rvb(iz) = 1.61E-2 - 3.375E-6*zsn(iz)
                 else if (zsn(iz) <= 8000.) then
                     rvb(iz) = 2.6E-3 - 6.5E-7*(zsn(iz) - 4000.)
                 else 
                     rvb(iz) = 0
-                endif
-            enddo
-            
+                endif 
+            enddo ! end z loop
         else if (dn_flag==.True.) then
             !set base state sounding to be dry and neutral
             do iz = 2,nz-1
+                ! set base state th to be all 300K
                 thb(iz) = 300.
-            enddo
-        
-            ! set base state water vapor mixing ratio to 0 as given
-            do iz = 2,nz-1
+
+                ! set base state water vapor mixing ratio to 0 as given
                 rvb(iz) = 0.
-            enddo
-        endif 
+            enddo !end z loop
+        endif  ! end WK vs. dry neutral flag
 
         ! setting the boundary points same as first real points for zero gradient
         thb(1) = thb(2) 
@@ -66,7 +61,7 @@ module base_state
         ! base state virtual potential temp using the definition of theta_v
         do iz = 1,nz
             thvb(iz) = calc_thv(thb(iz), rvb(iz)) 
-        enddo
+        enddo ! end z loop
 
         ! base state exner function (non-dimensionalized pressure, pi)
         ! let's calculate both at u grids and w grids (which will be useful later)
@@ -91,7 +86,7 @@ module base_state
         do iz = 3,nz-1
             pib(iz) = pib(iz-1) - (g/(cp*(thvb(iz-1)+thvb(iz))/2)) * (zsn(iz)-zsn(iz-1))
             piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz-1))) * (zwn(iz)-zwn(iz-1))
-        enddo
+        enddo ! end z loop
 
         do iz=2,nz-1
             if (base_out) then
@@ -121,7 +116,7 @@ module base_state
 
             ! for thv, assuming it scales linearlly between levels and use the average
             rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
-        enddo
+        enddo !end z loop
 
         !set the fictitious points at model top and bottom for zero gradient
         thvb(nz) = thvb(nz-1)
@@ -144,7 +139,7 @@ module base_state
             satfracb(nz) = satfracb(nz-1)
             rhb(1) = rhb(2)
             rhb(nz) = rhb(nz-1)
-        endif
+        endif ! end base_out
 
     end subroutine init_base_state
 

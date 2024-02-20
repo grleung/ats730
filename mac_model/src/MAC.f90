@@ -12,6 +12,7 @@ program MAC
     use initial_perturb, only: init_perturb
     use advection, only: advect
     use model_vars, only: it
+    use solve_prog, only: tendencies
 
     implicit none
 
@@ -38,9 +39,12 @@ program MAC
     call init_perturb
 
     !each timestep
-    do it=1,nt
-        call advect
+    do it=1,201!it=1,nt
+        !call advect
+        call tendencies 
         call write_current_state
+
+        print*,it
     enddo
 
     call deallocate_mem

@@ -45,6 +45,24 @@ module mem
         allocate (wp(nx,nz,3))
         allocate (pp(nx,nz))
 
+        ! tendency arrays
+        allocate (u_tend1(nx,nz))
+        allocate (u_tend2(nx,nz))
+        allocate (u_tend3(nx,nz))
+        allocate (u_tend_total(nx,nz))
+        allocate (w_tend1(nx,nz))
+        allocate (w_tend2(nx,nz))
+        allocate (w_tend3(nx,nz))
+        allocate (w_tend4(nx,nz))
+        allocate (w_tend_total(nx,nz))
+        allocate (thp_tend1(nx,nz))
+        allocate (thp_tend2(nx,nz))
+        allocate (thp_tend3(nx,nz))
+        allocate (thp_tend_total(nx,nz))
+        allocate (pip_tend1(nx,nz))
+        allocate (pip_tend2(nx,nz))
+        allocate (pip_tend_total(nx,nz))
+
     end subroutine allocate_mem
 
     subroutine deallocate_mem
@@ -85,6 +103,24 @@ module mem
         deallocate (up(nx,nz,3))
         deallocate (wp(nx,nz,3))
         deallocate (pp(nx,nz))
+
+        ! tendency arrays
+        deallocate (u_tend1(nx,nz))
+        deallocate (u_tend2(nx,nz))
+        deallocate (u_tend3(nx,nz))
+        deallocate (u_tend_total(nx,nz))
+        deallocate (w_tend1(nx,nz))
+        deallocate (w_tend2(nx,nz))
+        deallocate (w_tend3(nx,nz))
+        deallocate (w_tend4(nx,nz))
+        deallocate (w_tend_total(nx,nz))
+        deallocate (thp_tend1(nx,nz))
+        deallocate (thp_tend2(nx,nz))
+        deallocate (thp_tend3(nx,nz))
+        deallocate (thp_tend_total(nx,nz))
+        deallocate (pip_tend1(nx,nz))
+        deallocate (pip_tend2(nx,nz))
+        deallocate (pip_tend_total(nx,nz))
         
     end subroutine deallocate_mem
 
