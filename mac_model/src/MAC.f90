@@ -40,6 +40,8 @@ program MAC
     ! initialize perturbation from base state
     call init_perturb
 
+    call write_current_state
+
     !each timestep
     do it=1,nt
         !call advect
