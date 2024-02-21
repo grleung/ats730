@@ -1,5 +1,5 @@
 module solve_prog
-    !This model contains the full tendency equations for u,w,theta_prime,PI_prime from HW4
+    !This module contains the full tendency equations for u,w,theta_prime,PI_prime from HW4
 
     implicit none
 
@@ -14,6 +14,8 @@ module solve_prog
                             ,thp_tend1,thp_tend2,thp_tend3,thp_tend_total &
                             ,pip_tend1,pip_tend2,pip_tend_total
 
+        use boundaries, only: enforce_bounds_x, enforce_bounds_z
+
         implicit none
 
         integer :: iz ! counter for z-coordinate
@@ -26,9 +28,9 @@ module solve_prog
         rdz      = (1/(dz0))  ! reciprocal of dz [1/m]
         d2t       = (dt+dt)         ! 2*dt
 
-        ! first, set all tendencies to zero
-        do iz = 2, nz-1
-            do ix = 2, nx-1
+        ! first, reset all tendencies to zero
+        do iz = 1, nz
+            do ix = 1, nx
                 u_tend1(ix,iz)=0.
                 u_tend2(ix,iz)=0.
                 u_tend3(ix,iz)=0.
@@ -85,8 +87,8 @@ module solve_prog
 
                 ! second term in w-tendency equation: vertical advection term 
                 w_tend2(ix,iz) =  - rdz/rhoub(iz) &
-                                        * (((0.5*(wp(ix,iz+1,2)+wp(ix,iz,2)))**2) &
-                                        - ((0.5*(wp(ix,iz,2)+wp(ix,iz-1,2)))**2))
+                                        * ((rhowb(iz+1)*(0.5*(wp(ix,iz+1,2)+wp(ix,iz,2)))**2) &
+                                        - (rhowb(iz)*(0.5*(wp(ix,iz,2)+wp(ix,iz-1,2)))**2))
 
                 ! third term in w-tendency equation: pressure gradient term 
                 w_tend3(ix,iz) = -cp * rdz * 0.25 * (thb(iz)+thb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
@@ -98,6 +100,7 @@ module solve_prog
             enddo ! end x loop
         enddo ! end z loop
 
+    
         ! calculate tendency in theta
         ! this is equation 8 in HW4
 
@@ -111,8 +114,8 @@ module solve_prog
 
                 ! second term in thp-tendency equation: vertical advection term = -1/rho * d(rho*w * thp)/dz
                 thp_tend2(ix,iz) = - rdz/(rhoub(iz))                                                 &
-                                    * 0.5 *  ((rhowb(iz+1) *    wp(ix,iz+1,2)     * (thp(ix,iz,2)    +   thp(ix,iz+1,2))) &
-                                    -         (rhowb(iz)   *    wp(ix,iz,2)     * (thp(ix,iz-1,2)    +   thp(ix,iz,2))))
+                                    * 0.5 *  ((rhowb(iz+1) *    wp(ix,iz+1,2)     * (thp(ix,iz+1,2)    +   thp(ix,iz,2))) &
+                                    -         (rhowb(iz)   *    wp(ix,iz,2)     * (thp(ix,iz,2)    +   thp(ix,iz-1,2))))
 
                 ! last term in thp-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
                 thp_tend3(ix,iz) = -0.5 * (1/rhoub(iz)) *   rdz                                     &
@@ -130,22 +133,21 @@ module solve_prog
         ! loop over real/unique points
         do ix = 2, nx-1
             do iz = 2, nz-1
-                ! first term in pip-tendency equation: horizontal advection term = -d(u * thp)/dx
-                ! pip_tend1(ix,iz) = rhoub(iz) * thb(iz) * rdx * (up(ix+1,iz,2)-up(ix,iz,2))
+                ! first term in pip-tendency equation: horizontal advection term
                 pip_tend1(ix,iz) = -((cs**2)*rdx/(cp*thb(iz))) * (up(ix+1,iz,2)-up(ix,iz,2))
+                !pip_tend1(ix,iz) = (rhoub(iz)*thb(iz)*rdx) * (up(ix+1,iz,2)-up(ix,iz,2))
 
-                ! second term in pip-tendency equation: vertical advection term = -1/rho * d(rho*w * thp)/dz
-                !pip_tend2(ix,iz) = rdz * 0.5 * (rhowb(iz+1)*wp(ix,iz+1,2)*(thp(ix,iz+1,2)+thp(ix,iz,2))       &
-                !                        - rhowb(iz)*wp(ix,iz,2)*(thp(ix,iz,2)+thp(ix,iz-1,2)))                                          
-                pip_tend2(ix,iz) = -((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thb(iz)**2))) &
-                                * ((rhowb(iz+1)*wp(ix,iz+1,2)*(thb(iz+1)+thb(iz))) &
+                ! second term in pip-tendency equation: vertical advection term 
+                pip_tend2(ix,iz) = -(((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thb(iz)**2))))   &
+                                *  ((rhowb(iz+1)*wp(ix,iz+1,2)*(thb(iz+1)+thb(iz))) &
                                   -(rhowb(iz)*wp(ix,iz,2)*(thb(iz)+thb(iz-1))))
 
-                !pip_tend_total(ix,iz) = -((cs**2) /(rhoub(iz)*cp*((thb(iz))**2))) * (pip_tend1(ix,iz) + pip_tend2(ix,iz))
                 pip_tend_total(ix,iz) = pip_tend1(ix,iz)+pip_tend2(ix,iz)
+
+                !pip_tend_total(ix,iz) = -((cs**2) /(rhoub(iz)*cp*((thb(iz))**2))) * (pip_tend1(ix,iz) + pip_tend2(ix,iz))
+
             enddo ! end x loop
         enddo ! end z loop
-
 
         ! calculate actual future values
         ! loop over real/unique points
@@ -162,75 +164,6 @@ module solve_prog
                     thp(ix,iz,3) = thp(ix,iz,1) + (d2t * thp_tend_total(ix,iz))
                     pip(ix,iz,3) = pip(ix,iz,1) + (d2t * pip_tend_total(ix,iz))
                 endif
-            enddo ! end x loop
-        enddo ! end z loop
-
-        ! take care of boundaries
-        if (pbc_x==.True.) then 
-            do iz = 1,nz ! setting x to be periodic
-                pip(1,iz,3) = pip(nx-1,iz,3)
-                pip(nx,iz,3) = pip(2,iz,3)
-                thp(1,iz,3) = thp(nx-1,iz,3)
-                thp(nx,iz,3) = thp(2,iz,3)
-                up(1,iz,3) = up(nx-1,iz,3)
-                up(nx,iz,3) = up(2,iz,3)
-                wp(1,iz,3) = wp(nx-1,iz,3)
-                wp(nx,iz,3) = wp(2,iz,3)
-            enddo ! end z loop
-        else 
-            ! if not using PBCs, just set 1st point to be same as 2nd, last pt to be same as 2nd to last, etc.
-            do iz = 1,nz
-                pip(1,iz,3) = pip(2,iz,3)
-                pip(nx,iz,3) = pip(nx-1,iz,3)
-                thp(1,iz,3) = thp(2,iz,3)
-                thp(nx,iz,3) = thp(nx-1,iz,3)
-                up(1,iz,3) = up(2,iz,3)
-                up(nx,iz,3) = up(nx-1,iz,3)
-                wp(1,iz,3) = wp(2,iz,3)
-                wp(nx,iz,3) = wp(nx-1,iz,3)
-            enddo
-        endif !end x boundaries setting
-
-        ! set fictitous points to be equal to first real point
-        if (pbc_z==.True.) then 
-            do ix = 1,nx
-                pip(ix,1,3) = pip(ix,nz-1,3)
-                pip(ix,nz,3) = pip(ix, 2,3)
-                thp(ix,1,3) = thp(ix,nz-1,3)
-                thp(ix,nz,3) = thp(ix,2,3)
-                up(ix,1,3) = up(ix,nz-1,3)
-                up(ix,nz,3) = up(ix,2,3)
-                wp(ix,1,3) = wp(ix,nz-1,3)
-                wp(ix,nz,3) = wp(ix,2,3)
-            enddo ! end x loop
-        else 
-            ! if not using PBCs, just set 1st point to be same as 2nd, last pt to be same as 2nd to last, etc. (zero gradient)
-            do ix = 1,nx
-                pip(ix,1,3) = pip(ix,2,3)
-                pip(ix,nz,3) = pip(ix, nz-1,3)
-                thp(ix,1,3) = thp(ix,2,3)
-                thp(ix,nz,3) = thp(ix,nz-1,3)
-                up(ix,1,3) = up(ix,2,3)
-                up(ix,nz,3) = up(ix,nz-1,3)
-                
-                !enforce 0 w at top and bottom
-                wp(ix,2,3) = 0.
-                wp(ix,1,3) = wp(ix,2,3)
-                wp(ix,nz,3) = 0.
-            enddo ! end x loop
-        endif ! end z loop
-
-        ! step forward in time
-        do ix = 2, nx-1
-            do iz = 2, nz-1
-                up(ix,iz,1) = up(ix,iz,2)
-                up(ix,iz,2) = up(ix,iz,3)
-                wp(ix,iz,1) = wp(ix,iz,2)
-                wp(ix,iz,2) = wp(ix,iz,3)
-                thp(ix,iz,1) = thp(ix,iz,2)
-                thp(ix,iz,2) = thp(ix,iz,3)
-                pip(ix,iz,1) = pip(ix,iz,2)
-                pip(ix,iz,2) = pip(ix,iz,3)
             enddo ! end x loop
         enddo ! end z loop
 

@@ -115,7 +115,8 @@ module base_state
             ! from the u/scalar grid, so we need to use the piwb we calculated earlier
 
             ! for thv, assuming it scales linearlly between levels and use the average
-            rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
+            !rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
+            rhowb(iz) = (p00*((pib(iz)+pib(iz-1))/2)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
         enddo !end z loop
 
         !set the fictitious points at model top and bottom for zero gradient

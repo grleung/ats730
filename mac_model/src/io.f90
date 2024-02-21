@@ -134,6 +134,27 @@ module io
                 write(1, '(1x, *(g0, :, ", "))') wp(:,iz,2)
             enddo
 
+            write(1,*) 'var THP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') thp(:,iz,1)
+            enddo
+
+            write(1,*) 'var PIP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') pip(:,iz,1)
+            enddo
+
+            write(1,*) 'var UP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') up(:,iz,1)
+            enddo
+
+            write(1,*) 'var WP_past'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') wp(:,iz,1)
+            enddo
+
+
             write(1,*) 'var THP_TEND_pres'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') thp_tend_total(:,iz)

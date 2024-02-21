@@ -13,6 +13,8 @@ program MAC
     use advection, only: advect
     use model_vars, only: it
     use solve_prog, only: tendencies
+    use boundaries, only: enforce_bounds_x, enforce_bounds_z
+    use timestep, only: step_time
 
     implicit none
 
@@ -41,7 +43,12 @@ program MAC
     !each timestep
     do it=1,nt
         !call advect
+        call enforce_bounds_z
+        call enforce_bounds_x
         call tendencies 
+        call enforce_bounds_z
+        call enforce_bounds_x
+        call step_time
 
         if (modulo(it,outfreq)==0) then
             call write_current_state

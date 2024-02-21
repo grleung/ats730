@@ -12,6 +12,6 @@ module constants
         ,   p00     =    1.e5       & ! reference pressure [Pa]
         ,   lv      =    2.5e6      & ! latent heat of vaporization [J/kg] 
         ,   trigpi  =    4.*ATAN(1.)& ! pi = 3.1415...  
-        ,   cs      =    50.          ! speed of sounds [m/s] this is too slow but this is given in HW4
+        ,   cs      =    50.0          ! speed of sounds [m/s] this is too slow but this is given in HW4
 
 end module constants
