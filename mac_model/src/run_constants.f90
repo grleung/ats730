@@ -61,6 +61,7 @@ module run_constants
         ,   zcnt = 0.       &   ! center of thermal [m above ground]
         ,   xcnt = 0.       &   ! center of termal [m from W side of domain]
         ,   cx = 0.         &   ! horizontal advection speed [m/s]
-        ,   cz = 0.             ! vertival advection speed [m/s]
+        ,   cz = 0.         &    ! vertival advection speed [m/s
+        ,   cs      =    50.0          ! speed of sounds [m/s] this is too slow but this is given in HW4
         
 end module run_constants

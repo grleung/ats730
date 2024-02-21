@@ -11,7 +11,7 @@ module io
         use run_constants, only: nz,dz0,nx,dx,pbc_x, pbc_z,dt,endt,rvpsurf &
                                 ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq &
                                 ,wk_flag,dn_flag   &
-                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
+                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
 
         implicit none 
 
@@ -20,7 +20,7 @@ module io
         namelist /grid/ nz,nx,dz0,dx,pbc_x,pbc_z,dt,endt
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
-        namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz
+        namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
         
         open(unit=1, file='Namelist',action='read')
 

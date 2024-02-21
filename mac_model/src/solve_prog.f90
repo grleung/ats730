@@ -6,8 +6,8 @@ module solve_prog
     contains
     
     subroutine tendencies
-        use run_constants, only: nz,nx,dx,dz0,dt,pbc_x,pbc_z
-        use constants, only: cp, cs, g
+        use run_constants, only: nz,nx,dx,dz0,dt,pbc_x,pbc_z,cs
+        use constants, only: cp, g
         use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,pp,up,wp &
                             ,u_tend1,u_tend2,u_tend3,u_tend_total &
                             ,w_tend1,w_tend2,w_tend3,w_tend4,w_tend_total &
