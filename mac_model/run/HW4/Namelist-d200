@@ -1,0 +1,40 @@
+$output
+base_out = .True.
+base_outpath = 'd200/hw4_base_state.txt'
+parcel_out = .False.
+parcel_outpath = ''
+var_out = .True.
+var_outpath = 'd200/hw4_output_'
+outfreq=10
+/
+
+$grid
+nz=82,
+nx=164,
+dz0=200.,
+dx=200.,
+pbc_x=.True.,
+pbc_z=.False.,
+dt = 1.,
+endt =1200.,
+/
+
+$base
+wk_flag = .False.,
+dn_flag = .True.,
+/
+
+$parcel
+rvpsurf = 0.,
+/
+
+$pert
+pert_wind = .False.,
+radx=4000.,
+radz=4000.,
+amp=3.,
+zcnt=3000.,
+xcnt=16200.,
+cx = 15.,
+cz = 15.,
+/
