@@ -96,7 +96,7 @@ module boundaries
                     !enforce zero w through top and bottom
                     wp(ix,1,it) = 0.
                     wp(ix,2,it) = 0.
-                    wp(ix,nx,it) = 0.
+                    wp(ix,nz,it) = 0.
                 enddo
             enddo ! end loop over x
         endif ! end PBC flag

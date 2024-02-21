@@ -101,8 +101,8 @@ module io
         
         integer :: iz ! counter for z-coordinate
 
-        character(len=3) :: timechar
-        write(timechar, '(i3)')it
+        character(len=6) :: timechar
+        write(timechar, '(i6)')it
 
         if (var_out) then
             ! open the output file we want to write to
