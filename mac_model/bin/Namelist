@@ -1,19 +1,22 @@
 $output
- base_out = .True.
- base_outpath = 'hw3_base_state.txt'
- parcel_out = .False.
- parcel_outpath = ''
- var_out = .True.
- var_outpath = 'hw3_output_'
+base_out = .True.
+base_outpath = 'hw4_base_state.txt'
+parcel_out = .False.
+parcel_outpath = ''
+var_out = .True.
+var_outpath = 'hw4_output_'
+outfreq=1
 /
 
 $grid
-nz=50,
-nx=50,
-dz0=100.,
-dx=100.,
-pbc=.True.,
-dt = 3.,
+nz=42,
+nx=83,
+dz0=400.,
+dx=400.,
+pbc_x=.True.,
+pbc_z=.False.,
+dt = 2.,
+endt =1200.,
 /
 
 $base
@@ -26,12 +29,12 @@ rvpsurf = 0.,
 /
 
 $pert
-pert_wind = .True.,
-radx=1000.,
-radz=1000.,
-amp=10.,
-zcnt=2500.,
-xcnt=2500.,
+pert_wind = .False.,
+radx=4000.,
+radz=4000.,
+amp=3.,
+zcnt=3000.,
+xcnt=16200.,
 cx = 15.,
 cz = 15.,
 /

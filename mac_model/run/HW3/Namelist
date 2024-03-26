@@ -12,7 +12,8 @@ nz=50,
 nx=50,
 dz0=100.,
 dx=100.,
-pbc=.True.,
+pbc_x=.True.,
+pbc_z=.True.,
 dt = 3.,
 /
 
