@@ -6,13 +6,13 @@ module solve_prog
     contains
     
     subroutine tendencies
-        use run_constants, only: nz,nx,dx,dz0,dt,pbc_x,pbc_z,cs
+        use run_constants, only: nz,nx,dx,dz0,dt,pbc_x,pbc_z,cs,kmx,kmz,khx,khz
         use constants, only: cp, g
         use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,pp,up,wp &
-                            ,u_tend1,u_tend2,u_tend3,u_tend_total &
-                            ,w_tend1,w_tend2,w_tend3,w_tend4,w_tend_total &
-                            ,thp_tend1,thp_tend2,thp_tend3,thp_tend_total &
-                            ,pip_tend1,pip_tend2,pip_tend_total
+                            ,u_tend1,u_tend2,u_tend3,u_tend4,u_tend5,u_tend_total &
+                            ,w_tend1,w_tend2,w_tend3,w_tend4,w_tend5,w_tend6,w_tend_total &
+                            ,thp_tend1,thp_tend2,thp_tend3,thp_tend4,thp_tend5,thp_tend_total &
+                            ,pip_tend1,pip_tend2,pip_tend3,pip_tend4,pip_tend_total
 
         use boundaries, only: enforce_bounds_x, enforce_bounds_z
 
@@ -21,9 +21,8 @@ module solve_prog
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
 
-
         real :: rdx,rdz,d2t
-        
+
         rdx      = (1/(dx))  ! reciprocal of dx [1/m]
         rdz      = (1/(dz0))  ! reciprocal of dz [1/m]
         d2t       = (dt+dt)         ! 2*dt
@@ -34,18 +33,26 @@ module solve_prog
                 u_tend1(ix,iz)=0.
                 u_tend2(ix,iz)=0.
                 u_tend3(ix,iz)=0.
+                u_tend4(ix,iz)=0.
+                u_tend5(ix,iz)=0.
                 u_tend_total(ix,iz)=0.
                 w_tend1(ix,iz)=0.
                 w_tend2(ix,iz)=0.
                 w_tend3(ix,iz)=0.
                 w_tend4(ix,iz)=0.
+                w_tend5(ix,iz)=0.
+                w_tend6(ix,iz)=0.
                 w_tend_total(ix,iz)=0.
                 thp_tend1(ix,iz)=0.
                 thp_tend2(ix,iz)=0.
                 thp_tend3(ix,iz)=0.
+                thp_tend4(ix,iz)=0.
+                thp_tend5(ix,iz)=0.
                 thp_tend_total(ix,iz)=0.
                 pip_tend1(ix,iz)=0.
                 pip_tend2(ix,iz)=0.
+                pip_tend3(ix,iz)=0.
+                pip_tend4(ix,iz)=0.
                 pip_tend_total(ix,iz)=0.
             enddo
         enddo 
@@ -66,11 +73,17 @@ module solve_prog
                                     * 0.25 * ((rhowb(iz+1) *    (wp(ix-1,iz+1,2)    +   wp(ix,iz+1,2))  * (up(ix,iz,2)    +   up(ix,iz+1,2))) &
                                     -         (rhowb(iz)   *    (wp(ix-1,iz,2)      +   wp(ix,iz,2))    * (up(ix,iz-1,2)    +   up(ix,iz,2))))
 
-                ! last term in u-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
+                ! third term in u-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
                 u_tend3(ix,iz) = -cp*thb(iz)*rdx                                                   & 
                                     * (pip(ix,iz,2)-pip(ix-1,iz,2))
 
-                u_tend_total(ix,iz) = u_tend1(ix,iz) + u_tend2(ix,iz) + u_tend3(ix,iz)
+                ! fourth term in u-tendency equation: horizontal diffusion
+                u_tend4(ix,iz) = kmx * rdx * rdx * (up(ix-1,iz,2) - (2*up(ix,iz,2)) + up(ix+1,iz,2))
+
+                ! fifth term in u-tendency equation: vertical diffusion
+                u_tend5(ix,iz) = kmz * rdz * rdz * (up(ix,iz-1,2) - (2*up(ix,iz,2)) + up(ix,iz+1,2))
+                
+                u_tend_total(ix,iz) = u_tend1(ix,iz) + u_tend2(ix,iz) + u_tend3(ix,iz) + u_tend4(ix,iz) + u_tend5(ix,iz)
             enddo ! end x loop
         enddo ! end z loop
 
@@ -93,10 +106,16 @@ module solve_prog
                 ! third term in w-tendency equation: pressure gradient term 
                 w_tend3(ix,iz) = -cp * rdz * 0.25 * (thb(iz)+thb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
 
-                ! last term in w-tendency equation: pressure gradient term 
+                ! fourth term in w-tendency equation: pressure gradient term 
                 w_tend4(ix,iz) = g * (thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))
 
-                w_tend_total(ix,iz) = w_tend1(ix,iz) +w_tend2(ix,iz) +w_tend3(ix,iz) + w_tend4(ix,iz)
+                ! fifth term in w-tendency equation: horizontal diffusion
+                w_tend5(ix,iz) = kmx * rdx * rdx * (wp(ix-1,iz,2) - (2*wp(ix,iz,2)) + wp(ix+1,iz,2))
+
+                ! sixth term in w-tendency equation: vertical diffusion
+                w_tend6(ix,iz) = kmz * rdz * rdz * (wp(ix,iz-1,2) - (2*wp(ix,iz,2)) + wp(ix,iz+1,2))
+                
+                w_tend_total(ix,iz) = w_tend1(ix,iz) +w_tend2(ix,iz) +w_tend3(ix,iz) + w_tend4(ix,iz) + w_tend5(ix,iz) + w_tend6(ix,iz)
             enddo ! end x loop
         enddo ! end z loop
 
@@ -117,12 +136,18 @@ module solve_prog
                                     * 0.5 *  ((rhowb(iz+1) *    wp(ix,iz+1,2)     * (thp(ix,iz+1,2)    +   thp(ix,iz,2))) &
                                     -         (rhowb(iz)   *    wp(ix,iz,2)     * (thp(ix,iz,2)    +   thp(ix,iz-1,2))))
 
-                ! last term in thp-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
+                ! third term in thp-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
                 thp_tend3(ix,iz) = -0.5 * (1/rhoub(iz)) *   rdz                                     &
                                             * ((rhowb(iz) * wp(ix,iz,2) * (thb(iz)-thb(iz-1)))      &
                                             +  (rhowb(iz+1) * wp(ix,iz+1,2) * (thb(iz+1)-thb(iz))))
 
-                thp_tend_total(ix,iz) = thp_tend1(ix,iz) + thp_tend2(ix,iz) + thp_tend3(ix,iz)
+                ! fourth term in thp-tendency equation: horizontal diffusion
+                thp_tend4(ix,iz) = khx * rdx * rdx * (thp(ix-1,iz,2) - (2*thp(ix,iz,2)) + thp(ix+1,iz,2))
+
+                ! fifth term in thp-tendency equation: vertical diffusion
+                thp_tend5(ix,iz) = khz * rdz * rdz * (thp(ix,iz-1,2) - (2*thp(ix,iz,2)) + thp(ix,iz+1,2))
+
+                thp_tend_total(ix,iz) = thp_tend1(ix,iz) + thp_tend2(ix,iz) + thp_tend3(ix,iz) + thp_tend4(ix,iz) + thp_tend5(ix,iz)
             enddo ! end x loop
         enddo ! end z loop
 
@@ -142,10 +167,13 @@ module solve_prog
                                 *  ((rhowb(iz+1)*wp(ix,iz+1,2)*(thb(iz+1)+thb(iz))) &
                                   -(rhowb(iz)*wp(ix,iz,2)*(thb(iz)+thb(iz-1))))
 
-                pip_tend_total(ix,iz) = pip_tend1(ix,iz)+pip_tend2(ix,iz)
+                ! third term in thp-tendency equation: horizontal diffusion
+                pip_tend3(ix,iz) = khx * rdx * rdx * (pip(ix-1,iz,2) - (2*pip(ix,iz,2)) + pip(ix+1,iz,2))
 
-                !pip_tend_total(ix,iz) = -((cs**2) /(rhoub(iz)*cp*((thb(iz))**2))) * (pip_tend1(ix,iz) + pip_tend2(ix,iz))
+                ! fourth term in thp-tendency equation: vertical diffusion
+                pip_tend4(ix,iz) = khz * rdz * rdz * (pip(ix,iz-1,2) - (2*pip(ix,iz,2)) + pip(ix,iz+1,2))
 
+                pip_tend_total(ix,iz) = pip_tend1(ix,iz)+pip_tend2(ix,iz)+pip_tend3(ix,iz)+pip_tend4(ix,iz)
             enddo ! end x loop
         enddo ! end z loop
 

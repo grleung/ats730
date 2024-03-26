@@ -8,10 +8,11 @@ module io
 
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
-        use run_constants, only: nz,dz0,nx,dx,pbc_x, pbc_z,dt,endt,rvpsurf &
-                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq &
-                                ,wk_flag,dn_flag   &
-                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
+        use run_constants, only: nz,dz0,nx,dx,pbc_x,pbc_z,dt,endt,rvpsurf                                       &
+                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq    &
+                                ,wk_flag,dn_flag                                                                &
+                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs                                     &
+                                ,kmx,kmz,khx,khz    
 
         implicit none 
 
@@ -21,6 +22,7 @@ module io
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
         namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
+        namelist /diff/ kmx,kmz,khx,khz
         
         open(unit=1, file='Namelist',action='read')
 
@@ -30,6 +32,7 @@ module io
         read(1,nml=base)
         read(1,nml=parcel)
         read(1,nml=pert)
+        read(1,nml=diff)
         
         close(1)
 

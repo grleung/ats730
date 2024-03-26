@@ -63,5 +63,12 @@ module run_constants
         ,   cx = 0.         &   ! horizontal advection speed [m/s]
         ,   cz = 0.         &    ! vertival advection speed [m/s
         ,   cs      =    50.0          ! speed of sounds [m/s] this is too slow but this is given in HW4
+
+    ! diffusion settings
+    real :: &
+            kmx =   1.0     &   ! momentum exchange coefficient in x-dimension [m2/s]
+        ,   kmz =   1.0     &   ! momentum exchange coefficient in z-dimension [m2/s]
+        ,   khx =   1.0     &   ! scalar exchange coefficient in x-dimension [m2/s]
+        ,   khz =   1.0         ! scalar exchange coefficient in z-dimension [m2/s]
         
 end module run_constants

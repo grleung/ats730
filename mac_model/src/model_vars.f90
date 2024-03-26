@@ -59,10 +59,10 @@ module model_vars
 
     ! tendency  variables (array in nx,nz)
     real, allocatable, dimension(:,:)  :: &
-            u_tend1, u_tend2, u_tend3, u_tend_total         &
-        ,   w_tend1, w_tend2, w_tend3, w_tend4, w_tend_total         &
-        ,   thp_tend1,thp_tend2,thp_tend3,thp_tend_total    &
-        ,   pip_tend1,pip_tend2,pip_tend_total
+            u_tend1, u_tend2, u_tend3,u_tend4, u_tend5, u_tend_total         &
+        ,   w_tend1, w_tend2, w_tend3, w_tend4, w_tend5, w_tend6,w_tend_total         &
+        ,   thp_tend1,thp_tend2,thp_tend3,thp_tend4,thp_tend5,thp_tend_total    &
+        ,   pip_tend1,pip_tend2,pip_tend3,pip_tend4,pip_tend_total
 
     contains
 
