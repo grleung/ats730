@@ -1,2 +1,5 @@
 .vscode
 /mac_model/src/*.mod
+*.mod
+*.o
+*.code-workspace
