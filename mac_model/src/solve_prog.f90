@@ -6,10 +6,26 @@ module solve_prog
     contains
     
     subroutine tendencies
-        use run_constants, only: nz,nx,ny,dx,dy,dz0,dt,pbc_x,pbc_y,pbc_z,cs,kmx,kmy,kmz,khx,khy,khz
-        use constants, only: cp, g
-        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,up,vp,wp,rvp,rcp,rrp                                   &
-                            ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        &
+        implicit none
+
+        ! first zero out tendencies 
+        call zero_tends
+
+        ! calculate each of the tendency terms
+        call calc_tend_u
+        call calc_tend_v
+        call calc_tend_w
+        call calc_tend_thp
+        call calc_tend_pip
+
+        ! do actual time integration to apply tendencies we calculated above
+        call apply_tends
+
+    end subroutine tendencies
+
+    subroutine zero_tends
+        use run_constants, only: nz,nx,ny
+        use model_vars, only:u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        &
                             ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total                        &
                             ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                 &
                             ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total    &
@@ -23,13 +39,6 @@ module solve_prog
         integer :: iz ! counter for z-coordinate
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
-
-        real :: rdx,rdy,rdz,d2t
-
-        rdx      = 1/dx  ! reciprocal of dx [1/m]
-        rdy      = 1/dy  ! reciprocal of dxy [1/m]
-        rdz      = 1/dz0  ! reciprocal of dz [1/m]
-        d2t       = dt+dt         ! 2*dt
 
         ! first, reset all tendencies to zero
         do iz = 1, nz
@@ -100,6 +109,19 @@ module solve_prog
                 enddo
             enddo
         enddo 
+    end subroutine zero_tends
+
+    subroutine calc_tend_u
+        use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
+        use constants, only: cp
+        use model_vars, only:up,vp,wp,pip,rhoub,rhowb,thb                                       &
+                            ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
 
         ! calculate tendency in u
         ! this is equation 6 in HW4
@@ -142,7 +164,21 @@ module solve_prog
             enddo
         enddo ! end z loop
 
+    end subroutine calc_tend_u
 
+    subroutine calc_tend_v
+        use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
+        use constants, only: cp
+        use model_vars, only:up,vp,wp,pip,rhoub,rhowb,thb                                       &
+                            ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
+
+        
         ! calculate tendency in v
         ! this is equation 6 in HW4 but for v instead of u
 
@@ -182,6 +218,20 @@ module solve_prog
                 enddo ! end x loop
             enddo
         enddo ! end z loop
+
+    end subroutine calc_tend_v
+
+    subroutine calc_tend_w
+        use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
+        use constants, only: cp, g
+        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thb                                       &
+                            ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
 
         ! calculate tendency in w
         ! this is equation 7 in HW4
@@ -226,8 +276,19 @@ module solve_prog
                 enddo
             enddo ! end x loop
         enddo ! end z loop
+    end subroutine calc_tend_w
 
-    
+    subroutine calc_tend_thp
+        use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
+        use model_vars, only:up,vp,wp,thp,rhoub,rhowb,thb                                       &
+                            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
+
         ! calculate tendency in theta
         ! this is equation 8 in HW4
 
@@ -269,7 +330,19 @@ module solve_prog
                 enddo
             enddo ! end x loop
         enddo ! end z loop
+    end subroutine calc_tend_thp
 
+    subroutine calc_tend_pip
+        use run_constants, only: nz,nx,ny,khx,khy,khz,cs,rdx,rdy,rdz
+        use constants, only: cp
+        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thb                                       &
+                            ,pip_xadv,pip_yadv,pip_zadv,pip_xdiff,pip_ydiff,pip_zdiff,pip_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
 
         ! calculate tendency in perturbation exner function
         ! this is equation 9 in HW4
@@ -303,6 +376,19 @@ module solve_prog
                 enddo ! end x loop
             enddo
         enddo ! end z loop
+    end subroutine calc_tend_pip
+
+    subroutine apply_tends
+        use run_constants, only: nz,nx,ny,dt,d2t
+        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,up,vp,wp,rvp,rcp,rrp                                   &
+                            ,u_tend_total,v_tend_total,w_tend_total,thp_tend_total,pip_tend_total                    &
+                            ,rvp_tend_total,rcp_tend_total,rrp_tend_total   
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
 
         ! calculate actual future values
         ! loop over real/unique points
@@ -326,6 +412,6 @@ module solve_prog
             enddo ! end y loop
         enddo ! end x loop
 
-    end subroutine tendencies
+    end subroutine apply_tends
 
 end module solve_prog

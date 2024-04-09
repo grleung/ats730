@@ -40,7 +40,6 @@ module run_constants
     real :: & 
            rvpsurf   =   11.5E-3   ! parcel water vapor mixing ratio at first real level [kg/kg]
 
-
     !output settings
     character(len=80) :: & 
             base_outpath = 'hw1_output.txt' &
@@ -78,5 +77,12 @@ module run_constants
         ,   khx =   1.0     &   ! scalar exchange coefficient in x-dimension [m2/s]
         ,   khy =   1.0     &   ! scalar exchange coefficient in y-dimension [m2/s]
         ,   khz =   1.0         ! scalar exchange coefficient in z-dimension [m2/s]
+
+    ! useful reciprocals, etc.
+    real :: &
+            rdx      = 1.e-3     &  ! reciprocal of dx [1/m]
+        ,   rdy      = 1.e-3     &  ! reciprocal of dxy [1/m]
+        ,   rdz      = 1.e-3     &  ! reciprocal of dz [1/m]
+        ,   d2t      = 6.           ! 2*dt
         
 end module run_constants
