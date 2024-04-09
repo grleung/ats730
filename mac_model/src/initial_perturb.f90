@@ -9,7 +9,7 @@ module initial_perturb
     subroutine init_perturb()
         use constants, only: g,cp,trigpi
         use run_constants, only: nz, nx, ny,dz0,radx,rady,radz,amp,zcnt,xcnt,ycnt,pbc_x,pbc_y,pbc_z,pert_wind
-        use model_vars, only:zsn,xsn,ysn,thb, thvb,rhoub,thp,pip,pp,up,vp,wp
+        use model_vars, only:zsn,xsn,ysn,thb,thvb,rhoub,thp,pip,pp,up,vp,wp,rvp,rcp,rrp
         use boundaries, only: enforce_bounds_x,enforce_bounds_y,enforce_bounds_z
 
         implicit none
@@ -38,6 +38,14 @@ module initial_perturb
                             thp(ix,iy,iz,2) = 0.
                         endif
                     endif
+
+                    ! set initial values for other variables
+                    vp(ix,iy,iz,2) = 0.
+                    wp(ix,iy,iz,2) = 0.
+                    rvp(ix,iy,iz,2) = 0.
+                    rcp(ix,iy,iz,2) = 0.
+                    rrp(ix,iy,iz,2) = 0.
+
                 enddo
             enddo
         enddo
@@ -69,6 +77,9 @@ module initial_perturb
                     up(ix,iy,iz,1) = up(ix,iy,iz,2)
                     vp(ix,iy,iz,1) = vp(ix,iy,iz,2)
                     wp(ix,iy,iz,1) = wp(ix,iy,iz,2)
+                    rvp(ix,iy,iz,1) = rvp(ix,iy,iz,2)
+                    rcp(ix,iy,iz,1) = rcp(ix,iy,iz,2)
+                    rrp(ix,iy,iz,1) = rrp(ix,iy,iz,2)
                 enddo
             enddo
         enddo

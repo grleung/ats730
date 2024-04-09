@@ -8,12 +8,15 @@ module solve_prog
     subroutine tendencies
         use run_constants, only: nz,nx,ny,dx,dy,dz0,dt,pbc_x,pbc_y,pbc_z,cs,kmx,kmy,kmz,khx,khy,khz
         use constants, only: cp, g
-        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,pp,up,vp,wp &
-                            ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total &
-                            ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total &
-                            ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total &
-                            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total &
-                            ,pip_xadv,pip_yadv,pip_zadv,pip_xdiff,pip_ydiff,pip_zdiff,pip_tend_total
+        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,up,vp,wp,rvp,rcp,rrp                                   &
+                            ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        &
+                            ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total                        &
+                            ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                 &
+                            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total    &
+                            ,pip_xadv,pip_yadv,pip_zadv,pip_xdiff,pip_ydiff,pip_zdiff,pip_tend_total                &
+                            ,rvp_xadv,rvp_yadv,rvp_zadv,rvp_meanadv,rvp_xdiff,rvp_ydiff,rvp_zdiff,rvp_tend_total    &
+                            ,rcp_xadv,rcp_yadv,rcp_zadv,rcp_xdiff,rcp_ydiff,rcp_zdiff,rcp_tend_total                &
+                            ,rrp_xadv,rrp_yadv,rrp_zadv,rrp_xdiff,rrp_ydiff,rrp_zdiff,rrp_tend_total   
 
         implicit none
 
@@ -72,6 +75,28 @@ module solve_prog
                     pip_ydiff(ix,iy,iz)=0.
                     pip_zdiff(ix,iy,iz)=0.
                     pip_tend_total(ix,iy,iz)=0.
+                    rvp_xadv(ix,iy,iz)=0.
+                    rvp_yadv(ix,iy,iz)=0.
+                    rvp_zadv(ix,iy,iz)=0.
+                    rvp_meanadv(ix,iy,iz)=0.
+                    rvp_xdiff(ix,iy,iz)=0.
+                    rvp_ydiff(ix,iy,iz)=0.
+                    rvp_zdiff(ix,iy,iz)=0.
+                    rvp_tend_total(ix,iy,iz)=0.
+                    rcp_xadv(ix,iy,iz)=0.
+                    rcp_yadv(ix,iy,iz)=0.
+                    rcp_zadv(ix,iy,iz)=0.
+                    rcp_xdiff(ix,iy,iz)=0.
+                    rcp_ydiff(ix,iy,iz)=0.
+                    rcp_zdiff(ix,iy,iz)=0.
+                    rcp_tend_total(ix,iy,iz)=0.
+                    rrp_xadv(ix,iy,iz)=0.
+                    rrp_yadv(ix,iy,iz)=0.
+                    rrp_zadv(ix,iy,iz)=0.
+                    rrp_xdiff(ix,iy,iz)=0.
+                    rrp_ydiff(ix,iy,iz)=0.
+                    rrp_zdiff(ix,iy,iz)=0.
+                    rrp_tend_total(ix,iy,iz)=0.
                 enddo
             enddo
         enddo 

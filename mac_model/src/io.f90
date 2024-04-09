@@ -94,8 +94,10 @@ module io
 
     subroutine write_current_state
         use run_constants, only: nz, ny,var_out, var_outpath
-        use model_vars, only: it,zsn,xsn,ysn,thp,pip,up,vp,wp,pp &
-                            ,thp_tend_total,pip_tend_total,u_tend_total,v_tend_total,w_tend_total 
+        use model_vars, only: it,zsn,xsn,ysn,thp,pip,up,vp,wp,rvp,rcp,rrp   &
+                            ,thp_tend_total,pip_tend_total,u_tend_total     &
+                            ,v_tend_total,w_tend_total,rvp_tend_total       &
+                            ,rcp_tend_total,rrp_tend_total 
 
         implicit none
         
@@ -153,6 +155,27 @@ module io
                 enddo
             enddo
 
+            write(1,*) 'var RVP_pres'
+            do iz=1,nz
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') rvp(:,iy,iz,2)  
+                enddo
+            enddo
+            
+            write(1,*) 'var RCP_pres'
+            do iz=1,nz
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') rcp(:,iy,iz,2)  
+                enddo
+            enddo
+            
+            write(1,*) 'var RRP_pres'
+            do iz=1,nz
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') rrp(:,iy,iz,2)  
+                enddo
+            enddo
+
             write(1,*) 'var THP_TEND_pres'
             do iz=1,nz
                 do iy=1,ny
@@ -185,6 +208,27 @@ module io
             do iz=1,nz
                 do iy=1,ny
                     write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iy,iz)  
+                enddo
+            enddo
+
+            write(1,*) 'var RVP_TEND_pres'
+            do iz=1,nz
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') rvp_tend_total(:,iy,iz)  
+                enddo
+            enddo
+
+            write(1,*) 'var RCP_TEND_pres'
+            do iz=1,nz
+                do iy=1,ny
+                     write(1, '(1x, *(g0, :, ", "))') rcp_tend_total(:,iy,iz)  
+                enddo
+            enddo
+
+            write(1,*) 'var RRP_TEND_pres'
+            do iz=1,nz
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') rrp_tend_total(:,iy,iz)  
                 enddo
             enddo
             close(1)

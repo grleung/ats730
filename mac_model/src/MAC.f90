@@ -49,7 +49,6 @@ program MAC
     call write_current_state
     print*, "initial timestep written"
 
-
     !each timestep
     do it=1,nt
         !call advect
