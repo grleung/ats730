@@ -1,5 +1,5 @@
 module solve_prog
-    !This module contains the full tendency equations for u,w,theta_prime,PI_prime from HW4
+    !This module contains the full tendency equations for u,w,theta_prime,PI_prime, RVP_prime, RCP, RRP
 
     implicit none
 
@@ -7,7 +7,6 @@ module solve_prog
     
     subroutine tendencies
         implicit none
-
 
         ! first zero out tendencies 
         call zero_tends
@@ -491,6 +490,7 @@ module solve_prog
         use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
         use model_vars, only:up,vp,wp,rrp,rvb,rhoub,rhowb,thb                                      &
                             ,rrp_xadv,rrp_yadv,rrp_zadv,rrp_xdiff,rrp_ydiff,rrp_zdiff,rrp_tend_total                        
+        use microphysics_functions, only: rain_fallspeed
 
         implicit none
 
@@ -517,8 +517,10 @@ module solve_prog
 
                     ! term in rrp-tendency equation: vertical advection term = -1/rho * d(rho*w * rrp)/dz
                     rrp_zadv(ix,iy,iz) = - rdz/(rhoub(iz))                                                 &
-                                        * 0.5 *  ((rhowb(iz+1) *    wp(ix,iy,iz+1,2)     * (rrp(ix,iy,iz+1,2)    +   rrp(ix,iy,iz,2))) &
-                                        -         (rhowb(iz)   *    wp(ix,iy,iz,2)     * (rrp(ix,iy,iz,2)    +   rrp(ix,iy,iz-1,2))))
+                                        * 0.5 *  ((rhowb(iz+1) *    (wp(ix,iy,iz+1,2)-rain_fallspeed(rhowb(iz+1),0.5*(rrp(ix,iy,iz+1,2)+ rrp(ix,iy,iz,2))))     &
+                                                                    * (rrp(ix,iy,iz+1,2)    +   rrp(ix,iy,iz,2)))                                               &
+                                        -         (rhowb(iz)   *    (wp(ix,iy,iz,2)-rain_fallspeed(rhowb(iz),0.5*(rrp(ix,iy,iz,2)+rrp(ix,iy,iz-1,2))))          &
+                                                                      * (rrp(ix,iy,iz,2)    +   rrp(ix,iy,iz-1,2))))
 
                     ! term in rrp-tendency equation: x diffusion
                     rrp_xdiff(ix,iy,iz) = khx * rdx * rdx * (rrp(ix-1,iy,iz,1) - (2*rrp(ix,iy,iz,1)) + rrp(ix+1,iy,iz,1))
