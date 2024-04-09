@@ -36,7 +36,7 @@ BINDIR = $(MODELDIR)/bin
 # the executable compiled in this bin directory will be named after the .f90 program file
 PROGRAM = MAC
 # EXE: executable name to link into run directory; can be the same as PROGRAM or not
-EXE = /HW7/MAC.exe
+EXE = /test3d/MAC.exe
 
 # type "make" to compile the code (compiles all)
 # after compiling, link the executable (named after the PROGRAM.f90 file) into the run 

@@ -6,54 +6,73 @@ module solve_prog
     contains
     
     subroutine tendencies
-        use run_constants, only: nz,nx,dx,dz0,dt,pbc_x,pbc_z,cs,kmx,kmz,khx,khz
+        use run_constants, only: nz,nx,ny,dx,dy,dz0,dt,pbc_x,pbc_y,pbc_z,cs,kmx,kmy,kmz,khx,khy,khz
         use constants, only: cp, g
-        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,pp,up,wp &
-                            ,u_tend1,u_tend2,u_tend3,u_tend4,u_tend5,u_tend_total &
-                            ,w_tend1,w_tend2,w_tend3,w_tend4,w_tend5,w_tend6,w_tend_total &
-                            ,thp_tend1,thp_tend2,thp_tend3,thp_tend4,thp_tend5,thp_tend_total &
-                            ,pip_tend1,pip_tend2,pip_tend3,pip_tend4,pip_tend_total
-
-        use boundaries, only: enforce_bounds_x, enforce_bounds_z
+        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,pp,up,vp,wp &
+                            ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total &
+                            ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total &
+                            ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total &
+                            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total &
+                            ,pip_xadv,pip_yadv,pip_zadv,pip_xdiff,pip_ydiff,pip_zdiff,pip_tend_total
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
-        real :: rdx,rdz,d2t
+        real :: rdx,rdy,rdz,d2t
 
-        rdx      = (1/(dx))  ! reciprocal of dx [1/m]
-        rdz      = (1/(dz0))  ! reciprocal of dz [1/m]
-        d2t       = (dt+dt)         ! 2*dt
+        rdx      = 1/dx  ! reciprocal of dx [1/m]
+        rdy      = 1/dy  ! reciprocal of dxy [1/m]
+        rdz      = 1/dz0  ! reciprocal of dz [1/m]
+        d2t       = dt+dt         ! 2*dt
 
         ! first, reset all tendencies to zero
         do iz = 1, nz
-            do ix = 1, nx
-                u_tend1(ix,iz)=0.
-                u_tend2(ix,iz)=0.
-                u_tend3(ix,iz)=0.
-                u_tend4(ix,iz)=0.
-                u_tend5(ix,iz)=0.
-                u_tend_total(ix,iz)=0.
-                w_tend1(ix,iz)=0.
-                w_tend2(ix,iz)=0.
-                w_tend3(ix,iz)=0.
-                w_tend4(ix,iz)=0.
-                w_tend5(ix,iz)=0.
-                w_tend6(ix,iz)=0.
-                w_tend_total(ix,iz)=0.
-                thp_tend1(ix,iz)=0.
-                thp_tend2(ix,iz)=0.
-                thp_tend3(ix,iz)=0.
-                thp_tend4(ix,iz)=0.
-                thp_tend5(ix,iz)=0.
-                thp_tend_total(ix,iz)=0.
-                pip_tend1(ix,iz)=0.
-                pip_tend2(ix,iz)=0.
-                pip_tend3(ix,iz)=0.
-                pip_tend4(ix,iz)=0.
-                pip_tend_total(ix,iz)=0.
+            do iy=1,ny
+                do ix = 1, nx
+                    u_xadv(ix,iy,iz)=0.
+                    u_yadv(ix,iy,iz)=0.
+                    u_zadv(ix,iy,iz)=0.
+                    u_pgf(ix,iy,iz)=0.
+                    u_xdiff(ix,iy,iz)=0.
+                    u_ydiff(ix,iy,iz)=0.
+                    u_zdiff(ix,iy,iz)=0.
+                    u_tend_total(ix,iy,iz)=0.
+                    v_xadv(ix,iy,iz)=0.
+                    v_yadv(ix,iy,iz)=0.
+                    v_zadv(ix,iy,iz)=0.
+                    v_pgf(ix,iy,iz)=0.
+                    v_xdiff(ix,iy,iz)=0.
+                    v_ydiff(ix,iy,iz)=0.
+                    v_zdiff(ix,iy,iz)=0.
+                    v_tend_total(ix,iy,iz)=0.
+                    w_xadv(ix,iy,iz)=0.
+                    w_yadv(ix,iy,iz)=0.
+                    w_zadv(ix,iy,iz)=0.
+                    w_pgf(ix,iy,iz)=0.
+                    w_buoy(ix,iy,iz)=0.
+                    w_xdiff(ix,iy,iz)=0.
+                    w_ydiff(ix,iy,iz)=0.
+                    w_zdiff(ix,iy,iz)=0.
+                    w_tend_total(ix,iy,iz)=0.
+                    thp_xadv(ix,iy,iz)=0.
+                    thp_yadv(ix,iy,iz)=0.
+                    thp_zadv(ix,iy,iz)=0.
+                    thp_meanadv(ix,iy,iz)=0.
+                    thp_xdiff(ix,iy,iz)=0.
+                    thp_ydiff(ix,iy,iz)=0.
+                    thp_zdiff(ix,iy,iz)=0.
+                    thp_tend_total(ix,iy,iz)=0.
+                    pip_xadv(ix,iy,iz)=0.
+                    pip_yadv(ix,iy,iz)=0.
+                    pip_zadv(ix,iy,iz)=0.
+                    pip_xdiff(ix,iy,iz)=0.
+                    pip_ydiff(ix,iy,iz)=0.
+                    pip_zdiff(ix,iy,iz)=0.
+                    pip_tend_total(ix,iy,iz)=0.
+                enddo
             enddo
         enddo 
 
@@ -63,28 +82,80 @@ module solve_prog
         ! loop over real/unique points
         
         do ix = 2, nx-1
-            do iz = 2, nz-1
-                ! first term in u-tendency equation: horizontal advection term = -d(uu)/dx
-                u_tend1(ix,iz) = - rdx * (((0.5*(up(ix+1,iz,2)+up(ix,iz,2)))**2) &
-                                        - ((0.5*(up(ix,iz,2)+up(ix-1,iz,2)))**2))
+            do iy = 2, ny-1
+                do iz = 2, nz-1 
+                    ! term1 in u-tendency equation: x advection term = -d(uu)/dx
+                    u_xadv(ix,iy,iz) = - rdx * (((0.5*(up(ix+1,iy,iz,2)+up(ix,iy,iz,2)))**2) &
+                                            - ((0.5*(up(ix,iy,iz,2)+up(ix-1,iy,iz,2)))**2))
 
-                ! second term in u-tendency equation: vertical advection term = -1/rho * d(rho*u*w)/dz
-                u_tend2(ix,iz) = - (rdz/(rhoub(iz)))                                                 &
-                                    * 0.25 * ((rhowb(iz+1) *    (wp(ix-1,iz+1,2)    +   wp(ix,iz+1,2))  * (up(ix,iz,2)    +   up(ix,iz+1,2))) &
-                                    -         (rhowb(iz)   *    (wp(ix-1,iz,2)      +   wp(ix,iz,2))    * (up(ix,iz-1,2)    +   up(ix,iz,2))))
+                    ! term2 in u-tendency equation: y advection term = -d(uv)/dy
+                    u_yadv(ix,iy,iz) = - rdy                                                &
+                                        * 0.25 * (((vp(ix-1,iy+1,iz,2)    +   vp(ix,iy+1,iz,2))  * (up(ix,iy,iz,2)      +   up(ix,iy+1,iz,2))) &
+                                        -         ((vp(ix-1,iy,iz,2)      +   vp(ix,iy,iz,2))    * (up(ix,iy-1,iz,2)    +   up(ix,iy,iz,2))))
+                    
+                    ! term3 in u-tendency equation: vertical advection term = -1/rho * d(rho*u*w)/dz
+                    u_zadv(ix,iy,iz) = - (rdz/(rhoub(iz)))                                                 &
+                                        * 0.25 * ((rhowb(iz+1) *    (wp(ix-1,iy,iz+1,2)    +   wp(ix,iy,iz+1,2))  * (up(ix,iy,iz,2)    +   up(ix,iy,iz+1,2))) &
+                                        -         (rhowb(iz)   *    (wp(ix-1,iy,iz,2)      +   wp(ix,iy,iz,2))    * (up(ix,iy,iz-1,2)    +   up(ix,iy,iz,2))))
 
-                ! third term in u-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
-                u_tend3(ix,iz) = -cp*thb(iz)*rdx                                                   & 
-                                    * (pip(ix,iz,2)-pip(ix-1,iz,2))
+                    ! term4 in u-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
+                    u_pgf(ix,iy,iz) = -cp*thb(iz)*rdx                                                   & 
+                                        * (pip(ix,iy,iz,2)-pip(ix-1,iy,iz,2))
 
-                ! fourth term in u-tendency equation: horizontal diffusion
-                u_tend4(ix,iz) = kmx * rdx * rdx * (up(ix-1,iz,2) - (2*up(ix,iz,2)) + up(ix+1,iz,2))
+                    ! term5 in u-tendency equation: x diffusion
+                    u_xdiff(ix,iy,iz) = kmx * rdx * rdx * (up(ix-1,iy,iz,1) - (2*up(ix,iy,iz,1)) + up(ix+1,iy,iz,1))
 
-                ! fifth term in u-tendency equation: vertical diffusion
-                u_tend5(ix,iz) = kmz * rdz * rdz * (up(ix,iz-1,2) - (2*up(ix,iz,2)) + up(ix,iz+1,2))
-                
-                u_tend_total(ix,iz) = u_tend1(ix,iz) + u_tend2(ix,iz) + u_tend3(ix,iz) + u_tend4(ix,iz) + u_tend5(ix,iz)
-            enddo ! end x loop
+                    ! term6 in u-tendency equation: y diffusion
+                    u_ydiff(ix,iy,iz) = kmy * rdy * rdy * (up(ix,iy-1,iz,1) - (2*up(ix,iy,iz,1)) + up(ix,iy+1,iz,1))
+
+                    ! term7 in u-tendency equation: vertical diffusion
+                    u_zdiff(ix,iy,iz) = kmz * rdz * rdz * (up(ix,iy,iz-1,1) - (2*up(ix,iy,iz,1)) + up(ix,iy,iz+1,1))
+                    
+                    u_tend_total(ix,iy,iz) = u_xadv(ix,iy,iz) + u_yadv(ix,iy,iz) + u_zadv(ix,iy,iz) &
+                                            + u_pgf(ix,iy,iz) + u_xdiff(ix,iy,iz) + u_ydiff(ix,iy,iz) + u_zdiff(ix,iy,iz)
+                enddo ! end x loop
+            enddo
+        enddo ! end z loop
+
+
+        ! calculate tendency in v
+        ! this is equation 6 in HW4 but for v instead of u
+
+        ! loop over real/unique points
+        
+        do ix = 2, nx-1
+            do iy = 2, ny-1
+                do iz = 2, nz-1 
+                    ! term in v-tendency equation: x advection term = -d(uv)/dx
+                    v_xadv(ix,iy,iz) = -rdx * 0.25 * (((up(ix+1,iy-1,iz,2)+up(ix+1,iy,iz,2))*(vp(ix,iy,iz,2)+vp(ix+1,iy,iz,2)))    &
+                                                    - ((up(ix,iy-1,iz,2)+up(ix,iy,iz,2))*(vp(ix-1,iy,iz,2)+vp(ix,iy,iz,2))))
+                                            
+                    ! term in v-tendency equation: y advection term = -d(vv)/dy
+                    v_yadv(ix,iy,iz) = - rdy * (((0.5*(vp(ix,iy+1,iz,2)+vp(ix,iy,iz,2)))**2) &
+                                            - ((0.5*(vp(ix,iy,iz,2)+vp(ix,iy-1 ,iz,2)))**2))
+
+                    ! term in v-tendency equation: vertical advection term = -1/rho * d(rho*v*w)/dz
+                    v_zadv(ix,iy,iz) = - (rdz/(rhoub(iz)))                                                 &
+                                        * 0.25 * ((rhowb(iz+1) *    (wp(ix,iy-1,iz+1,2)    +   wp(ix,iy,iz+1,2))  * (vp(ix,iy,iz,2)    +   vp(ix,iy,iz+1,2))) &
+                                        -         (rhowb(iz)   *    (wp(ix,iy-1,iz,2)      +   wp(ix,iy,iz,2))    * (vp(ix,iy,iz-1,2)    +   vp(ix,iy,iz,2))))
+
+                    ! term in v-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dy
+                    v_pgf(ix,iy,iz) = -cp*thb(iz)*rdy                                                  & 
+                                        * (pip(ix,iy,iz,2)-pip(ix,iy-1,iz,2))
+
+                    ! term in v-tendency equation: x diffusion
+                    v_xdiff(ix,iy,iz) = kmx * rdx * rdx * (vp(ix-1,iy,iz,1) - (2*vp(ix,iy,iz,1)) + vp(ix+1,iy,iz,1))
+
+                    ! term in v-tendency equation: y diffusion
+                    v_ydiff(ix,iy,iz) = kmy * rdy * rdy * (vp(ix,iy-1,iz,1) - (2*vp(ix,iy,iz,1)) + vp(ix,iy+1,iz,1))
+
+                    ! term in v-tendency equation: vertical diffusion
+                    v_zdiff(ix,iy,iz) = kmz * rdz * rdz * (vp(ix,iy,iz-1,1) - (2*vp(ix,iy,iz,1)) + vp(ix,iy,iz+1,1))
+                    
+                    v_tend_total(ix,iy,iz) = v_xadv(ix,iy,iz) + v_yadv(ix,iy,iz) + v_zadv(ix,iy,iz) &
+                                        + v_pgf(ix,iy,iz) +v_xdiff(ix,iy,iz) + v_ydiff(ix,iy,iz) + v_zdiff(ix,iy,iz)
+                enddo ! end x loop
+            enddo
         enddo ! end z loop
 
         ! calculate tendency in w
@@ -92,30 +163,42 @@ module solve_prog
 
         ! loop over real/unique points
         do ix = 2, nx-1
-            do iz = 3, nz-1
-                ! first term in w-tendency equation: horizontal advection term 
-                w_tend1(ix,iz) = - rdx                                                                              &
-                                    * 0.25 * (((up(ix+1,iz,2)+up(ix+1,iz-1,2))*(wp(ix+1,iz,2)+wp(ix,iz,2)))         &                                        
-                                             -((up(ix,iz,2)+up(ix,iz-1,2))*(wp(ix,iz,2)+wp(ix-1,iz,2))) )
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    ! term in w-tendency equation: x advection term 
+                    w_xadv(ix,iy,iz) = - rdx                                                                              &
+                                        * 0.25 * (((up(ix+1,iy,iz,2)+up(ix+1,iy,iz-1,2))*(wp(ix+1,iy,iz,2)+wp(ix,iy,iz,2)))         &                                        
+                                                -((up(ix,iy,iz,2)+up(ix,iy,iz-1,2))*(wp(ix,iy,iz,2)+wp(ix-1,iy,iz,2))) )
 
-                ! second term in w-tendency equation: vertical advection term 
-                w_tend2(ix,iz) =  - rdz/rhoub(iz) &
-                                        * ((rhowb(iz+1)*(0.5*(wp(ix,iz+1,2)+wp(ix,iz,2)))**2) &
-                                        - (rhowb(iz)*(0.5*(wp(ix,iz,2)+wp(ix,iz-1,2)))**2))
+                    ! term in w-tendency equation: y advection term 
+                    w_yadv(ix,iy,iz) = - rdy                                                                              &
+                                        * 0.25 * (((vp(ix,iy+1,iz,2)+vp(ix,iy+1,iz-1,2))*(wp(ix,iy+1,iz,2)+wp(ix,iy,iz,2)))         &                                        
+                                                -((vp(ix,iy,iz,2)+vp(ix,iy,iz-1,2))*(wp(ix,iy,iz,2)+wp(ix,iy-1,iz,2))) )
 
-                ! third term in w-tendency equation: pressure gradient term 
-                w_tend3(ix,iz) = -cp * rdz * 0.25 * (thb(iz)+thb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
+                    ! term in w-tendency equation: vertical advection term 
+                    w_zadv(ix,iy,iz) =  - rdz/rhoub(iz) &
+                                            * ((rhowb(iz+1)*(0.5*(wp(ix,iy,iz+1,2)+wp(ix,iy,iz,2)))**2) &
+                                            - (rhowb(iz)*(0.5*(wp(ix,iy,iz,2)+wp(ix,iy,iz-1,2)))**2))
 
-                ! fourth term in w-tendency equation: pressure gradient term 
-                w_tend4(ix,iz) = g * (thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))
+                    ! term in w-tendency equation: pressure gradient term 
+                    w_pgf(ix,iy,iz) = -cp * rdz * 0.25 * (thb(iz)+thb(iz-1)) * (pip(ix,iy,iz,2)-pip(ix,iy,iz-1,2))
 
-                ! fifth term in w-tendency equation: horizontal diffusion
-                w_tend5(ix,iz) = kmx * rdx * rdx * (wp(ix-1,iz,2) - (2*wp(ix,iz,2)) + wp(ix+1,iz,2))
+                    ! term in w-tendency equation: buoyancy term 
+                    w_buoy(ix,iy,iz) = g * (thp(ix,iy,iz,2)+thp(ix,iy,iz-1,2))/(thb(iz)+thb(iz-1))
 
-                ! sixth term in w-tendency equation: vertical diffusion
-                w_tend6(ix,iz) = kmz * rdz * rdz * (wp(ix,iz-1,2) - (2*wp(ix,iz,2)) + wp(ix,iz+1,2))
-                
-                w_tend_total(ix,iz) = w_tend1(ix,iz) +w_tend2(ix,iz) +w_tend3(ix,iz) + w_tend4(ix,iz) + w_tend5(ix,iz) + w_tend6(ix,iz)
+                    ! term in w-tendency equation: x diffusion
+                    w_xdiff(ix,iy,iz) = kmx * rdx * rdx * (wp(ix-1,iy,iz,1) - (2*wp(ix,iy,iz,1)) + wp(ix+1,iy,iz,1))
+
+                    ! term in w-tendency equation:yx diffusion
+                    w_ydiff(ix,iy,iz) = kmy * rdy * rdy * (wp(ix,iy-1,iz,1) - (2*wp(ix,iy,iz,1)) + wp(ix,iy+1,iz,1))
+
+                    ! term in w-tendency equation: vertical diffusion
+                    w_zdiff(ix,iy,iz) = kmz * rdz * rdz * (wp(ix,iy,iz-1,1) - (2*wp(ix,iy,iz,1)) + wp(ix,iy,iz+1,1))
+                    
+                    w_tend_total(ix,iy,iz) = w_xadv(ix,iy,iz) + w_yadv(ix,iy,iz) + w_zadv(ix,iy,iz) &
+                                        + w_pgf(ix,iy,iz) + w_buoy(ix,iy,iz) &
+                                        + w_xdiff(ix,iy,iz) +  w_ydiff(ix,iy,iz) + w_zdiff(ix,iy,iz)
+                enddo
             enddo ! end x loop
         enddo ! end z loop
 
@@ -125,29 +208,40 @@ module solve_prog
 
         ! loop over real/unique points
         do ix = 2, nx-1
-            do iz = 2, nz-1
-                ! first term in thp-tendency equation: horizontal advection term = -d(u * thp)/dx
-                thp_tend1(ix,iz) = - rdx                                                                   &
-                                    * 0.5 * ((up(ix+1,iz,2) * (thp(ix+1,iz,2) +  thp(ix,iz,2)))     &
-                                    -        (up(ix,iz,2)   * (thp(ix,iz,2)   +  thp(ix-1,iz,2))))
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    ! term in thp-tendency equation: x advection term = -d(u * thp)/dx
+                    thp_xadv(ix,iy,iz) = - rdx                                                                   &
+                                        * 0.5 * ((up(ix+1,iy,iz,2) * (thp(ix+1,iy,iz,2) +  thp(ix,iy,iz,2)))     &
+                                        -        (up(ix,iy,iz,2)   * (thp(ix,iy,iz,2)   +  thp(ix-1,iy,iz,2))))
 
-                ! second term in thp-tendency equation: vertical advection term = -1/rho * d(rho*w * thp)/dz
-                thp_tend2(ix,iz) = - rdz/(rhoub(iz))                                                 &
-                                    * 0.5 *  ((rhowb(iz+1) *    wp(ix,iz+1,2)     * (thp(ix,iz+1,2)    +   thp(ix,iz,2))) &
-                                    -         (rhowb(iz)   *    wp(ix,iz,2)     * (thp(ix,iz,2)    +   thp(ix,iz-1,2))))
+                    ! term in thp-tendency equation: y advection term = -d(v * thp)/dy
+                    thp_yadv(ix,iy,iz) = - rdy                                                                  &
+                                        * 0.5 * ((vp(ix,iy+1,iz,2) * (thp(ix,iy+1,iz,2) +  thp(ix,iy,iz,2)))     &
+                                        -        (vp(ix,iy,iz,2)   * (thp(ix,iy,iz,2)   +  thp(ix,iy-1,iz,2))))
 
-                ! third term in thp-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
-                thp_tend3(ix,iz) = -0.5 * (1/rhoub(iz)) *   rdz                                     &
-                                            * ((rhowb(iz) * wp(ix,iz,2) * (thb(iz)-thb(iz-1)))      &
-                                            +  (rhowb(iz+1) * wp(ix,iz+1,2) * (thb(iz+1)-thb(iz))))
+                    ! term in thp-tendency equation: vertical advection term = -1/rho * d(rho*w * thp)/dz
+                    thp_zadv(ix,iy,iz) = - rdz/(rhoub(iz))                                                 &
+                                        * 0.5 *  ((rhowb(iz+1) *    wp(ix,iy,iz+1,2)     * (thp(ix,iy,iz+1,2)    +   thp(ix,iy,iz,2))) &
+                                        -         (rhowb(iz)   *    wp(ix,iy,iz,2)     * (thp(ix,iy,iz,2)    +   thp(ix,iy,iz-1,2))))
 
-                ! fourth term in thp-tendency equation: horizontal diffusion
-                thp_tend4(ix,iz) = khx * rdx * rdx * (thp(ix-1,iz,2) - (2*thp(ix,iz,2)) + thp(ix+1,iz,2))
+                    ! term in thp-tendency equation: mean state advection
+                    thp_meanadv(ix,iy,iz) = -0.5 * (1/rhoub(iz)) *   rdz                                     &
+                                                * ((rhowb(iz) * wp(ix,iy,iz,2) * (thb(iz)-thb(iz-1)))      &
+                                                +  (rhowb(iz+1) * wp(ix,iy,iz+1,2) * (thb(iz+1)-thb(iz))))
 
-                ! fifth term in thp-tendency equation: vertical diffusion
-                thp_tend5(ix,iz) = khz * rdz * rdz * (thp(ix,iz-1,2) - (2*thp(ix,iz,2)) + thp(ix,iz+1,2))
+                    ! term in thp-tendency equation: x diffusion
+                    thp_xdiff(ix,iy,iz) = khx * rdx * rdx * (thp(ix-1,iy,iz,1) - (2*thp(ix,iy,iz,1)) + thp(ix+1,iy,iz,1))
 
-                thp_tend_total(ix,iz) = thp_tend1(ix,iz) + thp_tend2(ix,iz) + thp_tend3(ix,iz) + thp_tend4(ix,iz) + thp_tend5(ix,iz)
+                    ! term in thp-tendency equation: y diffusion
+                    thp_ydiff(ix,iy,iz) = khy * rdy * rdy * (thp(ix,iy-1,iz,1) - (2*thp(ix,iy,iz,1)) + thp(ix,iy+1,iz,1))
+
+                    ! term in thp-tendency equation: z diffusion
+                    thp_zdiff(ix,iy,iz) = khz * rdz * rdz * (thp(ix,iy,iz-1,1) - (2*thp(ix,iy,iz,1)) + thp(ix,iy,iz+1,1))
+
+                    thp_tend_total(ix,iy,iz) = thp_xadv(ix,iy,iz) + thp_yadv(ix,iy,iz) + thp_zadv(ix,iy,iz) &
+                                            + thp_meanadv(ix,iy,iz) + thp_xdiff(ix,iy,iz) + thp_ydiff(ix,iy,iz) + thp_zdiff(ix,iy,iz)
+                enddo
             enddo ! end x loop
         enddo ! end z loop
 
@@ -157,43 +251,55 @@ module solve_prog
 
         ! loop over real/unique points
         do ix = 2, nx-1
-            do iz = 2, nz-1
-                ! first term in pip-tendency equation: horizontal advection term
-                pip_tend1(ix,iz) = -((cs**2)*rdx/(cp*thb(iz))) * (up(ix+1,iz,2)-up(ix,iz,2))
-                !pip_tend1(ix,iz) = (rhoub(iz)*thb(iz)*rdx) * (up(ix+1,iz,2)-up(ix,iz,2))
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    ! term in pip-tendency equation: x advection term
+                    pip_xadv(ix,iy,iz) = -((cs**2)*rdx/(cp*thb(iz))) * (up(ix+1,iy,iz,2)-up(ix,iy,iz,2))
 
-                ! second term in pip-tendency equation: vertical advection term 
-                pip_tend2(ix,iz) = -(((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thb(iz)**2))))   &
-                                *  ((rhowb(iz+1)*wp(ix,iz+1,2)*(thb(iz+1)+thb(iz))) &
-                                  -(rhowb(iz)*wp(ix,iz,2)*(thb(iz)+thb(iz-1))))
+                    ! term in pip-tendency equation: yadvection term
+                    pip_yadv(ix,iy,iz) = -((cs**2)*rdy/(cp*thb(iz))) * (vp(ix,iy+1,iz,2)-vp(ix,iy,iz,2))
+                    
+                    ! term in pip-tendency equation: z advection term 
+                    pip_zadv(ix,iy,iz) = -(((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thb(iz)**2))))   &
+                                    *  ((rhowb(iz+1)*wp(ix,iy,iz+1,2)*(thb(iz+1)+thb(iz))) &
+                                    -(rhowb(iz)*wp(ix,iy,iz,2)*(thb(iz)+thb(iz-1))))
 
-                ! third term in thp-tendency equation: horizontal diffusion
-                pip_tend3(ix,iz) = khx * rdx * rdx * (pip(ix-1,iz,2) - (2*pip(ix,iz,2)) + pip(ix+1,iz,2))
+                    ! term in pip-tendency equation: x diffusion
+                    pip_xdiff(ix,iy,iz) = khx * rdx * rdx * (pip(ix-1,iy,iz,1) - (2*pip(ix,iy,iz,1)) + pip(ix+1,iy,iz,1))
 
-                ! fourth term in thp-tendency equation: vertical diffusion
-                pip_tend4(ix,iz) = khz * rdz * rdz * (pip(ix,iz-1,2) - (2*pip(ix,iz,2)) + pip(ix,iz+1,2))
+                    ! term in pip-tendency equation: y diffusion
+                    pip_ydiff(ix,iy,iz) = khy * rdy * rdy * (pip(ix,iy-1,iz,1) - (2*pip(ix,iy,iz,1)) + pip(ix,iy+1,iz,1))
 
-                pip_tend_total(ix,iz) = pip_tend1(ix,iz)+pip_tend2(ix,iz)+pip_tend3(ix,iz)+pip_tend4(ix,iz)
-            enddo ! end x loop
+                    ! term in pip-tendency equation: x diffusion
+                    pip_zdiff(ix,iy,iz) = khz * rdz * rdz * (pip(ix,iy,iz-1,1) - (2*pip(ix,iy,iz,1)) + pip(ix,iy,iz+1,1))
+
+                    pip_tend_total(ix,iy,iz) = pip_xadv(ix,iy,iz)+pip_yadv(ix,iy,iz)+pip_zadv(ix,iy,iz)&
+                                            +pip_xdiff(ix,iy,iz)+pip_ydiff(ix,iy,iz)+pip_zdiff(ix,iy,iz)
+                enddo ! end x loop
+            enddo
         enddo ! end z loop
 
         ! calculate actual future values
         ! loop over real/unique points
         do ix = 2, nx-1
-            do iz = 2, nz-1
-                if (it==1) then !for very frist timestep
-                    up(ix,iz,3) = up(ix,iz,2) + (dt * u_tend_total(ix,iz))
-                    wp(ix,iz,3) = wp(ix,iz,2) + (dt * w_tend_total(ix,iz))
-                    thp(ix,iz,3) = thp(ix,iz,2) + (dt * thp_tend_total(ix,iz))
-                    pip(ix,iz,3) = pip(ix,iz,2) + (dt * pip_tend_total(ix,iz))
-                else
-                    up(ix,iz,3) = up(ix,iz,1) + (d2t * u_tend_total(ix,iz))
-                    wp(ix,iz,3) = wp(ix,iz,1) + (d2t * w_tend_total(ix,iz))
-                    thp(ix,iz,3) = thp(ix,iz,1) + (d2t * thp_tend_total(ix,iz))
-                    pip(ix,iz,3) = pip(ix,iz,1) + (d2t * pip_tend_total(ix,iz))
-                endif
-            enddo ! end x loop
-        enddo ! end z loop
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    if (it==1) then !for very frist timestep, just doing forward upstream
+                        up(ix,iy,iz,3) = up(ix,iy,iz,2) + (dt * u_tend_total(ix,iy,iz))
+                        vp(ix,iy,iz,3) = vp(ix,iy,iz,2) + (dt * v_tend_total(ix,iy,iz))
+                        wp(ix,iy,iz,3) = wp(ix,iy,iz,2) + (dt * w_tend_total(ix,iy,iz))
+                        thp(ix,iy,iz,3) = thp(ix,iy,iz,2) + (dt * thp_tend_total(ix,iy,iz))
+                        pip(ix,iy,iz,3) = pip(ix,iy,iz,2) + (dt * pip_tend_total(ix,iy,iz))
+                    else ! for other timesteps, leapfrog
+                        up(ix,iy,iz,3) = up(ix,iy,iz,1) + (d2t * u_tend_total(ix,iy,iz))
+                        vp(ix,iy,iz,3) = vp(ix,iy,iz,1) + (d2t * v_tend_total(ix,iy,iz))
+                        wp(ix,iy,iz,3) = wp(ix,iy,iz,1) + (d2t * w_tend_total(ix,iy,iz))
+                        thp(ix,iy,iz,3) = thp(ix,iy,iz,1) + (d2t * thp_tend_total(ix,iy,iz))
+                        pip(ix,iy,iz,3) = pip(ix,iy,iz,1) + (d2t * pip_tend_total(ix,iy,iz))
+                    endif
+                enddo ! end z loop
+            enddo ! end y loop
+        enddo ! end x loop
 
     end subroutine tendencies
 

@@ -8,21 +8,21 @@ module io
 
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
-        use run_constants, only: nz,dz0,nx,dx,pbc_x,pbc_z,dt,endt,rvpsurf                                       &
-                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq    &
-                                ,wk_flag,dn_flag                                                                &
-                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs                                     &
-                                ,kmx,kmz,khx,khz    
+        use run_constants, only: nz,dz0,nx,dx,ny,dy,pbc_x,pbc_y,pbc_z,dt,endt,rvpsurf                                       &
+                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq                &
+                                ,wk_flag,dn_flag                                                                            &
+                                ,pert_wind,radx,rady,radz,amp,zcnt,xcnt,ycnt,cx,cy,cz,cs                                    &
+                                ,kmx,kmy,kmz,khx,khy,khz    
 
         implicit none 
 
         ! define namelists
         namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq
-        namelist /grid/ nz,nx,dz0,dx,pbc_x,pbc_z,dt,endt
+        namelist /grid/ nz,nx,ny,dz0,dx,dy,pbc_x,pbc_y,pbc_z,dt,endt
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
-        namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
-        namelist /diff/ kmx,kmz,khx,khz
+        namelist /pert/ pert_wind,radx,rady,radz,amp,zcnt,xcnt,ycnt,cx,cy,cz,cs
+        namelist /diff/ kmx,kmy,kmz,khx,khy,khz  
         
         open(unit=1, file='Namelist',action='read')
 
@@ -93,16 +93,14 @@ module io
     end subroutine write_parcel_traj
 
     subroutine write_current_state
-        use run_constants, only: nz, var_out, var_outpath
-        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,pp &
-                            ,thp_tend_total,thp_tend1,thp_tend2,thp_tend3 &
-                            ,pip_tend_total,pip_tend1,pip_tend2 &
-                            ,u_tend_total,u_tend1,u_tend2,u_tend3 &
-                            ,w_tend_total, w_tend1,w_tend2,w_tend3,w_tend4
+        use run_constants, only: nz, ny,var_out, var_outpath
+        use model_vars, only: it,zsn,xsn,ysn,thp,pip,up,vp,wp,pp &
+                            ,thp_tend_total,pip_tend_total,u_tend_total,v_tend_total,w_tend_total 
 
         implicit none
         
         integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
 
         character(len=6) :: timechar
         write(timechar, '(i6)')it
@@ -117,127 +115,78 @@ module io
             write(1,*) 'coord xsn'
             write(1, '(1x, *(g0, :, ", "))') xsn(:)
 
+            write(1,*) 'coord ysn'
+            write(1, '(1x, *(g0, :, ", "))') ysn(:)
+
             write(1,*) 'var THP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp(:,iz,2)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') thp(:,iy,iz,2)
+                enddo
             enddo
 
             write(1,*) 'var PIP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip(:,iz,2)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') pip(:,iy,iz,2)  
+                enddo
             enddo
 
             write(1,*) 'var UP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') up(:,iz,2)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') up(:,iy,iz,2)  
+                enddo
             enddo
-
+            
+            write(1,*) 'var VP_pres'
+            do iz=1,nz
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') vp(:,iy,iz,2)  
+                enddo
+            enddo
+            
             write(1,*) 'var WP_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') wp(:,iz,2)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') wp(:,iy,iz,2)  
+                enddo
             enddo
-
-            write(1,*) 'var THP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp(:,iz,1)
-            enddo
-
-            write(1,*) 'var PIP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip(:,iz,1)
-            enddo
-
-            write(1,*) 'var UP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') up(:,iz,1)
-            enddo
-
-            write(1,*) 'var WP_past'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') wp(:,iz,1)
-            enddo
-
 
             write(1,*) 'var THP_TEND_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend_total(:,iz)
-            enddo
-
-            write(1,*) 'var THP_TEND1_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend1(:,iz)
-            enddo
-
-            write(1,*) 'var THP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend2(:,iz)
-            enddo
-
-            write(1,*) 'var THP_TEND3_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend3(:,iz)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') thp_tend_total(:,iy,iz)  
+                enddo
             enddo
 
             write(1,*) 'var PIP_TEND_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip_tend_total(:,iz)
-            enddo
-
-            write(1,*) 'var PIP_TEND1_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip_tend1(:,iz)
-            enddo
-
-            write(1,*) 'var PIP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip_tend2(:,iz)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') pip_tend_total(:,iy,iz)  
+                enddo
             enddo
 
             write(1,*) 'var UP_TEND_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend_total(:,iz)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') u_tend_total(:,iy,iz)  
+                enddo
             enddo
 
-            write(1,*) 'var UP_TEND1_pres'
+            write(1,*) 'var VP_TEND_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend1(:,iz)
-            enddo
-
-            write(1,*) 'var UP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend2(:,iz)
-            enddo
-
-            write(1,*) 'var UP_TEND3_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend3(:,iz)
+                do iy=1,ny
+                     write(1, '(1x, *(g0, :, ", "))') v_tend_total(:,iy,iz)  
+                enddo
             enddo
 
             write(1,*) 'var WP_TEND_pres'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iz)
+                do iy=1,ny
+                    write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iy,iz)  
+                enddo
             enddo
-
-            write(1,*) 'var WP_TEND1_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend1(:,iz)
-            enddo
-
-            write(1,*) 'var WP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend2(:,iz)
-            enddo
-
-            write(1,*) 'var WP_TEND3_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend3(:,iz)
-            enddo
-
-            write(1,*) 'var WP_TEND4_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend4(:,iz)
-            enddo
-            
             close(1)
         endif 
 

@@ -9,14 +9,13 @@ module base_state
     subroutine init_base_state()
 
         use constants, only: g,cp,rd,p00,cv
-        use run_constants, only: nz, nx, ztr, ttr, thtr, psurf, wk_flag, dn_flag, base_out
+        use run_constants, only: nz, ztr, ttr, thtr, psurf, wk_flag, dn_flag, base_out
         use thermo_functions, only: calc_thv, calc_rsat, calc_satfrac
-        use model_vars, only:zsn, zwn, thb, rvb, thvb, pib, piwb, rhoub,rhowb,tb,pb,rsatb,rhb,satfracb
+        use model_vars, only:zsn, zmn, thb, rvb, thvb, pib, piwb, rhoub,rhowb,tb,pb,rsatb,rhb,satfracb
     
         implicit none
 
         integer :: iz ! counter for z-coordinate
-        integer :: ix ! counter for x-coordinate
 
         ! initally, set the base state to be horizontally homogenous
         ! so we just need to loop over all the x values inside the z-loops        
@@ -70,10 +69,10 @@ module base_state
         ! this would just be (psurf/p00)**(rd/cp) (see definition of PI in HW1)
         piwb(2) = (psurf/p00)**(rd/cp)
 
-        ! but the grid for PI is offset by half a delta z (which is zun - zwn), 
+        ! but the grid for PI is offset by half a delta z (which is zun - zmn), 
         ! so we must integrate vertically to get PI(z=2) rather than PI(surf) 
         ! using the hydrostatic equation (see HW1) in terms of PI and thetav
-        pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zsn(2)-zwn(2)))
+        pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zsn(2)-zmn(2)))
 
         pib(1) = pib(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
         piwb(1) = piwb(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
@@ -85,7 +84,7 @@ module base_state
         ! note that we are basically assuming thvb scales linearly with height in between the scalar levels
         do iz = 3,nz-1
             pib(iz) = pib(iz-1) - (g/(cp*(thvb(iz-1)+thvb(iz))/2)) * (zsn(iz)-zsn(iz-1))
-            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz-1))) * (zwn(iz)-zwn(iz-1))
+            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz-1))) * (zmn(iz)-zmn(iz-1))
         enddo ! end z loop
 
         do iz=2,nz-1

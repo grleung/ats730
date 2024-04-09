@@ -10,10 +10,13 @@ module model_vars
     real, allocatable, dimension(:)  :: &
             dzn    & !  deltaZ (level depth) of the w  grid [m]
         ,   zsn    & !  physical height of u/scalar ("s" for scalar) grid [m]
-        ,   zwn    & !  physical height of vertical velocity ("w" for w) grid [m]
+        ,   zmn    & !  physical height of vertical velocity ("m" for momentum) grid [m]
         ,   dxn    & !  deltaX of the u grid [m]
-        ,   xsn    & !  physical horizontal position of scalar ("s" for scalar) grid [m]
-        ,   xun      !  physical horizontal position of horizontal velocity ("u" for u) grid [m]
+        ,   xsn    & !  physical x position of scalar ("s" for scalar) grid [m]
+        ,   xmn    & !  physical x position of horizontal velocity ("m" for momentum) grid [m]
+        ,   dyn    & !  deltaX of the u grid [m]
+        ,   ysn    & !  physical y position of scalar ("s" for scalar) grid [m]
+        ,   ymn      !  physical y position of horizontal velocity ("m" for momentum) grid [m]
 
     ! base state thermodynamic variables (only profile in nz)
     real, allocatable, dimension(:)  :: &
@@ -46,23 +49,26 @@ module model_vars
            lclp         & !  parcel lifted condensation level [in model levels, u-grid]
         ,   elp           !  parcel equlibirum level [in model levels, u-grid]
 
-    ! prognostic thermodynamic variables (array in nx,nz,3 time dims [past, pres, future])
-    real, allocatable, dimension(:,:,:)  :: &
+    ! prognostic thermodynamic variables (array in nx,ny,nz,3 time dims [past, pres, future])
+    real, allocatable, dimension(:,:,:,:)  :: &
             thp         & !  perturbation potential temperature ("th" for theta) [K]
         ,   rvp         & !  perturbation water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
         ,   pip         & !  perturbation non-dimensional pressure on u-grid [no units]
-        ,   up          & !  horizontal velocity [m/s]
+        ,   up          & !  x (E-W) velocity [m/s]
+        ,   vp          & !  y (N-S) velocity [m/s]
         ,   wp            !  vertical velocity [m/s]
 
-     real, allocatable, dimension(:,:) :: &
+    !(array in nx,ny,nz)    
+    real, allocatable, dimension(:,:,:) :: &
            pp         !  perturbation  pressure on u-grid [no units]
 
-    ! tendency  variables (array in nx,nz)
-    real, allocatable, dimension(:,:)  :: &
-            u_tend1, u_tend2, u_tend3,u_tend4, u_tend5, u_tend_total         &
-        ,   w_tend1, w_tend2, w_tend3, w_tend4, w_tend5, w_tend6,w_tend_total         &
-        ,   thp_tend1,thp_tend2,thp_tend3,thp_tend4,thp_tend5,thp_tend_total    &
-        ,   pip_tend1,pip_tend2,pip_tend3,pip_tend4,pip_tend_total
+    ! tendency  variables (array in nx,ny,nz)
+    real, allocatable, dimension(:,:,:)  :: &
+             u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        &
+            ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total                        &
+            ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                 &
+            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total    &
+            ,pip_xadv,pip_yadv,pip_zadv,pip_xdiff,pip_ydiff,pip_zdiff,pip_tend_total
 
     contains
 
