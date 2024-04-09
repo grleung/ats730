@@ -8,6 +8,7 @@ module solve_prog
     subroutine tendencies
         implicit none
 
+
         ! first zero out tendencies 
         call zero_tends
 
@@ -114,7 +115,7 @@ module solve_prog
     subroutine calc_tend_u
         use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
         use constants, only: cp
-        use model_vars, only:up,vp,wp,pip,rhoub,rhowb,thb                                       &
+        use model_vars, only:up,vp,wp,pip,rhoub,rhowb,thvb                                       &
                             ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        
 
         implicit none
@@ -146,7 +147,7 @@ module solve_prog
                                         -         (rhowb(iz)   *    (wp(ix-1,iy,iz,2)      +   wp(ix,iy,iz,2))    * (up(ix,iy,iz-1,2)    +   up(ix,iy,iz,2))))
 
                     ! term4 in u-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
-                    u_pgf(ix,iy,iz) = -cp*thb(iz)*rdx                                                   & 
+                    u_pgf(ix,iy,iz) = -cp*thvb(iz)*rdx                                                   & 
                                         * (pip(ix,iy,iz,2)-pip(ix-1,iy,iz,2))
 
                     ! term5 in u-tendency equation: x diffusion
@@ -169,7 +170,7 @@ module solve_prog
     subroutine calc_tend_v
         use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
         use constants, only: cp
-        use model_vars, only:up,vp,wp,pip,rhoub,rhowb,thb                                       &
+        use model_vars, only:up,vp,wp,pip,rhoub,rhowb,thvb                                       &
                             ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total                        
 
         implicit none
@@ -201,7 +202,7 @@ module solve_prog
                                         -         (rhowb(iz)   *    (wp(ix,iy-1,iz,2)      +   wp(ix,iy,iz,2))    * (vp(ix,iy,iz-1,2)    +   vp(ix,iy,iz,2))))
 
                     ! term in v-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dy
-                    v_pgf(ix,iy,iz) = -cp*thb(iz)*rdy                                                  & 
+                    v_pgf(ix,iy,iz) = -cp*thvb(iz)*rdy                                                  & 
                                         * (pip(ix,iy,iz,2)-pip(ix,iy-1,iz,2))
 
                     ! term in v-tendency equation: x diffusion
@@ -224,7 +225,7 @@ module solve_prog
     subroutine calc_tend_w
         use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
         use constants, only: cp, g
-        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thb                                       &
+        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thvb,thb                                       &
                             ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                        
 
         implicit none
@@ -256,7 +257,7 @@ module solve_prog
                                             - (rhowb(iz)*(0.5*(wp(ix,iy,iz,2)+wp(ix,iy,iz-1,2)))**2))
 
                     ! term in w-tendency equation: pressure gradient term 
-                    w_pgf(ix,iy,iz) = -cp * rdz * 0.25 * (thb(iz)+thb(iz-1)) * (pip(ix,iy,iz,2)-pip(ix,iy,iz-1,2))
+                    w_pgf(ix,iy,iz) = -cp * rdz * 0.25 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iy,iz,2)-pip(ix,iy,iz-1,2))
 
                     ! term in w-tendency equation: buoyancy term 
                     w_buoy(ix,iy,iz) = g * (thp(ix,iy,iz,2)+thp(ix,iy,iz-1,2))/(thb(iz)+thb(iz-1))
@@ -335,7 +336,7 @@ module solve_prog
     subroutine calc_tend_pip
         use run_constants, only: nz,nx,ny,khx,khy,khz,cs,rdx,rdy,rdz
         use constants, only: cp
-        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thb                                       &
+        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thvb                                       &
                             ,pip_xadv,pip_yadv,pip_zadv,pip_xdiff,pip_ydiff,pip_zdiff,pip_tend_total                        
 
         implicit none
@@ -352,15 +353,15 @@ module solve_prog
             do iy = 2, ny-1
                 do iz = 2, nz-1
                     ! term in pip-tendency equation: x advection term
-                    pip_xadv(ix,iy,iz) = -((cs**2)*rdx/(cp*thb(iz))) * (up(ix+1,iy,iz,2)-up(ix,iy,iz,2))
+                    pip_xadv(ix,iy,iz) = -((cs**2)*rdx/(cp*thvb(iz))) * (up(ix+1,iy,iz,2)-up(ix,iy,iz,2))
 
                     ! term in pip-tendency equation: yadvection term
-                    pip_yadv(ix,iy,iz) = -((cs**2)*rdy/(cp*thb(iz))) * (vp(ix,iy+1,iz,2)-vp(ix,iy,iz,2))
+                    pip_yadv(ix,iy,iz) = -((cs**2)*rdy/(cp*thvb(iz))) * (vp(ix,iy+1,iz,2)-vp(ix,iy,iz,2))
                     
                     ! term in pip-tendency equation: z advection term 
-                    pip_zadv(ix,iy,iz) = -(((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thb(iz)**2))))   &
-                                    *  ((rhowb(iz+1)*wp(ix,iy,iz+1,2)*(thb(iz+1)+thb(iz))) &
-                                    -(rhowb(iz)*wp(ix,iy,iz,2)*(thb(iz)+thb(iz-1))))
+                    pip_zadv(ix,iy,iz) = -(((cs**2)*rdz*0.5/(rhoub(iz)*cp*(thvb(iz)**2))))   &
+                                    *  ((rhowb(iz+1)*wp(ix,iy,iz+1,2)*(thvb(iz+1)+thvb(iz))) &
+                                    -(rhowb(iz)*wp(ix,iy,iz,2)*(thvb(iz)+thvb(iz-1))))
 
                     ! term in pip-tendency equation: x diffusion
                     pip_xdiff(ix,iy,iz) = khx * rdx * rdx * (pip(ix-1,iy,iz,1) - (2*pip(ix,iy,iz,1)) + pip(ix+1,iy,iz,1))
@@ -380,7 +381,7 @@ module solve_prog
 
     subroutine apply_tends
         use run_constants, only: nz,nx,ny,dt,d2t
-        use model_vars, only:it,thb,thvb,rhoub,rhowb,thp,pip,up,vp,wp,rvp,rcp,rrp                                   &
+        use model_vars, only:it,thp,pip,up,vp,wp,rvp,rcp,rrp                                   &
                             ,u_tend_total,v_tend_total,w_tend_total,thp_tend_total,pip_tend_total                    &
                             ,rvp_tend_total,rcp_tend_total,rrp_tend_total   
 
