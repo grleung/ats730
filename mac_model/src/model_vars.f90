@@ -62,8 +62,12 @@ module model_vars
 
     !(array in nx,ny,nz)    
     real, allocatable, dimension(:,:,:) :: &
-           pp           & !  perturbation pressure on u-grid [no units]
-        ,  thvp           !  perturbation virtual potential temperature [K]
+           pp               & !  perturbation pressure on u-grid [no units]
+        ,  thvp             & !  perturbation virtual potential temperature [K]
+        ,  vap2cld          & !  mixing ratio of condensed cloud water this time step (term C in HW9 equations) [kg/kg] -- rvp to rcp (or vice versa)
+        ,  rain2vap         & !  evaporation rate of rain water (term E in HW9 equations) [kg/kg/s] -- rrp to rvp
+        ,  cld2rain_accr    & !  accretion rate of cloud water to rain (term B in HW9 equations) [kg/kg/s] -- rcp to rrp 
+        ,  cld2rain_auto      !  autoconversion rate of cloud water to rain (term A in HW9 equations) [kg/kg/s] -- rcp to rrp
 
     ! tendency  variables (array in nx,ny,nz)
     real, allocatable, dimension(:,:,:)  :: &

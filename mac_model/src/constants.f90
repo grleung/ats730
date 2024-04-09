@@ -6,6 +6,7 @@ module constants
 
     real, parameter :: &
             g       =    9.80       & ! gravitational acceleration [m/s2]
+        ,   rhol    =   1.e3        & ! liquid water density [kg/m3]
         ,   rd      =    287.       & ! dry air gas constant [J/kgK]
         ,   cp      =    1004.      & ! dry air specific heat capacity at constant pressure [J/kgK]
         ,   cv      =    cp - rd    & ! dry air specific heat capacity at constant volume [J/kgK]

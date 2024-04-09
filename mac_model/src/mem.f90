@@ -51,6 +51,12 @@ module mem
         allocate (rrp(nx,ny,nz,3))
         allocate (pp(nx,ny,nz))
         allocate (thvp(nx,ny,nz))
+        
+        !microphysics terms
+        allocate (vap2cld(nx,ny,nz))
+        allocate (rain2vap(nx,ny,nz))
+        allocate (cld2rain_accr(nx,ny,nz))
+        allocate (cld2rain_auto(nx,ny,nz))
 
         ! tendency arrays
         allocate (u_xadv(nx,ny,nz))
@@ -164,6 +170,12 @@ module mem
         deallocate (rrp(nx,ny,nz,3))
         deallocate (pp(nx,ny,nz))
 
+        !microphysics terms
+        deallocate (vap2cld(nx,ny,nz))
+        deallocate (rain2vap(nx,ny,nz))
+        deallocate (cld2rain_accr(nx,ny,nz))
+        deallocate (cld2rain_auto(nx,ny,nz))
+        
         ! tendency arrays
         deallocate (u_xadv(nx,ny,nz))
         deallocate (u_yadv(nx,ny,nz))

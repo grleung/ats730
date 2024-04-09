@@ -28,7 +28,8 @@ module solve_prog
 
     subroutine zero_tends
         use run_constants, only: nz,nx,ny
-        use model_vars, only:u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        &
+        use model_vars, only:vap2cld,rain2vap,cld2rain_accr,cld2rain_auto                                           &
+                            ,u_xadv,u_yadv,u_zadv,u_pgf,u_xdiff,u_ydiff,u_zdiff,u_tend_total                        &
                             ,v_xadv,v_yadv,v_zadv,v_pgf,v_xdiff,v_ydiff,v_zdiff,v_tend_total                        &
                             ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                 &
                             ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total    &
@@ -47,6 +48,10 @@ module solve_prog
         do iz = 1, nz
             do iy=1,ny
                 do ix = 1, nx
+                    vap2cld(ix,iy,iz)=0.
+                    rain2vap(ix,iy,iz)=0.
+                    cld2rain_accr(ix,iy,iz)=0.
+                    cld2rain_auto(ix,iy,iz)=0.
                     u_xadv(ix,iy,iz)=0.
                     u_yadv(ix,iy,iz)=0.
                     u_zadv(ix,iy,iz)=0.
@@ -430,7 +435,7 @@ module solve_prog
                     ! term in rvp-tendency equation: z diffusion
                     rvp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rvp(ix,iy,iz-1,1) - (2*rvp(ix,iy,iz,1)) + rvp(ix,iy,iz+1,1))
 
-                    rvp_tend_total(ix,iy,iz) = rvp_xadv(ix,iy,iz) + rvp_yadv(ix,iy,iz) + rvp_zadv(ix,iy,iz) &
+                    rvp_tend_total(ix,iy,iz) = rvp_xadv(ix,iy,iz) + rvp_yadv(ix,iy,iz) + rvp_zadv(ix,iy,iz)                             &
                                             + rvp_meanadv(ix,iy,iz) + rvp_xdiff(ix,iy,iz) + rvp_ydiff(ix,iy,iz) + rvp_zdiff(ix,iy,iz)
                 enddo
             enddo ! end x loop
@@ -517,9 +522,9 @@ module solve_prog
 
                     ! term in rrp-tendency equation: vertical advection term = -1/rho * d(rho*w * rrp)/dz
                     rrp_zadv(ix,iy,iz) = - rdz/(rhoub(iz))                                                 &
-                                        * 0.5 *  ((rhowb(iz+1) *    (wp(ix,iy,iz+1,2)-rain_fallspeed(rhowb(iz+1),0.5*(rrp(ix,iy,iz+1,2)+ rrp(ix,iy,iz,2))))     &
-                                                                    * (rrp(ix,iy,iz+1,2)    +   rrp(ix,iy,iz,2)))                                               &
-                                        -         (rhowb(iz)   *    (wp(ix,iy,iz,2)-rain_fallspeed(rhowb(iz),0.5*(rrp(ix,iy,iz,2)+rrp(ix,iy,iz-1,2))))          &
+                                        * 0.5 *  ((rhowb(iz+1) *    wp(ix,iy,iz+1,2) &!-rain_fallspeed(rhowb(iz+1),0.5*(rrp(ix,iy,iz+1,2)+ rrp(ix,iy,iz,2))))     &
+                                                                    * (rrp(ix,iy,iz+1,2)    +   rrp(ix,iy,iz,2)))                                              &
+                                        -         (rhowb(iz)   *    wp(ix,iy,iz,2)&!-rain_fallspeed(rhowb(iz),0.5*(rrp(ix,iy,iz,2)+rrp(ix,iy,iz-1,2))))          &
                                                                       * (rrp(ix,iy,iz,2)    +   rrp(ix,iy,iz-1,2))))
 
                     ! term in rrp-tendency equation: x diffusion
