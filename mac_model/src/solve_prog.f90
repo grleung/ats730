@@ -18,6 +18,9 @@ module solve_prog
         call calc_tend_w
         call calc_tend_thp
         call calc_tend_pip
+        call calc_tend_rvp
+        call calc_tend_rcp
+        call calc_tend_rrp
 
         ! do actual time integration to apply tendencies we calculated above
         call apply_tends
@@ -146,7 +149,7 @@ module solve_prog
                                         * 0.25 * ((rhowb(iz+1) *    (wp(ix-1,iy,iz+1,2)    +   wp(ix,iy,iz+1,2))  * (up(ix,iy,iz,2)    +   up(ix,iy,iz+1,2))) &
                                         -         (rhowb(iz)   *    (wp(ix-1,iy,iz,2)      +   wp(ix,iy,iz,2))    * (up(ix,iy,iz-1,2)    +   up(ix,iy,iz,2))))
 
-                    ! term4 in u-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dx
+                    ! term4 in u-tendency equation: pressure gradient term = -cp * thetav_base * d(pi_pert)/ dx
                     u_pgf(ix,iy,iz) = -cp*thvb(iz)*rdx                                                   & 
                                         * (pip(ix,iy,iz,2)-pip(ix-1,iy,iz,2))
 
@@ -201,7 +204,7 @@ module solve_prog
                                         * 0.25 * ((rhowb(iz+1) *    (wp(ix,iy-1,iz+1,2)    +   wp(ix,iy,iz+1,2))  * (vp(ix,iy,iz,2)    +   vp(ix,iy,iz+1,2))) &
                                         -         (rhowb(iz)   *    (wp(ix,iy-1,iz,2)      +   wp(ix,iy,iz,2))    * (vp(ix,iy,iz-1,2)    +   vp(ix,iy,iz,2))))
 
-                    ! term in v-tendency equation: pressure gradient term = -cp * theta_base * d(pi_pert)/ dy
+                    ! term in v-tendency equation: pressure gradient term = -cp * thetav_base * d(pi_pert)/ dy
                     v_pgf(ix,iy,iz) = -cp*thvb(iz)*rdy                                                  & 
                                         * (pip(ix,iy,iz,2)-pip(ix,iy-1,iz,2))
 
@@ -225,7 +228,7 @@ module solve_prog
     subroutine calc_tend_w
         use run_constants, only: nz,nx,ny,kmx,kmy,kmz,rdx,rdy,rdz
         use constants, only: cp, g
-        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thvb,thb                                       &
+        use model_vars, only:up,vp,wp,pip,thp,rhoub,rhowb,thvb,thb,rvp,rcp,rrp                               &
                             ,w_xadv,w_yadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_ydiff,w_zdiff,w_tend_total                        
 
         implicit none
@@ -260,7 +263,9 @@ module solve_prog
                     w_pgf(ix,iy,iz) = -cp * rdz * 0.25 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iy,iz,2)-pip(ix,iy,iz-1,2))
 
                     ! term in w-tendency equation: buoyancy term 
-                    w_buoy(ix,iy,iz) = g * (thp(ix,iy,iz,2)+thp(ix,iy,iz-1,2))/(thb(iz)+thb(iz-1))
+                    w_buoy(ix,iy,iz) = g *((thp(ix,iy,iz,2)+thp(ix,iy,iz-1,2))/(thb(iz)+thb(iz-1))      &   
+                                              + (0.61 * 0.5 * (rvp(ix,iy,iz,2)+rvp(ix,iy,iz-1,2)))                                &
+                                              - (0.5 * (rcp(ix,iy,iz,2)+rcp(ix,iy,iz-1,2)) + (rrp(ix,iy,iz,2)+rrp(ix,iy,iz-1,2))))
 
                     ! term in w-tendency equation: x diffusion
                     w_xdiff(ix,iy,iz) = kmx * rdx * rdx * (wp(ix-1,iy,iz,1) - (2*wp(ix,iy,iz,1)) + wp(ix+1,iy,iz,1))
@@ -378,6 +383,158 @@ module solve_prog
             enddo
         enddo ! end z loop
     end subroutine calc_tend_pip
+
+    subroutine calc_tend_rvp
+        use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
+        use model_vars, only:up,vp,wp,rvp,rvb,rhoub,rhowb,thb                                      &
+                            ,rvp_xadv,rvp_yadv,rvp_zadv,rvp_meanadv,rvp_xdiff,rvp_ydiff,rvp_zdiff,rvp_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
+
+        ! calculate tendency in theta
+        ! this is equation 8 in HW4
+
+        ! loop over real/unique points
+        do ix = 2, nx-1
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    ! term in rvp-tendency equation: x advection term = -d(u * rvp)/dx
+                    rvp_xadv(ix,iy,iz) = - rdx                                                                   &
+                                        * 0.5 * ((up(ix+1,iy,iz,2) * (rvp(ix+1,iy,iz,2) +  rvp(ix,iy,iz,2)))     &
+                                        -        (up(ix,iy,iz,2)   * (rvp(ix,iy,iz,2)   +  rvp(ix-1,iy,iz,2))))
+
+                    ! term in rvp-tendency equation: y advection term = -d(v * rvp)/dy
+                    rvp_yadv(ix,iy,iz) = - rdy                                                                  &
+                                        * 0.5 * ((vp(ix,iy+1,iz,2) * (rvp(ix,iy+1,iz,2) +  rvp(ix,iy,iz,2)))     &
+                                        -        (vp(ix,iy,iz,2)   * (rvp(ix,iy,iz,2)   +  rvp(ix,iy-1,iz,2))))
+
+                    ! term in rvp-tendency equation: vertical advection term = -1/rho * d(rho*w * rvp)/dz
+                    rvp_zadv(ix,iy,iz) = - rdz/(rhoub(iz))                                                 &
+                                        * 0.5 *  ((rhowb(iz+1) *    wp(ix,iy,iz+1,2)     * (rvp(ix,iy,iz+1,2)    +   rvp(ix,iy,iz,2))) &
+                                        -         (rhowb(iz)   *    wp(ix,iy,iz,2)     * (rvp(ix,iy,iz,2)    +   rvp(ix,iy,iz-1,2))))
+
+                    ! term in rvp-tendency equation: mean state advection
+                    rvp_meanadv(ix,iy,iz) = -0.5 * (1/rhoub(iz)) *   rdz                                     &
+                                                * ((rhowb(iz) * wp(ix,iy,iz,2) * (rvb(iz)-rvb(iz-1)))      &
+                                                +  (rhowb(iz+1) * wp(ix,iy,iz+1,2) * (rvb(iz+1)-rvb(iz))))
+
+                    ! term in rvp-tendency equation: x diffusion
+                    rvp_xdiff(ix,iy,iz) = khx * rdx * rdx * (rvp(ix-1,iy,iz,1) - (2*rvp(ix,iy,iz,1)) + rvp(ix+1,iy,iz,1))
+
+                    ! term in rvp-tendency equation: y diffusion
+                    rvp_ydiff(ix,iy,iz) = khy * rdy * rdy * (rvp(ix,iy-1,iz,1) - (2*rvp(ix,iy,iz,1)) + rvp(ix,iy+1,iz,1))
+
+                    ! term in rvp-tendency equation: z diffusion
+                    rvp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rvp(ix,iy,iz-1,1) - (2*rvp(ix,iy,iz,1)) + rvp(ix,iy,iz+1,1))
+
+                    rvp_tend_total(ix,iy,iz) = rvp_xadv(ix,iy,iz) + rvp_yadv(ix,iy,iz) + rvp_zadv(ix,iy,iz) &
+                                            + rvp_meanadv(ix,iy,iz) + rvp_xdiff(ix,iy,iz) + rvp_ydiff(ix,iy,iz) + rvp_zdiff(ix,iy,iz)
+                enddo
+            enddo ! end x loop
+        enddo ! end z loop
+    end subroutine calc_tend_rvp
+
+    subroutine calc_tend_rcp
+        use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
+        use model_vars, only:up,vp,wp,rcp,rvb,rhoub,rhowb,thb                                      &
+                            ,rcp_xadv,rcp_yadv,rcp_zadv,rcp_xdiff,rcp_ydiff,rcp_zdiff,rcp_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
+
+        ! calculate tendency in theta
+        ! this is equation 8 in HW4
+
+        ! loop over real/unique points
+        do ix = 2, nx-1
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    ! term in rcp-tendency equation: x advection term = -d(u * rcp)/dx
+                    rcp_xadv(ix,iy,iz) = - rdx                                                                   &
+                                        * 0.5 * ((up(ix+1,iy,iz,2) * (rcp(ix+1,iy,iz,2) +  rcp(ix,iy,iz,2)))     &
+                                        -        (up(ix,iy,iz,2)   * (rcp(ix,iy,iz,2)   +  rcp(ix-1,iy,iz,2))))
+
+                    ! term in rcp-tendency equation: y advection term = -d(v * rcp)/dy
+                    rcp_yadv(ix,iy,iz) = - rdy                                                                  &
+                                        * 0.5 * ((vp(ix,iy+1,iz,2) * (rcp(ix,iy+1,iz,2) +  rcp(ix,iy,iz,2)))     &
+                                        -        (vp(ix,iy,iz,2)   * (rcp(ix,iy,iz,2)   +  rcp(ix,iy-1,iz,2))))
+
+                    ! term in rcp-tendency equation: vertical advection term = -1/rho * d(rho*w * rcp)/dz
+                    rcp_zadv(ix,iy,iz) = - rdz/(rhoub(iz))                                                 &
+                                        * 0.5 *  ((rhowb(iz+1) *    wp(ix,iy,iz+1,2)     * (rcp(ix,iy,iz+1,2)    +   rcp(ix,iy,iz,2))) &
+                                        -         (rhowb(iz)   *    wp(ix,iy,iz,2)     * (rcp(ix,iy,iz,2)    +   rcp(ix,iy,iz-1,2))))
+
+                    ! term in rcp-tendency equation: x diffusion
+                    rcp_xdiff(ix,iy,iz) = khx * rdx * rdx * (rcp(ix-1,iy,iz,1) - (2*rcp(ix,iy,iz,1)) + rcp(ix+1,iy,iz,1))
+
+                    ! term in rcp-tendency equation: y diffusion
+                    rcp_ydiff(ix,iy,iz) = khy * rdy * rdy * (rcp(ix,iy-1,iz,1) - (2*rcp(ix,iy,iz,1)) + rcp(ix,iy+1,iz,1))
+
+                    ! term in rcp-tendency equation: z diffusion
+                    rcp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rcp(ix,iy,iz-1,1) - (2*rcp(ix,iy,iz,1)) + rcp(ix,iy,iz+1,1))
+
+                    rcp_tend_total(ix,iy,iz) = rcp_xadv(ix,iy,iz) + rcp_yadv(ix,iy,iz) + rcp_zadv(ix,iy,iz) &
+                                            +  rcp_xdiff(ix,iy,iz) + rcp_ydiff(ix,iy,iz) + rcp_zdiff(ix,iy,iz)
+                enddo
+            enddo ! end x loop
+        enddo ! end z loop
+    end subroutine calc_tend_rcp
+
+    subroutine calc_tend_rrp
+        use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
+        use model_vars, only:up,vp,wp,rrp,rvb,rhoub,rhowb,thb                                      &
+                            ,rrp_xadv,rrp_yadv,rrp_zadv,rrp_xdiff,rrp_ydiff,rrp_zdiff,rrp_tend_total                        
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: iy ! counter for y-coordinate
+        integer :: ix ! counter for x-coordinate
+
+        ! calculate tendency in theta
+        ! this is equation 8 in HW4
+
+        ! loop over real/unique points
+        do ix = 2, nx-1
+            do iy = 2, ny-1
+                do iz = 2, nz-1
+                    ! term in rrp-tendency equation: x advection term = -d(u * rrp)/dx
+                    rrp_xadv(ix,iy,iz) = - rdx                                                                   &
+                                        * 0.5 * ((up(ix+1,iy,iz,2) * (rrp(ix+1,iy,iz,2) +  rrp(ix,iy,iz,2)))     &
+                                        -        (up(ix,iy,iz,2)   * (rrp(ix,iy,iz,2)   +  rrp(ix-1,iy,iz,2))))
+
+                    ! term in rrp-tendency equation: y advection term = -d(v * rrp)/dy
+                    rrp_yadv(ix,iy,iz) = - rdy                                                                  &
+                                        * 0.5 * ((vp(ix,iy+1,iz,2) * (rrp(ix,iy+1,iz,2) +  rrp(ix,iy,iz,2)))     &
+                                        -        (vp(ix,iy,iz,2)   * (rrp(ix,iy,iz,2)   +  rrp(ix,iy-1,iz,2))))
+
+                    ! term in rrp-tendency equation: vertical advection term = -1/rho * d(rho*w * rrp)/dz
+                    rrp_zadv(ix,iy,iz) = - rdz/(rhoub(iz))                                                 &
+                                        * 0.5 *  ((rhowb(iz+1) *    wp(ix,iy,iz+1,2)     * (rrp(ix,iy,iz+1,2)    +   rrp(ix,iy,iz,2))) &
+                                        -         (rhowb(iz)   *    wp(ix,iy,iz,2)     * (rrp(ix,iy,iz,2)    +   rrp(ix,iy,iz-1,2))))
+
+                    ! term in rrp-tendency equation: x diffusion
+                    rrp_xdiff(ix,iy,iz) = khx * rdx * rdx * (rrp(ix-1,iy,iz,1) - (2*rrp(ix,iy,iz,1)) + rrp(ix+1,iy,iz,1))
+
+                    ! term in rrp-tendency equation: y diffusion
+                    rrp_ydiff(ix,iy,iz) = khy * rdy * rdy * (rrp(ix,iy-1,iz,1) - (2*rrp(ix,iy,iz,1)) + rrp(ix,iy+1,iz,1))
+
+                    ! term in rrp-tendency equation: z diffusion
+                    rrp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rrp(ix,iy,iz-1,1) - (2*rrp(ix,iy,iz,1)) + rrp(ix,iy,iz+1,1))
+
+                    rrp_tend_total(ix,iy,iz) = rrp_xadv(ix,iy,iz) + rrp_yadv(ix,iy,iz) + rrp_zadv(ix,iy,iz) &
+                                            +  rrp_xdiff(ix,iy,iz) + rrp_ydiff(ix,iy,iz) + rrp_zdiff(ix,iy,iz)
+                enddo
+            enddo ! end x loop
+        enddo ! end z loop
+    end subroutine calc_tend_rrp
 
     subroutine apply_tends
         use run_constants, only: nz,nx,ny,dt,d2t
