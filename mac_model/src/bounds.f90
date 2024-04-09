@@ -6,7 +6,7 @@ module boundaries
     contains
     
     subroutine enforce_bounds_x
-        use model_vars, only: thp,pip,pp,up,vp,wp
+        use model_vars, only: thp,pip,up,vp,wp,rvp,rcp,rrp
         use run_constants, only: nz,nx,ny,pbc_x
 
         implicit none
@@ -34,6 +34,15 @@ module boundaries
 
                         wp(1,iy,iz,it) = wp(nx-1,iy,iz,it)
                         wp(nx,iy,iz,it) = wp(2,iy,iz,it)
+
+                        rvp(1,iy,iz,it) = rvp(nx-1,iy,iz,it)
+                        rvp(nx,iy,iz,it) = rvp(2,iy,iz,it)
+
+                        rcp(1,iy,iz,it) = rcp(nx-1,iy,iz,it)
+                        rcp(nx,iy,iz,it) = rcp(2,iy,iz,it)
+
+                        rrp(1,iy,iz,it) = rrp(nx-1,iy,iz,it)
+                        rrp(nx,iy,iz,it) = rrp(2,iy,iz,it)
                     enddo ! end loop over time
                 enddo ! end loop over y
             enddo ! end loop over z
@@ -56,6 +65,15 @@ module boundaries
 
                         wp(1,iy,iz,it) = wp(2,iy,iz,it)
                         wp(nx,iy,iz,it) = wp(nx-1,iy,iz,it)
+
+                        rvp(1,iy,iz,it) = rvp(2,iy,iz,it)
+                        rvp(nx,iy,iz,it) = rvp(nx-1,iy,iz,it)
+
+                        rcp(1,iy,iz,it) = rcp(2,iy,iz,it)
+                        rcp(nx,iy,iz,it) = rcp(nx-1,iy,iz,it)
+
+                        rrp(1,iy,iz,it) = rrp(2,iy,iz,it)
+                        rrp(nx,iy,iz,it) = rrp(nx-1,iy,iz,it)
                     enddo ! end loop over time
                 enddo ! end loop over y
             enddo ! end loop over z
@@ -64,7 +82,7 @@ module boundaries
     end subroutine enforce_bounds_x
 
     subroutine enforce_bounds_y
-        use model_vars, only: thp,pip,pp,up,vp,wp
+        use model_vars, only: thp,pip,up,vp,wp,rvp,rcp,rrp
         use run_constants, only: nz,nx,ny,pbc_y
 
         implicit none
@@ -92,6 +110,15 @@ module boundaries
 
                         wp(ix,1,iz,it) = wp(ix,ny-1,iz,it)
                         wp(ix,ny,iz,it) = wp(ix,2,iz,it)
+                        
+                        rvp(ix,1,iz,it) = rvp(ix,ny-1,iz,it)
+                        rvp(ix,ny,iz,it) = rvp(ix,2,iz,it)
+
+                        rcp(ix,1,iz,it) = rcp(ix,ny-1,iz,it)
+                        rcp(ix,ny,iz,it) = rcp(ix,2,iz,it)
+
+                        rrp(ix,1,iz,it) = rrp(ix,ny-1,iz,it)
+                        rrp(ix,ny,iz,it) = rrp(ix,2,iz,it)
                     enddo ! end loop over time
                 enddo ! end loop over x
             enddo ! end loop over z
@@ -114,6 +141,15 @@ module boundaries
 
                         wp(ix,1,iz,it) = wp(ix,2,iz,it)
                         wp(ix,ny,iz,it) = wp(ix,ny-1,iz,it)
+
+                        rvp(ix,1,iz,it) = rvp(ix,2,iz,it)
+                        rvp(ix,ny,iz,it) = rvp(ix,ny-1,iz,it)
+
+                        rcp(ix,1,iz,it) = rcp(ix,2,iz,it)
+                        rcp(ix,ny,iz,it) = rcp(ix,ny-1,iz,it)
+
+                        rrp(ix,1,iz,it) = rrp(ix,2,iz,it)
+                        rrp(ix,ny,iz,it) = rrp(ix,ny-1,iz,it)
                     enddo ! end loop over time
                 enddo ! end loop over x
             enddo ! end loop over z
@@ -123,7 +159,7 @@ module boundaries
     
 
     subroutine enforce_bounds_z
-        use model_vars, only: thp,pip,pp,up,vp,wp
+        use model_vars, only: thp,pip,up,vp,wp,rvp,rcp,rrp
         use run_constants, only: nz,nx,ny,pbc_z
 
         implicit none
@@ -145,9 +181,21 @@ module boundaries
 
                         up(ix,iy,1,it) = up(ix,iy,nz-1,it)
                         up(ix,iy,nz,it) = up(ix,iy,2,it)
+                        
+                        vp(ix,iy,1,it) = vp(ix,iy,nz-1,it)
+                        vp(ix,iy,nz,it) = vp(ix,iy,2,it)
 
                         wp(ix,iy,1,it) = wp(ix,iy,nz-1,it)
                         wp(ix,iy,nz,it) = wp(ix,iy,2,it)
+                        
+                        rvp(ix,iy,1,it) = rvp(ix,iy,nz-1,it)
+                        rvp(ix,iy,nz,it) = rvp(ix,iy,2,it)
+                        
+                        rcp(ix,iy,1,it) = rcp(ix,iy,nz-1,it)
+                        rcp(ix,iy,nz,it) = rcp(ix,iy,2,it)
+
+                        rrp(ix,iy,1,it) = rrp(ix,iy,nz-1,it)
+                        rrp(ix,iy,nz,it) = rrp(ix,iy,2,it)
                     enddo ! end loop over time
                 enddo ! end loop over x
             enddo ! end loop over y
@@ -165,10 +213,22 @@ module boundaries
                         up(ix,iy,1,it) = up(ix,iy,2,it)
                         up(ix,iy,nz,it) = up(ix,iy,nz-1,it)
 
+                        vp(ix,iy,1,it) = vp(ix,iy,2,it)
+                        vp(ix,iy,nz,it) = vp(ix,iy,nz-1,it)
+                        
                         !enforce zero w through top and bottom
                         wp(ix,iy,1,it) = 0.
                         wp(ix,iy,2,it) = 0.
                         wp(ix,iy,nz,it) = 0.
+
+                        rvp(ix,iy,1,it) = rvp(ix,iy,2,it)
+                        rvp(ix,iy,nz,it) = rvp(ix,iy,nz-1,it)
+                        
+                        rcp(ix,iy,1,it) = rcp(ix,iy,2,it)
+                        rcp(ix,iy,nz,it) = rcp(ix,iy,nz-1,it)
+
+                        rrp(ix,iy,1,it) = rrp(ix,iy,2,it)
+                        rrp(ix,iy,nz,it) = rrp(ix,iy,nz-1,it)
                     enddo
                 enddo
             enddo ! end loop over x
