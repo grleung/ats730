@@ -6,7 +6,7 @@ module timestep
     contains
     
     subroutine step_time
-        use model_vars, only: thp,pip,pp,up,vp,wp
+        use model_vars, only: thp,pip,pp,up,vp,wp,rvp,rcp,rrp
         use run_constants, only: nz,nx,ny
 
         implicit none
@@ -29,6 +29,12 @@ module timestep
                     thp(ix,iy,iz,2) = thp(ix,iy,iz,3)
                     pip(ix,iy,iz,1) = pip(ix,iy,iz,2)
                     pip(ix,iy,iz,2) = pip(ix,iy,iz,3)
+                    rvp(ix,iy,iz,1) = rvp(ix,iy,iz,2)
+                    rvp(ix,iy,iz,2) = rvp(ix,iy,iz,3)
+                    rcp(ix,iy,iz,1) = rcp(ix,iy,iz,2)
+                    rcp(ix,iy,iz,2) = rcp(ix,iy,iz,3)
+                    rrp(ix,iy,iz,1) = rrp(ix,iy,iz,2)
+                    rrp(ix,iy,iz,2) = rrp(ix,iy,iz,3)
                 enddo ! end z loop
             enddo !end y loop
         enddo ! end x loop

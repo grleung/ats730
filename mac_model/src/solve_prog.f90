@@ -6,36 +6,63 @@ module solve_prog
     contains
     
     subroutine tendencies
+        use microphysics, only: check_negs, add_tend_micro,sat_adjust,calc_accretion,calc_autoconversion,calc_rainevap
         implicit none
 
         ! first zero out tendencies 
         call zero_tends
 
-        ! calculate each of the tendency terms
+        ! calculate each of the tendency terms 
+        ! this is only by advection, diffusion, and buoyancy/PGF
         call calc_tend_u
+        print*,'u'
         call calc_tend_v
+        print*,'v'
         call calc_tend_w
+        print*,'w'
         call calc_tend_thp
+        print*,'th'
         call calc_tend_pip
+        print*,'pi'
         call calc_tend_rvp
+        print*,'rv'
         call calc_tend_rcp
+        print*,'rc'
         call calc_tend_rrp
+        print*,'rr'
+        print*,'done tends'
 
-        ! temporarily apply the tendencies calculated above
-        call apply_tends
-
-        ! check water values non negative
+        ! check water mixing ratios are non negative before doing microphysics tendencies
+        call check_negs
+        print*,'check neg'
 
         ! then we calculate the microphysics conversions
-
-        ! check water values non negative
-
-        ! then update rvp,rcp,rrp (and theta?) with microphysics conversions
-
-        ! check water values non negative
+        call calc_autoconversion
+        print*,'auto'
+        call calc_accretion
+        print*,'accr'
+        call calc_rainevap
+        print*,'rainevap'
         
-        ! saturation adjustment         
+        ! temporarily apply the tendencies calculated above
+        call apply_tends
+        print*,'apply tends'
+        
+        ! saturation adjustment    
+        call sat_adjust  
+        
+        ! then update rvp,rcp,rrp with microphysics conversions
+        call add_tend_micro
+        print*,'add tend micro'
+        
+        ! apply the tendencies calculated above
+        call apply_tends
+        print*,'apply tends'
 
+        ! check water mixing ratios are non negative after applying all tendencies
+        call check_negs
+        print*,'check neg'
+        
     end subroutine tendencies
 
     subroutine zero_tends
@@ -305,7 +332,7 @@ module solve_prog
         use constants, only: lv,cp
         use model_vars, only:up,vp,wp,thp,rhoub,rhowb,thb,pib                                       &
                             ,rain2vap,vap2cld                                                       &
-                            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_heating,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total                        
+                            ,thp_xadv,thp_yadv,thp_zadv,thp_meanadv,thp_xdiff,thp_ydiff,thp_zdiff,thp_tend_total                        
 
         implicit none
 
@@ -340,9 +367,6 @@ module solve_prog
                                                 * ((rhowb(iz) * wp(ix,iy,iz,2) * (thb(iz)-thb(iz-1)))      &
                                                 +  (rhowb(iz+1) * wp(ix,iy,iz+1,2) * (thb(iz+1)-thb(iz))))
 
-                    ! term from latent heating
-                    !thp_heating(ix,iy,iz) = (vap2cld(ix,iy,iz)-rain2vap(ix,iy,iz))*lv/(cp*pib(iz))
-
                     ! term in thp-tendency equation: x diffusion
                     thp_xdiff(ix,iy,iz) = khx * rdx * rdx * (thp(ix-1,iy,iz,1) - (2*thp(ix,iy,iz,1)) + thp(ix+1,iy,iz,1))
 
@@ -352,7 +376,7 @@ module solve_prog
                     ! term in thp-tendency equation: z diffusion
                     thp_zdiff(ix,iy,iz) = khz * rdz * rdz * (thp(ix,iy,iz-1,1) - (2*thp(ix,iy,iz,1)) + thp(ix,iy,iz+1,1))
 
-                    thp_tend_total(ix,iy,iz) = thp_xadv(ix,iy,iz) + thp_yadv(ix,iy,iz) + thp_zadv(ix,iy,iz) & !+ thp_heating(ix,iy,iz) &
+                    thp_tend_total(ix,iy,iz) = thp_xadv(ix,iy,iz) + thp_yadv(ix,iy,iz) + thp_zadv(ix,iy,iz)                         &
                                             + thp_meanadv(ix,iy,iz) + thp_xdiff(ix,iy,iz) + thp_ydiff(ix,iy,iz) + thp_zdiff(ix,iy,iz)
                 enddo
             enddo ! end x loop
@@ -408,7 +432,6 @@ module solve_prog
     subroutine calc_tend_rvp
         use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz,rdt
         use model_vars, only:up,vp,wp,rvp,rvb,rhoub,rhowb,thb                            &
-                            ,vap2cld,rain2vap                                            &
                             ,rvp_xadv,rvp_yadv,rvp_zadv,rvp_meanadv,rvp_xdiff,rvp_ydiff,rvp_zdiff,rvp_tend_total                        
 
         implicit none
@@ -454,8 +477,7 @@ module solve_prog
                     rvp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rvp(ix,iy,iz-1,1) - (2*rvp(ix,iy,iz,1)) + rvp(ix,iy,iz+1,1))
 
                     rvp_tend_total(ix,iy,iz) = rvp_xadv(ix,iy,iz) + rvp_yadv(ix,iy,iz) + rvp_zadv(ix,iy,iz)                             &
-                                            + rvp_meanadv(ix,iy,iz) + rvp_xdiff(ix,iy,iz) + rvp_ydiff(ix,iy,iz) + rvp_zdiff(ix,iy,iz)   !&
-                                           ! - (vap2cld(ix,iy,iz)*rdt) + rain2vap(ix,iy,iz)
+                                            + rvp_meanadv(ix,iy,iz) + rvp_xdiff(ix,iy,iz) + rvp_ydiff(ix,iy,iz) + rvp_zdiff(ix,iy,iz)
                 enddo
             enddo ! end x loop
         enddo ! end z loop
@@ -464,7 +486,6 @@ module solve_prog
     subroutine calc_tend_rcp
         use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
         use model_vars, only:up,vp,wp,rcp,rvb,rhoub,rhowb,thb                                      &
-                            ,vap2cld,cld2rain_accr,cld2rain_auto                                   &
                             ,rcp_xadv,rcp_yadv,rcp_zadv,rcp_xdiff,rcp_ydiff,rcp_zdiff,rcp_tend_total                        
 
         implicit none
@@ -505,8 +526,7 @@ module solve_prog
                     rcp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rcp(ix,iy,iz-1,1) - (2*rcp(ix,iy,iz,1)) + rcp(ix,iy,iz+1,1))
 
                     rcp_tend_total(ix,iy,iz) = rcp_xadv(ix,iy,iz) + rcp_yadv(ix,iy,iz) + rcp_zadv(ix,iy,iz)         &
-                                            +  rcp_xdiff(ix,iy,iz) + rcp_ydiff(ix,iy,iz) + rcp_zdiff(ix,iy,iz)    !  &
-                                           ! +  vap2cld(ix,iy,iz) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz)
+                                            +  rcp_xdiff(ix,iy,iz) + rcp_ydiff(ix,iy,iz) + rcp_zdiff(ix,iy,iz)     
                 enddo
             enddo ! end x loop
         enddo ! end z loop
@@ -515,7 +535,6 @@ module solve_prog
     subroutine calc_tend_rrp
         use run_constants, only: nz,nx,ny,khx,khy,khz,rdx,rdy,rdz
         use model_vars, only:up,vp,wp,rrp,rvb,rhoub,rhowb,thb                                      &
-                            ,rain2vap,cld2rain_accr,cld2rain_auto                                   &
                             ,rrp_xadv,rrp_yadv,rrp_zadv,rrp_xdiff,rrp_ydiff,rrp_zdiff,rrp_tend_total                        
         use micro_functions, only: rain_fallspeed
 
@@ -559,8 +578,7 @@ module solve_prog
                     rrp_zdiff(ix,iy,iz) = khz * rdz * rdz * (rrp(ix,iy,iz-1,1) - (2*rrp(ix,iy,iz,1)) + rrp(ix,iy,iz+1,1))
 
                     rrp_tend_total(ix,iy,iz) = rrp_xadv(ix,iy,iz) + rrp_yadv(ix,iy,iz) + rrp_zadv(ix,iy,iz) &
-                                            +  rrp_xdiff(ix,iy,iz) + rrp_ydiff(ix,iy,iz) + rrp_zdiff(ix,iy,iz) !&
-                                            !-  rain2vap(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz)
+                                            +  rrp_xdiff(ix,iy,iz) + rrp_ydiff(ix,iy,iz) + rrp_zdiff(ix,iy,iz) 
                 enddo
             enddo ! end x loop
         enddo ! end z loop

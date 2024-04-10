@@ -5,7 +5,7 @@ module grid
 
     subroutine init_grid()
 
-        use run_constants, only: nz, dz0, dzrat, nx, dx, ny, dy,rdx,rdy,rdz,d2t,dt,rdt
+        use run_constants, only: nz, dz0, dzrat, nx, dx, ny, dy,rdx,rdy,rdz,d2t,dt,rdt,rd2t
         use model_vars, only: dzn, zsn, zmn, dxn, xsn, xmn, dyn, ysn, ysn, ymn
 
         implicit none
@@ -20,6 +20,7 @@ module grid
         rdz      = 1/dz0       ! reciprocal of dz [1/m]
         d2t      = dt+dt       ! 2*dt [s]
         rdt      = 1/dt        ! reciprocal of dt [1/s]
+        rd2t     = 1/d2t
 
         ! set up z-coordinate
 
