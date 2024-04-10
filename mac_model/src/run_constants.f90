@@ -83,6 +83,14 @@ module run_constants
             rdx      = 1.e-3     &  ! reciprocal of dx [1/m]
         ,   rdy      = 1.e-3     &  ! reciprocal of dxy [1/m]
         ,   rdz      = 1.e-3     &  ! reciprocal of dz [1/m]
-        ,   d2t      = 6.           ! 2*dt
+        ,   d2t      = 6.        &  ! 2*dt
+        ,   rdt      = 1/3.
+
+    ! microphysics constants
+    real ::  &
+            minrain = 1.e-10    &   
+        ,   cldautothresh = 1.e-3   &
+        ,   autorate = 1.-3         &
+        ,   accrrate = 2.2 
         
 end module run_constants

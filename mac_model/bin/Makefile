@@ -36,7 +36,7 @@ BINDIR = $(MODELDIR)/bin
 # the executable compiled in this bin directory will be named after the .f90 program file
 PROGRAM = MAC
 # EXE: executable name to link into run directory; can be the same as PROGRAM or not
-EXE = /test3d/MAC.exe
+EXE = /HW9/MAC.exe
 
 # type "make" to compile the code (compiles all)
 # after compiling, link the executable (named after the PROGRAM.f90 file) into the run 
@@ -63,10 +63,12 @@ cape.o: constants.o run_constants.o model_vars.o thermo_functions.o
 initial_perturb.o : constants.o run_constants.o thermo_functions.o model_vars.o grid.o bounds.o
 io.o: model_vars.o run_constants.o 
 advection.o : run_constants.o model_vars.o
-solve_prog.o : run_constants.o model_vars.o bounds.o
+micro_functions.o : constants.o
+microphysics.o: constants.o run_constants.o micro_functions.o model_vars.o
+solve_prog.o : run_constants.o model_vars.o bounds.o micro_functions.o
 bounds.o : run_constants.o model_vars.o
 timestep.o : run_constants.o model_vars.o
-$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o initial_perturb.o advection.o solve_prog.o bounds.o timestep.o
+$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o micro_functions.o microphysics.o thermo_functions.o mem.o initial_perturb.o advection.o solve_prog.o bounds.o timestep.o
 
 # ======================================================================
 # general rules, these should not require modification
