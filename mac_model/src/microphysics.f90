@@ -22,8 +22,8 @@ module microphysics
                 do ix = 1, nx
                     if ((rvb(iz)+rvp(ix,iy,iz,3))<0.) then
                         !keep track of how much vapor we have removed so we can add it back in later
-                        vapadd = vapadd + (rvb(iz)+rvp(ix,iy,iz,3))
-                        rvp(ix,iy,iz,3) = 0.
+                        vapadd = vapadd + (rvp(ix,iy,iz,3)+rvb(iz))
+                        rvp(ix,iy,iz,3) = -rvb(iz)
                     endif 
 
                     if (rcp(ix,iy,iz,3) < 0.) then
@@ -69,7 +69,7 @@ module microphysics
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
-        real :: cldavail, cldsink, cldrat, rainavail, vapavail
+        real :: cldavail, cldsink, cldrat, rainavail,cldex,rainex
 
         do iz = 1, nz
             do iy=1,ny
@@ -78,7 +78,7 @@ module microphysics
 
                     ! check that the amount being removed through accretion and autoconversion is less than the existing amount of cloud
                     
-                    cldavail = rcp(ix,iy,iz,1)*rd2t
+                    cldavail = (rcp(ix,iy,iz,1)*rd2t) !+ rcp_tend_total(ix,iy,iz)
                     cldsink = cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) 
 
                     if (cldsink > cldavail) then
@@ -90,17 +90,16 @@ module microphysics
 
                     rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
 
-
-                    rainavail = rrp(ix,iy,iz,1)*rd2t
+                    rainavail = rrp(ix,iy,iz,1)*rd2t !+ rrp_tend_total(ix,iy,iz)
 
                     if (rain2vap(ix,iy,iz) > rainavail) then
                         rain2vap(ix,iy,iz) = rainavail
                     endif
 
-                    rrp_tend_total(ix,iy,iz) = rrp_tend_total(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) - rain2vap(ix,iy,iz)
+                    rrp_tend_total(ix,iy,iz) = rrp_tend_total(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz)  - rain2vap(ix,iy,iz)
 
-                    thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) - ((lv/(cp*pib(iz))) * rain2vap(ix,iy,iz))
-                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) + rain2vap(ix,iy,iz)
+                    thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) - ((lv/(cp*pib(iz))) * (rain2vap(ix,iy,iz)))
+                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) + rain2vap(ix,iy,iz) 
                     
                 enddo
             enddo
@@ -139,10 +138,10 @@ module microphysics
 
                         ! if microphysics wants to condense more water than is available
                         ! set condensed vapor to be maximum amount of vapor
-                        if (vap2cld(ix,iy,iz) > rv) then
-                            vap2cld(ix,iy,iz) = rv
-                        else if (-1.*vap2cld(ix,iy,iz) > rcp(ix,iy,iz,2)) then
-                            vap2cld(ix,iy,iz) = -rcp(ix,iy,iz,2)
+                        if (vap2cld(ix,iy,iz) > rvb(iz)+rvp(ix,iy,iz,1)) then
+                            vap2cld(ix,iy,iz) = rvb(iz)+rvp(ix,iy,iz,1)
+                        else if (-vap2cld(ix,iy,iz) > rcp(ix,iy,iz,1)) then
+                            vap2cld(ix,iy,iz) = -rcp(ix,iy,iz,1)
                         endif
 
                     else 
