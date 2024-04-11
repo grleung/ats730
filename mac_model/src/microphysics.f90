@@ -186,15 +186,11 @@ module microphysics
 
                     !condition here in case it's supersaturated so we aren't condensing onto raindrops
                     if ((rvp(ix,iy,iz,2)+rvb(iz)) < rsat) then
-                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rvp(ix,iy,iz,2)/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
+                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-((rvp(ix,iy,iz,2)+rvb(iz))/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
                                                         / (2.03e4 * (9.58e6/(rhoub(iz)*rsat)))
                     else 
                         rain2vap(ix,iy,iz) = 0.
                     endif
-                    !if (rain2vap(ix,iy,iz)<0.) then
-                    !    rain2vap(ix,iy,iz)=0.
-                    !endif
-
 
                 enddo
             enddo
