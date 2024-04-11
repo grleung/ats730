@@ -93,7 +93,7 @@ module run_constants
         ,   minrain = 1.e-20        & 
         ,   mincld  = 1.e-20        &  
         ,   cldautothresh = 1.e-3   &
-        ,   autorate = 1.-3         &
+        ,   autorate = 1.e-3         &
         ,   accrrate = 2.2 
         
 end module run_constants

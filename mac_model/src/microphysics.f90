@@ -149,6 +149,11 @@ module microphysics
             do iy=1,ny
                 do ix = 1, nx
                     cld2rain_accr(ix,iy,iz) = accrrate * rhoub(iz) * rcp(ix,iy,iz,2) * rrp(ix,iy,iz,2)**(7/8)
+
+                    if (cld2rain_accr(ix,iy,iz)<0.) then
+                        cld2rain_accr(ix,iy,iz)=0.
+                    endif
+
                 enddo
             enddo
         enddo
@@ -158,7 +163,7 @@ module microphysics
     subroutine calc_rainevap
         use constants, only: p00, cp, rd
         use run_constants, only: nz,nx,ny,accrrate
-        use model_vars, only:rain2vap,rrp,rvp,rhoub,thb,thp,pib,pip
+        use model_vars, only:rain2vap,rrp,rvp,rvb,rhoub,thb,thp,pib,pip
         use micro_functions, only: rain_vent
         use thermo_functions, only: calc_rsat
 
@@ -179,10 +184,16 @@ module microphysics
                     pi = pib(iz)+pip(ix,iy,iz,2)
                     rsat = calc_rsat(pi*th, p00*(pi**(cp/rd)))
 
-                    !should add condition here in case it's supersaturated so we aren't condensing onto raindrops
-                    
-                    rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rvp(ix,iy,iz,2)/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
+                    !condition here in case it's supersaturated so we aren't condensing onto raindrops
+                    if ((rvp(ix,iy,iz,2)+rvb(iz)) < rsat) then
+                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rvp(ix,iy,iz,2)/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
                                                         / (2.03e4 * (9.58e6/(rhoub(iz)*rsat)))
+                    else 
+                        rain2vap(ix,iy,iz) = 0.
+                    endif
+                    !if (rain2vap(ix,iy,iz)<0.) then
+                    !    rain2vap(ix,iy,iz)=0.
+                    !endif
 
 
                 enddo
