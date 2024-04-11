@@ -88,7 +88,7 @@ module microphysics
                         cld2rain_auto(ix,iy,iz) = cld2rain_auto(ix,iy,iz) - ((1-cldrat) * (cldsink - cldavail))
                     endif
 
-                    rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) + (rdt*vap2cld(ix,iy,iz)) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
+                    rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
 
 
                     rainavail = rrp(ix,iy,iz,1)*rd2t
@@ -99,14 +99,8 @@ module microphysics
 
                     rrp_tend_total(ix,iy,iz) = rrp_tend_total(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) - rain2vap(ix,iy,iz)
 
-                    vapavail = (rvp(ix,iy,iz,1)+rvb(iz))*rd2t
-
-                    if (rdt*vap2cld(ix,iy,iz)>vapavail) then
-                        vap2cld(ix,iy,iz) = vapavail*dt
-                    endif
-
-                    thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) + ((lv/(cp*pib(iz))) * ((rdt*vap2cld(ix,iy,iz)) - rain2vap(ix,iy,iz)))
-                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) - (rdt*vap2cld(ix,iy,iz)) + rain2vap(ix,iy,iz)
+                    thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) - ((lv/(cp*pib(iz))) * rain2vap(ix,iy,iz))
+                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) + rain2vap(ix,iy,iz)
                     
                 enddo
             enddo
@@ -115,10 +109,11 @@ module microphysics
 
 
     subroutine sat_adjust
-        use model_vars, only: vap2cld, pib,thb,rvb,pip,thp,rvp,rcp
+        use model_vars, only: vap2cld, pib,thb,rvb,pip,thp,rvp,rcp          &
+                            ,rvp_tend_total,rcp_tend_total,thp_tend_total
         use thermo_functions, only: calc_rsat
         use constants, only: p00, cp, rd,lv
-        use run_constants, only: nx,ny,nz
+        use run_constants, only: nx,ny,nz,rdt
 
         implicit none
 
@@ -154,6 +149,9 @@ module microphysics
                         vap2cld(ix,iy,iz) = 0.
                     endif
 
+                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) - rdt*vap2cld(ix,iy,iz)
+                    rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) + rdt*vap2cld(ix,iy,iz)
+                    thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) + ((lv/(cp*pib(iz))) * vap2cld(ix,iy,iz) * rdt)
                 enddo
             enddo
         enddo
