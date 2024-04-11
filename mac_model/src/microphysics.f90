@@ -14,26 +14,46 @@ module microphysics
         integer :: iz ! counter for z-coordinate
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
-        integer :: it
+
+        real :: vapadd=0,cldadd=0,rainadd=0
 
         do iz = 1, nz
             do iy=1,ny
                 do ix = 1, nx
                     if ((rvb(iz)+rvp(ix,iy,iz,3))<0.) then
-                        rvp(ix,iy,iz,3) = minmix
+                        !keep track of how much vapor we have removed so we can add it back in later
+                        vapadd = vapadd + (rvb(iz)+rvp(ix,iy,iz,3))
+                        rvp(ix,iy,iz,3) = 0.
                     endif 
 
                     if (rcp(ix,iy,iz,3) < 0.) then
-                        rcp(ix,iy,iz,3) = minmix
+                        cldadd = cldadd + rcp(ix,iy,iz,3)
+                        rcp(ix,iy,iz,3) = 0.
                     endif 
 
                     if (rrp(ix,iy,iz,3) < 0.) then
-                        rrp(ix,iy,iz,3) = minmix
+                        rainadd = rainadd + rrp(ix,iy,iz,3)
+                        rrp(ix,iy,iz,3) = 0.
                     endif 
-                    ! this doesn't conserve mass yet
                 enddo
             enddo
         enddo
+
+        ! calculate amount of vapor to add to each grid point
+        vapadd = -vapadd/(nx*ny*nz)
+        cldadd = -cldadd/(nx*ny*nz)
+        rainadd = -rainadd/(nx*ny*nz)
+
+        do iz = 1, nz
+            do iy=1,ny
+                do ix = 1, nx
+                    rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3)+vapadd
+                    rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3)+cldadd
+                    rrp(ix,iy,iz,3) = rrp(ix,iy,iz,3)+rainadd
+                enddo
+            enddo
+        enddo
+
 
     end subroutine check_negs
 
