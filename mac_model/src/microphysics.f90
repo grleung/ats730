@@ -39,7 +39,7 @@ module microphysics
 
     subroutine add_tend_micro
         use model_vars, only: rvp_tend_total, rcp_tend_total, rrp_tend_total, thp_tend_total,pib &
-                            , rain2vap,cld2rain_accr,cld2rain_auto,vap2cld
+                            , rain2vap,cld2rain_accr,cld2rain_auto,vap2cld, rcp, rrp
         use run_constants, only: nx,ny,nz,rd2t
         use constants, only: cp, lv
 
@@ -49,14 +49,31 @@ module microphysics
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
+        real :: cldavail, cldsink, cldrat, ainavail, rainsink
+
         do iz = 1, nz
             do iy=1,ny
                 do ix = 1, nx
                     ! not yet balanced
-                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) - (rd2t*vap2cld(ix,iy,iz)) + rain2vap(ix,iy,iz)
+
+                    ! check that the amount being removed through accretion and autoconversion is less than the existing amount of cloud
+                    
+                    cldavail = (rcp(ix,iy,iz,1)*rd2t) 
+                    cldsink = cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) 
+
+                    if (cldsink > cldavail) then
+                        cldrat = cld2rain_accr(ix,iy,iz)/cldsink
+
+                        cld2rain_accr(ix,iy,iz) = cld2rain_accr(ix,iy,iz) - (cldrat * (cldsink - cldavail))
+                        cld2rain_auto(ix,iy,iz) = cld2rain_auto(ix,iy,iz) - ((1-cldrat) * (cldsink - cldavail))
+                    endif
+
                     rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) + (rd2t*vap2cld(ix,iy,iz)) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
+
                     rrp_tend_total(ix,iy,iz) = rrp_tend_total(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) - rain2vap(ix,iy,iz)
                     thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) + ((lv/(cp*pib(iz))) * ((rd2t*vap2cld(ix,iy,iz)) - rain2vap(ix,iy,iz)))
+                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) - (rd2t*vap2cld(ix,iy,iz)) + rain2vap(ix,iy,iz)
+                    
                 enddo
             enddo
         enddo
