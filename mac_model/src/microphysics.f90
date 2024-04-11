@@ -49,7 +49,7 @@ module microphysics
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
-        real :: cldavail, cldsink, cldrat, ainavail, rainsink
+        real :: cldavail, cldsink, cldrat, rainavail
 
         do iz = 1, nz
             do iy=1,ny
@@ -58,7 +58,7 @@ module microphysics
 
                     ! check that the amount being removed through accretion and autoconversion is less than the existing amount of cloud
                     
-                    cldavail = (rcp(ix,iy,iz,1)*rd2t) 
+                    cldavail = rcp(ix,iy,iz,1)*rd2t
                     cldsink = cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) 
 
                     if (cldsink > cldavail) then
@@ -69,6 +69,13 @@ module microphysics
                     endif
 
                     rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) + (rd2t*vap2cld(ix,iy,iz)) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
+
+
+                    rainavail = rrp(ix,iy,iz,1)*rd2t
+
+                    if (rain2vap(ix,iy,iz) > rainavail) then
+                        rain2vap(ix,iy,iz) = rainavail
+                    endif
 
                     rrp_tend_total(ix,iy,iz) = rrp_tend_total(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) - rain2vap(ix,iy,iz)
                     thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) + ((lv/(cp*pib(iz))) * ((rd2t*vap2cld(ix,iy,iz)) - rain2vap(ix,iy,iz)))
@@ -190,7 +197,7 @@ module microphysics
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
-        real :: fvent,rsat,th,pi
+        real :: fvent,rsat,th,pi,rv
 
         do iz = 1, nz
             do iy=1,ny
@@ -199,11 +206,12 @@ module microphysics
 
                     th = thb(iz)+thp(ix,iy,iz,2)
                     pi = pib(iz)+pip(ix,iy,iz,2)
+                    rv = rvp(ix,iy,iz,2)+rvb(iz)
                     rsat = calc_rsat(pi*th, p00*(pi**(cp/rd)))
 
                     !condition here in case it's supersaturated so we aren't condensing onto raindrops
-                    if ((rvp(ix,iy,iz,2)+rvb(iz)) < rsat) then
-                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-((rvp(ix,iy,iz,2)+rvb(iz))/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
+                    if (rv < rsat) then
+                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rv/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
                                                         / (2.03e4 * (9.58e6/(rhoub(iz)*rsat)))
                     else 
                         rain2vap(ix,iy,iz) = 0.
