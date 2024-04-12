@@ -84,8 +84,11 @@ module microphysics
                     if (cldsink > cldavail) then
                         cldrat = cld2rain_accr(ix,iy,iz)/cldsink
 
-                        cld2rain_accr(ix,iy,iz) = cld2rain_accr(ix,iy,iz) - (cldrat * (cldsink - cldavail))
-                        cld2rain_auto(ix,iy,iz) = cld2rain_auto(ix,iy,iz) - ((1-cldrat) * (cldsink - cldavail))
+                        !cld2rain_accr(ix,iy,iz) = cld2rain_accr(ix,iy,iz) - (cldrat * (cldsink - cldavail))
+                        !cld2rain_auto(ix,iy,iz) = cld2rain_auto(ix,iy,iz) - ((1-cldrat) * (cldsink - cldavail))
+
+                        cld2rain_accr(ix,iy,iz) = cldrat * cldavail
+                        cld2rain_auto(ix,iy,iz) = (1-cldrat) * cldavail
                     endif
 
                     rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
@@ -108,11 +111,10 @@ module microphysics
 
 
     subroutine sat_adjust
-        use model_vars, only: vap2cld, pib,thb,rvb,pip,thp,rvp,rcp          &
-                            ,rvp_tend_total,rcp_tend_total,thp_tend_total
+        use model_vars, only: vap2cld, pib,thb,rvb,pip,thp,rvp,rcp         
         use thermo_functions, only: calc_rsat
         use constants, only: p00, cp, rd,lv
-        use run_constants, only: nx,ny,nz,rdt
+        use run_constants, only: nx,ny,nz,rd2t
 
         implicit none
 
@@ -138,19 +140,23 @@ module microphysics
 
                         ! if microphysics wants to condense more water than is available
                         ! set condensed vapor to be maximum amount of vapor
-                        if (vap2cld(ix,iy,iz) > rvb(iz)+rvp(ix,iy,iz,1)) then
-                            vap2cld(ix,iy,iz) = rvb(iz)+rvp(ix,iy,iz,1)
-                        else if (-vap2cld(ix,iy,iz) > rcp(ix,iy,iz,1)) then
-                            vap2cld(ix,iy,iz) = -rcp(ix,iy,iz,1)
+                        if (vap2cld(ix,iy,iz) > rv) then
+                            vap2cld(ix,iy,iz) = rv
+                        else if (-vap2cld(ix,iy,iz) > rcp(ix,iy,iz,3)) then
+                            vap2cld(ix,iy,iz) = -rcp(ix,iy,iz,3)
                         endif
 
                     else 
                         vap2cld(ix,iy,iz) = 0.
                     endif
 
-                    rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) - rdt*vap2cld(ix,iy,iz)
-                    rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) + rdt*vap2cld(ix,iy,iz)
-                    thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) + ((lv/(cp*pib(iz))) * vap2cld(ix,iy,iz) * rdt)
+                    rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3) + vap2cld(ix,iy,iz)
+                    rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3) - vap2cld(ix,iy,iz)
+                    thp(ix,iy,iz,3) = thp(ix,iy,iz,3) + ((lv/(cp*pib(iz))) * vap2cld(ix,iy,iz))
+
+                    !rvp_tend_total(ix,iy,iz) = rvp_tend_total(ix,iy,iz) - rd2t*vap2cld(ix,iy,iz)
+                    !rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) + rd2t*vap2cld(ix,iy,iz)
+                    !thp_tend_total(ix,iy,iz) = thp_tend_total(ix,iy,iz) + ((lv/(cp*pib(iz))) * vap2cld(ix,iy,iz) * rd2t)
                 enddo
             enddo
         enddo
@@ -184,7 +190,7 @@ module microphysics
     end subroutine calc_autoconversion
 
     subroutine calc_accretion
-        use run_constants, only: nz,nx,ny,accrrate
+        use run_constants, only: nz,nx,ny,accrrate,mincld,minrain
         use model_vars, only:cld2rain_accr,rcp,rrp,rhoub
 
         implicit none
@@ -196,11 +202,15 @@ module microphysics
         do iz = 1, nz
             do iy=1,ny
                 do ix = 1, nx
-                    cld2rain_accr(ix,iy,iz) = accrrate * rhoub(iz) * rcp(ix,iy,iz,2) * rrp(ix,iy,iz,2)**(7/8)
+                    if (rcp(ix,iy,iz,2)>0) then
+                        cld2rain_accr(ix,iy,iz) = accrrate * rhoub(iz) * rcp(ix,iy,iz,2) * (rrp(ix,iy,iz,2)**(7./8.))
 
-                    if (cld2rain_accr(ix,iy,iz)<0.) then
+                        if (cld2rain_accr(ix,iy,iz)<0.) then
+                            cld2rain_accr(ix,iy,iz)=0.
+                        endif
+                    else 
                         cld2rain_accr(ix,iy,iz)=0.
-                    endif
+                    endif 
 
                 enddo
             enddo
@@ -221,7 +231,7 @@ module microphysics
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
-        real :: fvent,rsat,th,pi,rv
+        real :: fvent,rsat,th,pi,rv,pb
 
         do iz = 1, nz
             do iy=1,ny
@@ -232,11 +242,12 @@ module microphysics
                     pi = pib(iz)+pip(ix,iy,iz,2)
                     rv = rvp(ix,iy,iz,2)+rvb(iz)
                     rsat = calc_rsat(pi*th, p00*(pi**(cp/rd)))
+                    pb = p00*pib(iz) **(cp/rd)
 
                     !condition here in case it's supersaturated so we aren't condensing onto raindrops
                     if (rv < rsat) then
-                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rv/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**.525) &
-                                                        / (2.03e4 * (9.58e6/(rhoub(iz)*rsat)))
+                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rv/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**0.525) &
+                                                        / (2.03e4 + (9.58e6/(pb*rsat)))
                     else 
                         rain2vap(ix,iy,iz) = 0.
                     endif
