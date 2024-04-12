@@ -6,7 +6,7 @@ module microphysics
     contains
 
     subroutine check_negs
-        use run_constants, only: minmix,nx,ny,nz
+        use run_constants, only: minmix,nx,ny,nz,mincld,minrain
         use model_vars, only: rvb,rvp,rcp,rrp
 
         implicit none
@@ -15,44 +15,73 @@ module microphysics
         integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
-        real :: vapadd=0,cldadd=0,rainadd=0
+        real :: vpos=0.,cpos=0.,rpos=0.,vneg=0.,cneg=0.,rneg=0.
 
         do iz = 1, nz
             do iy=1,ny
                 do ix = 1, nx
                     if ((rvb(iz)+rvp(ix,iy,iz,3))<0.) then
                         !keep track of how much vapor we have removed so we can add it back in later
-                        vapadd = vapadd + (rvp(ix,iy,iz,3)+rvb(iz))
+                        vneg = vneg + (rvp(ix,iy,iz,3)+rvb(iz))
                         rvp(ix,iy,iz,3) = -rvb(iz)
+                    else
+                        vpos = vpos + (rvp(ix,iy,iz,3)+rvb(iz))
                     endif 
 
                     if (rcp(ix,iy,iz,3) < 0.) then
-                        cldadd = cldadd + rcp(ix,iy,iz,3)
+                        cneg = cneg + rcp(ix,iy,iz,3)
                         rcp(ix,iy,iz,3) = 0.
+                    else
+                        cpos = cpos + rcp(ix,iy,iz,3)
                     endif 
 
                     if (rrp(ix,iy,iz,3) < 0.) then
-                        rainadd = rainadd + rrp(ix,iy,iz,3)
+                        rneg = rneg + rrp(ix,iy,iz,3)
                         rrp(ix,iy,iz,3) = 0.
+                    else
+                        rpos = rpos + rrp(ix,iy,iz,3)
                     endif 
                 enddo
             enddo
         enddo
 
-        ! calculate amount of vapor to add to each grid point
-        vapadd = -vapadd/(nx*ny*nz)
-        cldadd = -cldadd/(nx*ny*nz)
-        rainadd = -rainadd/(nx*ny*nz)
+        if (cpos>mincld) then 
+            do iz = 1, nz
+                do iy=1,ny
+                    do ix = 1, nx
+                        if (rcp(ix,iy,iz,3) >0.) then
+                            rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3) * (1+(cneg/cpos))
+                        endif
+                    enddo
+                enddo
+            enddo
+        endif 
 
         do iz = 1, nz
             do iy=1,ny
                 do ix = 1, nx
-                    rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3)+vapadd
-                    rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3)+cldadd
-                    rrp(ix,iy,iz,3) = rrp(ix,iy,iz,3)+rainadd
+                    if ((rvb(iz)+rvp(ix,iy,iz,3))>0.) then
+                        rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3) * (1+(vneg/vpos))
+                    endif
                 enddo
             enddo
         enddo
+
+        if (rpos>minrain) then 
+            do iz = 1, nz
+                do iy=1,ny
+                    do ix = 1, nx
+                        if (rrp(ix,iy,iz,3)> 0.) then
+                        rrp(ix,iy,iz,3) = rrp(ix,iy,iz,3) * (1+(rneg/rpos)) 
+                    endif
+                    enddo
+                enddo
+            enddo
+        endif 
+            
+                                !rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3)+vpos
+                    !rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3)+cpos
+                    !rrp(ix,iy,iz,3) = rrp(ix,iy,iz,3)+rpos
 
 
     end subroutine check_negs
