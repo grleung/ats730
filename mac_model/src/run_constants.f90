@@ -89,9 +89,9 @@ module run_constants
 
     ! microphysics constants
     real ::  &
-            minmix = 1.e-20         &
-        ,   minrain = 1.e-20        & 
-        ,   mincld  = 1.e-20        &  
+            minmix = 1.e-10         &
+        ,   minrain = 1.e-10        & 
+        ,   mincld  = 1.e-10        &  
         ,   cldautothresh = 1.e-3   &
         ,   autorate = 1.e-3         &
         ,   accrrate = 2.2 

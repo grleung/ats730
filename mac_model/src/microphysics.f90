@@ -78,12 +78,6 @@ module microphysics
                 enddo
             enddo
         endif 
-            
-                                !rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3)+vpos
-                    !rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3)+cpos
-                    !rrp(ix,iy,iz,3) = rrp(ix,iy,iz,3)+rpos
-
-
     end subroutine check_negs
 
     subroutine add_tend_micro
@@ -106,26 +100,46 @@ module microphysics
                     ! not yet balanced
 
                     ! check that the amount being removed through accretion and autoconversion is less than the existing amount of cloud
+                    !print*,rcp_tend_total(ix,iy,iz),rrp_tend_total(ix,iy,iz)
                     
-                    cldavail = (rcp(ix,iy,iz,1)*rd2t) !+ rcp_tend_total(ix,iy,iz)
+                    cldavail = (rcp(ix,iy,iz,1)*rd2t) + rcp_tend_total(ix,iy,iz)
                     cldsink = cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) 
+                    
+                    if (cldavail>0) then
+                        if (cldsink > cldavail) then
+                            cldrat = cld2rain_accr(ix,iy,iz)/cldsink
 
-                    if (cldsink > cldavail) then
-                        cldrat = cld2rain_accr(ix,iy,iz)/cldsink
+                            cld2rain_accr(ix,iy,iz) = cldrat * cldavail
+                            cld2rain_auto(ix,iy,iz) = (1-cldrat) * cldavail
+                        endif
+                    else
+                        cld2rain_accr(ix,iy,iz) = 0.
+                        cld2rain_auto(ix,iy,iz) = 0.
+                    endif
 
-                        !cld2rain_accr(ix,iy,iz) = cld2rain_accr(ix,iy,iz) - (cldrat * (cldsink - cldavail))
-                        !cld2rain_auto(ix,iy,iz) = cld2rain_auto(ix,iy,iz) - ((1-cldrat) * (cldsink - cldavail))
+                    if (cld2rain_accr(ix,iy,iz)<0) then
+                        cld2rain_accr(ix,iy,iz) = 0.
+                    endif
 
-                        cld2rain_accr(ix,iy,iz) = cldrat * cldavail
-                        cld2rain_auto(ix,iy,iz) = (1-cldrat) * cldavail
+                    if (cld2rain_auto(ix,iy,iz)<0) then
+                        cld2rain_auto(ix,iy,iz) = 0.
                     endif
 
                     rcp_tend_total(ix,iy,iz) = rcp_tend_total(ix,iy,iz) - cld2rain_accr(ix,iy,iz) - cld2rain_auto(ix,iy,iz) 
 
-                    rainavail = rrp(ix,iy,iz,1)*rd2t !+ rrp_tend_total(ix,iy,iz)
+                    rainavail = rrp(ix,iy,iz,1)*rd2t + rrp_tend_total(ix,iy,iz)
 
-                    if (rain2vap(ix,iy,iz) > rainavail) then
-                        rain2vap(ix,iy,iz) = rainavail
+                    if (rainavail>0) then 
+                        if (rain2vap(ix,iy,iz) > rainavail) then
+                            rain2vap(ix,iy,iz) = rainavail
+                        endif
+                    else
+                        rain2vap(ix,iy,iz) = 0.
+                    endif
+                    
+                    !more checks on negative values -- not sure why this should be needed but if not some of the rain2vap becomes negative sometimes? maybe floating pt math
+                    if (rain2vap(ix,iy,iz)<0) then
+                        rain2vap(ix,iy,iz) = 0.
                     endif
 
                     rrp_tend_total(ix,iy,iz) = rrp_tend_total(ix,iy,iz) + cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz)  - rain2vap(ix,iy,iz)

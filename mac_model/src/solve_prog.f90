@@ -67,10 +67,6 @@ module solve_prog
         ! saturation adjustment    
         call sat_adjust  
         print*,'sat adjusted'
-
-        ! apply the tendencies calculated above
-        !call apply_tends
-        !print*,'apply tends'
         
         ! check water mixing ratios are non negative after applying all tendencies
         call check_negs
@@ -319,10 +315,11 @@ module solve_prog
                     w_pgf(ix,iy,iz) = -cp * rdz * 0.25 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iy,iz,2)-pip(ix,iy,iz-1,2))
 
                     ! term in w-tendency equation: buoyancy term 
-                    w_buoy(ix,iy,iz) = g *((thp(ix,iy,iz,2)+thp(ix,iy,iz-1,2))/(thb(iz)+thb(iz-1))      &   
-                                              + (0.61 * 0.5 * (rvp(ix,iy,iz,2)+rvp(ix,iy,iz-1,2)))                                &
-                                              - (0.5 * ((rcp(ix,iy,iz,2)+rcp(ix,iy,iz-1,2)) + (rrp(ix,iy,iz,2)+rrp(ix,iy,iz-1,2)))))
-
+                    w_buoy(ix,iy,iz) = g*(((thp(ix,iy,iz,2)+thp(ix,iy,iz-1,2))/(thb(iz)+thb(iz-1)))                         &
+                                            + 0.61*0.5*(rvp(ix,iy,iz,2)+rvp(ix,iy,iz-1,2))                                  &
+                                            - 0.5*((rcp(ix,iy,iz,2)+rcp(ix,iy,iz-1,2))+(rrp(ix,iy,iz,2)+rrp(ix,iy,iz-1,2))) &
+                                            )
+                    
                     ! term in w-tendency equation: x diffusion
                     w_xdiff(ix,iy,iz) = kmx * rdx * rdx * (wp(ix-1,iy,iz,1) - (2*wp(ix,iy,iz,1)) + wp(ix+1,iy,iz,1))
 
