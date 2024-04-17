@@ -6,7 +6,7 @@ module solve_prog
     contains
     
     subroutine tendencies
-        use microphysics, only: check_negs, add_tend_micro,sat_adjust,calc_accretion,calc_autoconversion,calc_rainevap
+        use microphysics, only: check_negs, apply_micro_tends,sat_adjust,calc_accretion,calc_autoconversion,calc_rainevap
         implicit none
 
         ! first zero out tendencies 
@@ -20,10 +20,10 @@ module solve_prog
         print*,'v'
         call calc_tend_w
         print*,'w'
-        call calc_tend_thp
-        print*,'th'
         call calc_tend_pip
         print*,'pi'
+        call calc_tend_thp
+        print*,'th'
         call calc_tend_rvp
         print*,'rv'
         call calc_tend_rcp
@@ -31,6 +31,10 @@ module solve_prog
         call calc_tend_rrp
         print*,'rr'
         print*,'done tends'
+        
+        ! temporarily apply the tendencies calculated above
+        call apply_tends
+        print*,'apply tends'
 
         ! check water mixing ratios are non negative before doing microphysics tendencies
         call check_negs
@@ -44,22 +48,10 @@ module solve_prog
         call calc_rainevap
         print*,'rainevap'
         
-        ! temporarily apply the tendencies calculated above
-        call apply_tends
-        print*,'apply tends'
-
-        ! check water mixing ratios are non negative after applying all tendencies
-        call check_negs
-        print*,'check neg'
-        
         ! then update rvp,rcp,rrp with microphysics conversions
-        call add_tend_micro
+        call apply_micro_tends
         print*,'add tend micro'
         
-        ! apply the tendencies calculated above
-        call apply_tends
-        print*,'apply tends'
-
         ! check water mixing ratios are non negative after applying all tendencies
         call check_negs
         print*,'check neg'
@@ -70,7 +62,7 @@ module solve_prog
         
         ! check water mixing ratios are non negative after applying all tendencies
         call check_negs
-        print*,'check neg'
+        !print*,'check neg'
         
     end subroutine tendencies
 
@@ -295,7 +287,7 @@ module solve_prog
         ! loop over real/unique points
         do ix = 2, nx-1
             do iy = 2, ny-1
-                do iz = 2, nz-1
+                do iz = 3, nz-1
                     ! term in w-tendency equation: x advection term 
                     w_xadv(ix,iy,iz) = - rdx                                                                              &
                                         * 0.25 * (((up(ix+1,iy,iz,2)+up(ix+1,iy,iz-1,2))*(wp(ix+1,iy,iz,2)+wp(ix,iy,iz,2)))         &                                        
@@ -373,7 +365,7 @@ module solve_prog
                                         -         (rhowb(iz)   *    wp(ix,iy,iz,2)     * (thp(ix,iy,iz,2)    +   thp(ix,iy,iz-1,2))))
 
                     ! term in thp-tendency equation: mean state advection
-                    thp_meanadv(ix,iy,iz) = -0.5 * (1/rhoub(iz)) *   rdz                                     &
+                    thp_meanadv(ix,iy,iz) = -0.5 * (rdz/rhoub(iz))                                     &
                                                 * ((rhowb(iz) * wp(ix,iy,iz,2) * (thb(iz)-thb(iz-1)))      &
                                                 +  (rhowb(iz+1) * wp(ix,iy,iz+1,2) * (thb(iz+1)-thb(iz))))
 

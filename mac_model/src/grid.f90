@@ -77,7 +77,7 @@ module grid
         enddo
 
         ! set up horizontal location of v grid, which is staggered with the scalar grid
-        ymn(1) = -dyn(1) !this is a fictitious point that is one grid spacing to the west of the boundary (may change for PBC)
+        ymn(1) = -dyn(1) !this is a fictitious point that is one grid spacing to the S of the boundary (may change for PBC)
         ymn(2) = 0.
         do iy = 3,ny
             ymn(iy) = ymn(iy-1)+dyn(iy)

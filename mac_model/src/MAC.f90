@@ -15,6 +15,7 @@ program MAC
     use solve_prog, only: tendencies
     use boundaries, only: enforce_bounds_x, enforce_bounds_y,enforce_bounds_z
     use timestep, only: step_time
+    use cfl, only: check_cfl
 
     implicit none
 
@@ -67,6 +68,9 @@ program MAC
             call write_current_state
             print*, "timestep written"
         endif
+
+        call check_cfl
+        print*,'cfl ok'
     
         print*,it
     enddo
