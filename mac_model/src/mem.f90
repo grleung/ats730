@@ -1,5 +1,5 @@
 module mem
-    use run_constants, only: nz,nx
+    use run_constants, only: nz,nx,nab,ndb,bin_flag
     use model_vars
     
     implicit none
@@ -43,15 +43,29 @@ module mem
         allocate (pip(nx,nz,3))
         allocate (up(nx,nz,3))
         allocate (wp(nx,nz,3))
-        allocate (rcp(nx,nz,3))
-        allocate (rrp(nx,nz,3))
 
         allocate (pp(nx,nz))
         allocate (thvp(nx,nz))
-        allocate (vap2cld(nx,nz))
-        allocate (rain2vap(nx,nz))
-        allocate (cld2rain_accr(nx,nz))
-        allocate (cld2rain_auto(nx,nz))
+
+
+        if (bin_flag) then
+            allocate(na(nx,nz,nab,3))
+            allocate(ma(nx,nz,nab,3))
+            allocate(nc(nx,nz,nab,ndb,3))
+            allocate(mc(nx,nz,nab,ndb,3))
+            allocate(nac(nx,nz,nab,ndb,3))
+            allocate(mac(nx,nz,nab,ndb,3))
+            allocate(nr(nx,nz,nab,ndb,3))
+            allocate(mr(nx,nz,nab,ndb,3))
+            allocate(mar(nx,nz,nab,ndb,3))
+        else
+            allocate (rcp(nx,nz,3))
+            allocate (rrp(nx,nz,3))
+            allocate (vap2cld(nx,nz))
+            allocate (rain2vap(nx,nz))
+            allocate (cld2rain_accr(nx,nz))
+            allocate (cld2rain_auto(nx,nz))
+        endif 
 
         ! tendency arrays
         allocate (u_xadv(nx,nz))
@@ -79,22 +93,34 @@ module mem
         allocate (pip_zdiff(nx,nz))
         allocate (pip_tend_total(nx,nz))
 
-        allocate (rvp_xadv(nx,nz))
-        allocate (rvp_zadv(nx,nz))
-        allocate (rvp_meanadv(nx,nz))
-        allocate (rvp_xdiff(nx,nz))
-        allocate (rvp_zdiff(nx,nz))
-        allocate (rvp_tend_total(nx,nz))
-        allocate (rcp_xadv(nx,nz))
-        allocate (rcp_zadv(nx,nz))
-        allocate (rcp_xdiff(nx,nz))
-        allocate (rcp_zdiff(nx,nz))
-        allocate (rcp_tend_total(nx,nz))
-        allocate (rrp_xadv(nx,nz))
-        allocate (rrp_zadv(nx,nz))
-        allocate (rrp_xdiff(nx,nz))
-        allocate (rrp_zdiff(nx,nz))
-        allocate (rrp_tend_total(nx,nz))
+        if (bin_flag) then
+            allocate(na_tend_total(nx,nz,nab))
+            allocate(ma_tend_total(nx,nz,nab))
+            allocate(nc_tend_total(nx,nz,nab,ndb))
+            allocate(mc_tend_total(nx,nz,nab,ndb))
+            allocate(nac_tend_total(nx,nz,nab,ndb))
+            allocate(mac_tend_total(nx,nz,nab,ndb))
+            allocate(nr_tend_total(nx,nz,nab,ndb))
+            allocate(mr_tend_total(nx,nz,nab,ndb))
+            allocate(mar_tend_total(nx,nz,nab,ndb))
+        else
+            allocate (rvp_xadv(nx,nz))
+            allocate (rvp_zadv(nx,nz))
+            allocate (rvp_meanadv(nx,nz))
+            allocate (rvp_xdiff(nx,nz))
+            allocate (rvp_zdiff(nx,nz))
+            allocate (rvp_tend_total(nx,nz))
+            allocate (rcp_xadv(nx,nz))
+            allocate (rcp_zadv(nx,nz))
+            allocate (rcp_xdiff(nx,nz))
+            allocate (rcp_zdiff(nx,nz))
+            allocate (rcp_tend_total(nx,nz))
+            allocate (rrp_xadv(nx,nz))
+            allocate (rrp_zadv(nx,nz))
+            allocate (rrp_xdiff(nx,nz))
+            allocate (rrp_zdiff(nx,nz))
+            allocate (rrp_tend_total(nx,nz))
+        endif
 
     end subroutine allocate_mem
 
@@ -135,14 +161,27 @@ module mem
         deallocate (pip(nx,nz,3))
         deallocate (up(nx,nz,3))
         deallocate (wp(nx,nz,3))
-        deallocate (rcp(nx,nz,3))
-        deallocate (rrp(nx,nz,3))
         deallocate (pp(nx,nz))
         deallocate (thvp(nx,nz))
-        deallocate (vap2cld(nx,nz))
-        deallocate (rain2vap(nx,nz))
-        deallocate (cld2rain_accr(nx,nz))
-        deallocate (cld2rain_auto(nx,nz))
+
+        if (bin_flag) then
+            deallocate(na(nx,nz,nab,3))
+            deallocate(ma(nx,nz,nab,3))
+            deallocate(nc(nx,nz,nab,ndb,3))
+            deallocate(mc(nx,nz,nab,ndb,3))
+            deallocate(nac(nx,nz,nab,ndb,3))
+            deallocate(mac(nx,nz,nab,ndb,3))
+            deallocate(nr(nx,nz,nab,ndb,3))
+            deallocate(mr(nx,nz,nab,ndb,3))
+            deallocate(mar(nx,nz,nab,ndb,3))
+        else
+            deallocate (rcp(nx,nz,3))
+            deallocate (rrp(nx,nz,3))
+            deallocate (vap2cld(nx,nz))
+            deallocate (rain2vap(nx,nz))
+            deallocate (cld2rain_accr(nx,nz))
+            deallocate (cld2rain_auto(nx,nz))
+        endif 
 
         ! tendency arrays
         deallocate (u_xadv(nx,nz))
@@ -170,22 +209,34 @@ module mem
         deallocate (pip_zdiff(nx,nz))
         deallocate (pip_tend_total(nx,nz))
         
-        deallocate (rvp_xadv(nx,nz))
-        deallocate (rvp_zadv(nx,nz))
-        deallocate (rvp_meanadv(nx,nz))
-        deallocate (rvp_xdiff(nx,nz))
-        deallocate (rvp_zdiff(nx,nz))
-        deallocate (rvp_tend_total(nx,nz))
-        deallocate (rcp_xadv(nx,nz))
-        deallocate (rcp_zadv(nx,nz))
-        deallocate (rcp_xdiff(nx,nz))
-        deallocate (rcp_zdiff(nx,nz))
-        deallocate (rcp_tend_total(nx,nz))
-        deallocate (rrp_xadv(nx,nz))
-        deallocate (rrp_zadv(nx,nz))
-        deallocate (rrp_xdiff(nx,nz))
-        deallocate (rrp_zdiff(nx,nz))
-        deallocate (rrp_tend_total(nx,nz))
+        if (bin_flag) then
+            deallocate(na_tend_total(nx,nz,nab))
+            deallocate(ma_tend_total(nx,nz,nab))
+            deallocate(nc_tend_total(nx,nz,nab,ndb))
+            deallocate(mc_tend_total(nx,nz,nab,ndb))
+            deallocate(nac_tend_total(nx,nz,nab,ndb))
+            deallocate(mac_tend_total(nx,nz,nab,ndb))
+            deallocate(nr_tend_total(nx,nz,nab,ndb))
+            deallocate(mr_tend_total(nx,nz,nab,ndb))
+            deallocate(mar_tend_total(nx,nz,nab,ndb))
+        else
+            deallocate (rvp_xadv(nx,nz))
+            deallocate (rvp_zadv(nx,nz))
+            deallocate (rvp_meanadv(nx,nz))
+            deallocate (rvp_xdiff(nx,nz))
+            deallocate (rvp_zdiff(nx,nz))
+            deallocate (rvp_tend_total(nx,nz))
+            deallocate (rcp_xadv(nx,nz))
+            deallocate (rcp_zadv(nx,nz))
+            deallocate (rcp_xdiff(nx,nz))
+            deallocate (rcp_zdiff(nx,nz))
+            deallocate (rcp_tend_total(nx,nz))
+            deallocate (rrp_xadv(nx,nz))
+            deallocate (rrp_zadv(nx,nz))
+            deallocate (rrp_xdiff(nx,nz))
+            deallocate (rrp_zdiff(nx,nz))
+            deallocate (rrp_tend_total(nx,nz))
+        endif
 
     end subroutine deallocate_mem
 

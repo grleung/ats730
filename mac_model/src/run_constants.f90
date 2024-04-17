@@ -89,5 +89,13 @@ module run_constants
     ,   cldautothresh = 1.e-3   &
     ,   autorate = 1.e-3         &
     ,   accrrate = 2.2 
-        
+
+    ! bin microphysics
+    logical :: &
+        bin_flag = .True.    ! flag to use bin microphysics or not
+
+    integer :: &
+        nab = 20      &   ! number of aerosol bins
+    ,   ndb = 20         ! number of drop/droplet bins
+
 end module run_constants

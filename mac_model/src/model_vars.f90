@@ -74,6 +74,29 @@ module model_vars
             ,rcp_xadv,rcp_zadv,rcp_xdiff,rcp_zdiff,rcp_tend_total                &
             ,rrp_xadv,rrp_zadv,rrp_xdiff,rrp_zdiff,rrp_tend_total                       
 
+    ! aerosol bin microphysics variables (array in nx,nz,na,3 time dims)
+    real, allocatable, dimension(:,:,:,:) :: &
+            na, ma   ! aerosol number and mass
+    
+    ! water bin microphysics variables (array in nx,nz,na,nd,3 time dims)
+    real, allocatable, dimension(:,:,:,:,:) :: &
+            nc, mc   & ! cloud number and mass
+        ,   nac, mac & ! aerosol in cloud number and mass
+        ,   nr, mr   & ! rain number and mass
+        ,   mar        ! aerosol in rain mass only
+
+    ! aerosol bin microphysics variables (array in nx,nz,na,3 time dims)
+    real, allocatable, dimension(:,:,:) :: &
+            na_tend_total, ma_tend_total   ! aerosol number and mass
+    
+    ! water bin microphysics variables (array in nx,nz,na,nd,3 time dims)
+    real, allocatable, dimension(:,:,:,:) :: &
+            nc_tend_total, mc_tend_total   & ! cloud number and mass
+        ,   nac_tend_total, mac_tend_total & ! aerosol in cloud number and mass
+        ,   nr_tend_total, mr_tend_total   & ! rain number and mass
+        ,   mar_tend_total        ! aerosol in rain mass only
+    
+    
     contains
 
 end module model_vars

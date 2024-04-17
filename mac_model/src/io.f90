@@ -12,7 +12,7 @@ module io
                                 ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq    &
                                 ,wk_flag,dn_flag                                                                &
                                 ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs                                     &
-                                ,kmx,kmz,khx,khz,cldautothresh,autorate,accrrate,Nint   
+                                ,kmx,kmz,khx,khz,cldautothresh,autorate,accrrate,nint                           
 
         implicit none 
 
@@ -23,7 +23,7 @@ module io
         namelist /parcel/ rvpsurf
         namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
         namelist /diff/ kmx,kmz,khx,khz
-        namelist /micro/ cldautothresh,autorate,accrrate,Nint
+        namelist /micro/ cldautothresh,autorate,accrrate,nint
         
         open(unit=1, file='Namelist',action='read')
 
