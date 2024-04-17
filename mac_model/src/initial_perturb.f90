@@ -9,8 +9,9 @@ module initial_perturb
     subroutine init_perturb()
         use constants, only: g,cp,trigpi
         use run_constants, only: nz, nx, dz0,radx,radz,amp,zcnt,xcnt, pbc_x, pbc_z,pert_wind
-        use model_vars, only:zsn, xsn,thb, thvb,rhoub,thp,pip,pp,up,wp
+        use model_vars, only:zsn, xsn,thb,rvb,thvb,rhoub,thp,pip,pp,up,wp,rvp,rcp,rrp,thvp
         use boundaries, only: enforce_bounds_x,enforce_bounds_z
+        use thermo_functions, only:calc_thv
 
         implicit none
 
@@ -44,6 +45,16 @@ module initial_perturb
             enddo 
         enddo 
 
+        do ix = 2,nx-1
+            do iz = 2,nz-1
+                rvp(ix,iz,2) = 0.
+                rcp(ix,iz,2) = 0.
+                rrp(ix,iz,2) = 0.
+                up(ix,iz,2) = 0.
+                wp(ix,iz,2) = 0.
+            enddo
+        enddo
+
         call enforce_bounds_z
         call enforce_bounds_x
 
@@ -55,6 +66,9 @@ module initial_perturb
                 pip(ix,iz,1) = pip(ix,iz,2)
                 up(ix,iz,1) = up(ix,iz,2)
                 wp(ix,iz,1) = wp(ix,iz,2)
+                rvp(ix,iz,1) = rvp(ix,iz,2)
+                rcp(ix,iz,1) = rcp(ix,iz,2)
+                rrp(ix,iz,1) = rrp(ix,iz,2)
             enddo
         enddo
         
@@ -62,6 +76,7 @@ module initial_perturb
         do iz = 1,nz
             do ix = 1,nx
                 pp(ix,iz) = pip(ix,iz,2)*cp*rhoub(iz)*thvb(iz)
+                thvp(ix,iz) = calc_thv(thb(iz)+thp(ix,iz,2),rvb(iz)+rvp(ix,iz,2))
             enddo
         enddo
 

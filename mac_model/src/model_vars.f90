@@ -52,17 +52,27 @@ module model_vars
         ,   rvp         & !  perturbation water vapor mixing ratio ("r" for ratio, "v" for vapor) [kg/kg]
         ,   pip         & !  perturbation non-dimensional pressure on u-grid [no units]
         ,   up          & !  horizontal velocity [m/s]
-        ,   wp            !  vertical velocity [m/s]
+        ,   wp          & !  vertical velocity [m/s]
+        ,   rcp         & !  cloud water mixing ratio ('r for ratio, 'c' for cloud), tehcnically a perturbation but from base state 0 [kg/kg]
+        ,   rrp           !  rain water mixing ratio ('r for ratio, 'r' for rain), tehcnically a perturbation but from base state 0 [kg/kg]
 
      real, allocatable, dimension(:,:) :: &
-           pp         !  perturbation  pressure on u-grid [no units]
+           pp               & !  perturbation pressure on u-grid [no units]
+        ,  thvp             & !  perturbation virtual potential temperature [K]
+        ,  vap2cld          & !  mixing ratio of condensed cloud water this time step (term C in HW9 equations) [kg/kg] -- rvp to rcp (or vice versa)
+        ,  rain2vap         & !  evaporation rate of rain water (term E in HW9 equations) [kg/kg/s] -- rrp to rvp
+        ,  cld2rain_accr    & !  accretion rate of cloud water to rain (term B in HW9 equations) [kg/kg/s] -- rcp to rrp 
+        ,  cld2rain_auto      !  autoconversion rate of cloud water to rain (term A in HW9 equations) [kg/kg/s] -- rcp to rrp
 
     ! tendency  variables (array in nx,nz)
     real, allocatable, dimension(:,:)  :: &
-            u_tend1, u_tend2, u_tend3,u_tend4, u_tend5, u_tend_total         &
-        ,   w_tend1, w_tend2, w_tend3, w_tend4, w_tend5, w_tend6,w_tend_total         &
-        ,   thp_tend1,thp_tend2,thp_tend3,thp_tend4,thp_tend5,thp_tend_total    &
-        ,   pip_tend1,pip_tend2,pip_tend3,pip_tend4,pip_tend_total
+            u_xadv, u_zadv, u_pgf,u_xdiff, u_zdiff, u_tend_total                                    &
+        ,   w_xadv, w_zadv, w_pgf, w_buoy, w_xdiff, w_zdiff,w_tend_total                            &
+        ,   thp_xadv,thp_zadv,thp_meanadv,thp_pgf,thp_xdiff,thp_zdiff,thp_tend_total                &
+        ,   pip_xadv,pip_zadv,pip_xdiff,pip_zdiff,pip_tend_total                                    &
+            ,rvp_xadv,rvp_zadv,rvp_meanadv,rvp_xdiff,rvp_zdiff,rvp_tend_total    &
+            ,rcp_xadv,rcp_zadv,rcp_xdiff,rcp_zdiff,rcp_tend_total                &
+            ,rrp_xadv,rrp_zadv,rrp_xdiff,rrp_zdiff,rrp_tend_total                       
 
     contains
 

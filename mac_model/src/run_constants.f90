@@ -11,7 +11,7 @@ module run_constants
         ,    nx      =    29     ! number of horizontal (x) points
 
     real :: & ! grid parameters
-            dz0       =   700.    &  ! depth of first vertical level [m]
+            dz0       =   1000.    &  ! depth of first vertical level [m]
         ,   dzrat     =   1.      &  ! ratio of subsequent vertical levels, for now keep all constant
         ,   dx        =   1000.   &  ! width of horizontal grid spacing [m]
         ,   dt        =   3.      &  ! timestep [s]
@@ -70,5 +70,23 @@ module run_constants
         ,   kmz =   1.0     &   ! momentum exchange coefficient in z-dimension [m2/s]
         ,   khx =   1.0     &   ! scalar exchange coefficient in x-dimension [m2/s]
         ,   khz =   1.0         ! scalar exchange coefficient in z-dimension [m2/s]
+        
+
+    ! extra grid constants
+    real :: & 
+            rdx =   1.e-3   &   
+        ,   rdz =   1.e-3   &
+        ,   d2t =   6.      &
+        ,   rdt =   1/3.    &
+        ,   rd2t=   1/6.    
+
+    ! microphysics constants
+    real ::  &
+        minmix = 1.e-10         &
+    ,   minrain = 1.e-10        & 
+    ,   mincld  = 1.e-10        &  
+    ,   cldautothresh = 1.e-3   &
+    ,   autorate = 1.e-3         &
+    ,   accrrate = 2.2 
         
 end module run_constants

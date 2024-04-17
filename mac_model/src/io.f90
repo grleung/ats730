@@ -94,11 +94,9 @@ module io
 
     subroutine write_current_state
         use run_constants, only: nz, var_out, var_outpath
-        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,pp &
-                            ,thp_tend_total,thp_tend1,thp_tend2,thp_tend3 &
-                            ,pip_tend_total,pip_tend1,pip_tend2 &
-                            ,u_tend_total,u_tend1,u_tend2,u_tend3 &
-                            ,w_tend_total, w_tend1,w_tend2,w_tend3,w_tend4
+        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,rvp,rcp,rrp          &
+                                ,w_xadv,w_zadv,w_buoy,w_pgf,w_tend_total    &
+                                ,vap2cld,rain2vap,cld2rain_accr,cld2rain_auto
 
         implicit none
         
@@ -106,6 +104,7 @@ module io
 
         character(len=6) :: timechar
         write(timechar, '(i6)')it
+
 
         if (var_out) then
             ! open the output file we want to write to
@@ -117,127 +116,86 @@ module io
             write(1,*) 'coord xsn'
             write(1, '(1x, *(g0, :, ", "))') xsn(:)
 
-            write(1,*) 'var THP_pres'
+            write(1,*) 'var THP'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') thp(:,iz,2)
             enddo
 
-            write(1,*) 'var PIP_pres'
+            write(1,*) 'var PIP'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') pip(:,iz,2)
             enddo
 
-            write(1,*) 'var UP_pres'
+            write(1,*) 'var UP'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') up(:,iz,2)
             enddo
 
-            write(1,*) 'var WP_pres'
+            write(1,*) 'var WP'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') wp(:,iz,2)
             enddo
-
-            write(1,*) 'var THP_past'
+            
+            write(1,*) 'var RVP'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp(:,iz,1)
+                write(1, '(1x, *(g0, :, ", "))') rvp(:,iz,2)
             enddo
 
-            write(1,*) 'var PIP_past'
+            write(1,*) 'var RCP'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip(:,iz,1)
+                write(1, '(1x, *(g0, :, ", "))') rcp(:,iz,2)
             enddo
 
-            write(1,*) 'var UP_past'
+            write(1,*) 'var RRP'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') up(:,iz,1)
+                write(1, '(1x, *(g0, :, ", "))') rrp(:,iz,2)
+            enddo
+            
+            write(1,*) 'var WP_XADV'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_xadv(:,iz)
             enddo
 
-            write(1,*) 'var WP_past'
+            write(1,*) 'var WP_ZADV'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') wp(:,iz,1)
+                write(1, '(1x, *(g0, :, ", "))') w_zadv(:,iz)
             enddo
 
-
-            write(1,*) 'var THP_TEND_pres'
+            write(1,*) 'var WP_BUOY'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend_total(:,iz)
+                write(1, '(1x, *(g0, :, ", "))') w_buoy(:,iz)
             enddo
 
-            write(1,*) 'var THP_TEND1_pres'
+            write(1,*) 'var WP_PGF'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend1(:,iz)
+                write(1, '(1x, *(g0, :, ", "))') w_pgf(:,iz)
             enddo
 
-            write(1,*) 'var THP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend2(:,iz)
-            enddo
-
-            write(1,*) 'var THP_TEND3_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') thp_tend3(:,iz)
-            enddo
-
-            write(1,*) 'var PIP_TEND_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip_tend_total(:,iz)
-            enddo
-
-            write(1,*) 'var PIP_TEND1_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip_tend1(:,iz)
-            enddo
-
-            write(1,*) 'var PIP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') pip_tend2(:,iz)
-            enddo
-
-            write(1,*) 'var UP_TEND_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend_total(:,iz)
-            enddo
-
-            write(1,*) 'var UP_TEND1_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend1(:,iz)
-            enddo
-
-            write(1,*) 'var UP_TEND2_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend2(:,iz)
-            enddo
-
-            write(1,*) 'var UP_TEND3_pres'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') u_tend3(:,iz)
-            enddo
-
-            write(1,*) 'var WP_TEND_pres'
+            write(1,*) 'var WP_TEND'
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iz)
             enddo
 
-            write(1,*) 'var WP_TEND1_pres'
+            write(1,*) 'var VAP2CLD'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend1(:,iz)
+                write(1, '(1x, *(g0, :, ", "))') vap2cld(:,iz)
             enddo
 
-            write(1,*) 'var WP_TEND2_pres'
+            write(1,*) 'var RAIN2VAP'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend2(:,iz)
+                write(1, '(1x, *(g0, :, ", "))') rain2vap(:,iz)
             enddo
 
-            write(1,*) 'var WP_TEND3_pres'
+            write(1,*) 'var CLD2RAIN_AUTO'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend3(:,iz)
+                write(1, '(1x, *(g0, :, ", "))') cld2rain_auto(:,iz)
             enddo
 
-            write(1,*) 'var WP_TEND4_pres'
+            write(1,*) 'var CLD2RAIN_ACCR'
             do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend4(:,iz)
+                write(1, '(1x, *(g0, :, ", "))') cld2rain_accr(:,iz)
             enddo
-            
+
             close(1)
         endif 
 

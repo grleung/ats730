@@ -19,8 +19,7 @@ module base_state
         integer :: ix ! counter for x-coordinate
 
         ! initally, set the base state to be horizontally homogenous
-        ! so we just need to loop over all the x values inside the z-loops        
-
+        ! so we just need to loop over all the x values inside the z-loops     
         if (wk_flag==.True.) then
             ! use WK sounding
             
@@ -38,7 +37,7 @@ module base_state
                 else if (zsn(iz) <= 8000.) then
                     rvb(iz) = 2.6E-3 - 6.5E-7*(zsn(iz) - 4000.)
                 else 
-                    rvb(iz) = 0
+                    rvb(iz) = 0.
                 endif 
             enddo ! end z loop
         else if (dn_flag==.True.) then
@@ -48,7 +47,17 @@ module base_state
                 thb(iz) = 300.
 
                 ! set base state water vapor mixing ratio to 0 as given
-                rvb(iz) = 0.
+                !rvb(iz) = 0.
+
+                ! set base state water vapor mixing ratio to given
+                if (zsn(iz) <= 4000.) then
+                    rvb(iz) = 1.61E-2 - 3.375E-6*zsn(iz)
+                else if (zsn(iz) <= 8000.) then
+                    rvb(iz) = 2.6E-3 - 6.5E-7*(zsn(iz) - 4000.)
+                else 
+                    rvb(iz) = 0.
+                endif 
+
             enddo !end z loop
         endif  ! end WK vs. dry neutral flag
 
@@ -95,7 +104,7 @@ module base_state
 
                 ! base state temperature
                 tb(iz) = pib(iz)*thb(iz)
-            
+
                 ! base state saturation vapor mixing ratio 
                 ! using Teten's equation as written in HW1
                 rsatb(iz) = calc_rsat(tb(iz),pb(iz))
@@ -105,7 +114,6 @@ module base_state
                 satfracb(iz) = calc_satfrac(rvb(iz),rsatb(iz))
                 rhb(iz) = satfracb(iz)*100
             endif
-            
             ! base state air density on u/scalar grid
             ! we can calculate this exactly from the ideal gas law as written in HW1
             rhoub(iz) = (p00*pib(iz)**(cv/rd))/(rd*thvb(iz))
@@ -118,6 +126,8 @@ module base_state
             !rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
             rhowb(iz) = (p00*((pib(iz)+pib(iz-1))/2)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
         enddo !end z loop
+
+
 
         !set the fictitious points at model top and bottom for zero gradient
         thvb(nz) = thvb(nz-1)

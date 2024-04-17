@@ -36,7 +36,7 @@ BINDIR = $(MODELDIR)/bin
 # the executable compiled in this bin directory will be named after the .f90 program file
 PROGRAM = MAC
 # EXE: executable name to link into run directory; can be the same as PROGRAM or not
-EXE = /HW7/MAC.exe
+EXE = /HW9/MAC.exe
 
 # type "make" to compile the code (compiles all)
 # after compiling, link the executable (named after the PROGRAM.f90 file) into the run 
@@ -57,16 +57,18 @@ all: $(PROGRAM)
 # additional pre-compiled libraries of can be added.
 
 grid.o: run_constants.o model_vars.o
+thermo_functions.o : constants.o run_constants.o
 mem.o: run_constants.o model_vars.o
 base_state.o: thermo_functions.o constants.o run_constants.o model_vars.o
 cape.o: constants.o run_constants.o model_vars.o thermo_functions.o
 initial_perturb.o : constants.o run_constants.o thermo_functions.o model_vars.o grid.o bounds.o
 io.o: model_vars.o run_constants.o 
 advection.o : run_constants.o model_vars.o
-solve_prog.o : run_constants.o model_vars.o bounds.o
+solve_prog.o : run_constants.o model_vars.o bounds.o microphysics.o
 bounds.o : run_constants.o model_vars.o
 timestep.o : run_constants.o model_vars.o
-$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o initial_perturb.o advection.o solve_prog.o bounds.o timestep.o
+microphysics.o : run_constants.o model_vars.o thermo_functions.o
+$(PROGRAM):  io.o base_state.o grid.o constants.o run_constants.o model_vars.o cape.o thermo_functions.o mem.o initial_perturb.o advection.o solve_prog.o bounds.o timestep.o microphysics.o
 
 # ======================================================================
 # general rules, these should not require modification

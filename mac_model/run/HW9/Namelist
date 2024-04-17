@@ -1,0 +1,46 @@
+$output
+base_out = .True.,
+base_outpath = 'out/base_state.txt',
+parcel_out = .False.,
+parcel_outpath = '',
+var_out = .True.,
+var_outpath = 'out/output_',
+outfreq=10,
+/
+
+$grid
+nz=50,
+nx=83,
+dz0=400.,
+dx=400.,
+pbc_x=.True.,
+pbc_z=.False.,
+dt = 2.,
+endt =1200.,
+/
+
+$base
+wk_flag = .True.,
+dn_flag = .False.,
+/
+
+$parcel
+rvpsurf = 0.,
+/
+
+$pert
+pert_wind = .False.,
+radx=4000.,
+radz=4000.,
+amp=3.,
+zcnt=3000.,
+xcnt=16200.,
+cs = 50.,
+/
+
+$diff
+kmx = 200.,
+kmz = 200.,
+khx = 600.,
+khz = 600.,
+/

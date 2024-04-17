@@ -6,7 +6,7 @@ module boundaries
     contains
     
     subroutine enforce_bounds_x
-        use model_vars, only: thp,pip,pp,up,wp
+        use model_vars, only: thp,pip,pp,up,wp,rvp,rcp,rrp
         use run_constants, only: nz,nx,pbc_x
 
         implicit none
@@ -30,6 +30,15 @@ module boundaries
 
                     wp(1,iz,it) = wp(nx-1,iz,it)
                     wp(nx,iz,it) = wp(2,iz,it)
+
+                    rvp(1,iz,it) = rvp(nx-1,iz,it)
+                    rvp(nx,iz,it) = rvp(2,iz,it)
+
+                    rcp(1,iz,it) = rcp(nx-1,iz,it)
+                    rcp(nx,iz,it) = rcp(2,iz,it)
+
+                    rrp(1,iz,it) = rrp(nx-1,iz,it)
+                    rrp(nx,iz,it) = rrp(2,iz,it)
                 enddo
             enddo ! end loop over z
         else
@@ -47,6 +56,15 @@ module boundaries
 
                     wp(1,iz,it) = wp(2,iz,it)
                     wp(nx,iz,it) = wp(nx-1,iz,it)
+                    
+                    rvp(1,iz,it) = rvp(2,iz,it)
+                    rvp(nx,iz,it) = rvp(nx-1,iz,it)
+
+                    rcp(1,iz,it) = rcp(2,iz,it)
+                    rcp(nx,iz,it) = rcp(nx-1,iz,it)
+
+                    rrp(1,iz,it) = rrp(2,iz,it)
+                    rrp(nx,iz,it) = rrp(nx-1,iz,it)
                 enddo
             enddo ! end loop over z
         endif ! end PBC flag
@@ -54,7 +72,7 @@ module boundaries
     end subroutine enforce_bounds_x
 
     subroutine enforce_bounds_z
-        use model_vars, only: thp,pip,pp,up,wp
+        use model_vars, only: thp,pip,pp,up,wp,rcp,rrp,rvp
         use run_constants, only: nz,nx,pbc_z
 
         implicit none
@@ -78,6 +96,15 @@ module boundaries
 
                     wp(ix,1,it) = wp(ix,nz-1,it)
                     wp(ix,nz,it) = wp(ix,2,it)
+
+                    rvp(ix,1,it) = rvp(ix,nz-1,it)
+                    rvp(ix,nz,it) = rvp(ix,2,it)
+                    
+                    rcp(ix,1,it) = rcp(ix,nz-1,it)
+                    rcp(ix,nz,it) = rcp(ix,2,it)
+                    
+                    rrp(ix,1,it) = rrp(ix,nz-1,it)
+                    rrp(ix,nz,it) = rrp(ix,2,it)
                 enddo
             enddo ! end loop over x
         else
@@ -97,6 +124,15 @@ module boundaries
                     wp(ix,1,it) = 0.
                     wp(ix,2,it) = 0.
                     wp(ix,nz,it) = 0.
+
+                    rvp(ix,1,it) = rvp(ix,2,it)
+                    rvp(ix,nz,it) = rvp(ix,nz-1,it)
+
+                    rcp(ix,1,it) = rcp(ix,2,it)
+                    rcp(ix,nz,it) = rcp(ix,nz-1,it)
+
+                    rrp(ix,1,it) = rrp(ix,2,it)
+                    rrp(ix,nz,it) = rrp(ix,nz-1,it)
                 enddo
             enddo ! end loop over x
         endif ! end PBC flag

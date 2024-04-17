@@ -24,14 +24,18 @@ program MAC
     nt = int(endt/dt)
     
     call allocate_mem
+    print*,'allocated mem'
 
     ! First, let's setup
     call init_grid 
+    print*,'grid init'
     
     ! Call base state initialization
     call init_base_state
+    print*,'base init'
     ! Write output to a simple text file
     call write_base_state
+    print*,'base written'
 
     ! Calculate parcel CAPE
     call calculate_parcel_cape
@@ -39,17 +43,22 @@ program MAC
 
     ! initialize perturbation from base state
     call init_perturb
+    print*,'pert init'
 
     call write_current_state
+    print*,'initial timestep written'
 
     !each timestep
     do it=1,nt
         !call advect
         call enforce_bounds_z
         call enforce_bounds_x
+        print*,'bounds enforced'
         call tendencies 
+        print*,'done tend'
         call enforce_bounds_z
         call enforce_bounds_x
+        print*,'bounds enforced'
         call step_time
 
         if (modulo(it,outfreq)==0) then
