@@ -1,4 +1,9 @@
+/mac_model/run/*
+/mac2d/
+/mac3d
 .vscode
+/mac_model/bin/*.mod
+/mac_model/bin/*.o
 /mac_model/src/*.mod
 */*/*.mod
 */*/*.o
