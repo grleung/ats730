@@ -1,256 +1,223 @@
 module microphysics
-    !This module contains subroutines for doing the microphysical calculations
 
     implicit none
-
+    
     contains
 
-    subroutine check_negs
-        use run_constants, only: minmix,nx,ny,nz,mincld,minrain
-        use model_vars, only: rvb,rvp,rcp,rrp
-
+    subroutine check_micro_zeros
+        use model_vars, only: rvb,rvp, rcp, rrp
+        use run_constants, only: nx, nz
+        
         implicit none
 
-        integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
-        integer :: ix ! counter for x-coordinate
+        integer :: ix, iz
+        do iz=1,nz
+            do ix=1,nx
+                if ((rvp(ix,iz,3)+rvb(iz))<0.) then
+                    rvp(ix,iz,3) = -rvb(iz)
+                endif 
 
+                if (rcp(ix,iz,3)<0.) then
+                    rcp(ix,iz,3) = 0.
+                endif
 
-        do iz = 1, nz
-            do iy=1,ny
-                do ix = 1, nx
-                    if ((rvb(iz)+rvp(ix,iy,iz,3))<0.) then
-                        rvp(ix,iy,iz,3) = -rvb(iz)
-                    endif 
-
-                    if (rcp(ix,iy,iz,3) < 0.) then
-                        rcp(ix,iy,iz,3) = 0.
-                    endif 
-
-                    if (rrp(ix,iy,iz,3) < 0.) then
-                        rrp(ix,iy,iz,3) = 0.
-                    endif 
-                enddo
+                if (rrp(ix,iz,3)<0.) then
+                    rrp(ix,iz,3) = 0.
+                endif
             enddo
         enddo
-    end subroutine check_negs
+        
+    end subroutine check_micro_zeros
 
     subroutine sat_adjust
-        use model_vars, only: vap2cld, pib,thb,rvb,pip,thp,rvp,rcp         
+        use model_vars, only: vap2cld, rvp, rcp, pip, thp             &   
+                        , rvb, thb, pib
+        use run_constants, only: nx, nz
         use thermo_functions, only: calc_rsat
-        use constants, only: p00, cp, rd,lv
-        use run_constants, only: nx,ny,nz,rd2t
+        use constants, only: lv, cp, p00, rd
 
         implicit none
 
-        integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
-        integer :: ix ! counter for x-coordinate
+        integer :: ix,iz
+        real    :: phi,rsat,th,pi,t,p,rv
 
-        real :: rsat,th,pi,phi,rv,t,p
+        do iz=1,nz
+            do ix=1,nx
+                th = thp(ix,iz,3) + thb(iz)
+                pi = pip(ix,iz,3) + pib(iz)
+                t = th*pi
+                p = p00 * pi**(cp/rd)
+                rv = rvp(ix,iz,3) + rvb(iz)
 
-        do iz = 1, nz
-            do iy=1,ny
-                do ix = 1, nx
-                    th = thp(ix,iy,iz,3) + thb(iz)
-                    pi = pip(ix,iy,iz,3) + pib(iz)
-                    t = th*pi
-                    p = p00 * (pi**(cp/rd))
-                    rv = rvp(ix,iy,iz,3) + rvb(iz)
+                rsat = calc_rsat(t, p)
 
-                    rsat = calc_rsat(t, p)
+                phi = rsat * (17.27*237.*lv)/(cp*(t-36.)**2)
+                vap2cld(ix,iz) = (rv - rsat)/(1+phi)
 
-                    phi = rsat * (17.27 * 237. * lv)/(cp*(t-36.)**2)
+                if (vap2cld(ix,iz) > rv) then
+                    vap2cld(ix,iz) = rv
+                else if (-vap2cld(ix,iz) > rcp(ix,iz,3)) then 
+                    vap2cld(ix,iz) = -rcp(ix,iz,3)
+                endif
 
-                    vap2cld(ix,iy,iz) = (rv - rsat)/(1+phi)
-
-                    ! if microphysics wants to condense more vapor than is available
-                    ! set condensed vapor to be maximum amount of vapor
-                    if (vap2cld(ix,iy,iz) > rv) then
-                        vap2cld(ix,iy,iz) = rv
-                    ! if it wants to evaporate more cloud than is available
-                    ! set negative condensed water to be maximum amount of cloud 
-                    else if (-vap2cld(ix,iy,iz) > rcp(ix,iy,iz,3)) then
-                        vap2cld(ix,iy,iz) = -rcp(ix,iy,iz,3)
-                    endif
-
-                    thp(ix,iy,iz,3) = thp(ix,iy,iz,3) + (lv/(cp*pib(iz))) * vap2cld(ix,iy,iz)
-                    rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3) + vap2cld(ix,iy,iz)
-                    rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3) - vap2cld(ix,iy,iz)
-                enddo
+                thp(ix,iz,3) = thp(ix,iz,3) + (lv/(cp*pib(iz)))*vap2cld(ix,iz)
+                rvp(ix,iz,3) = rvp(ix,iz,3) - vap2cld(ix,iz)
+                rcp(ix,iz,3) = rcp(ix,iz,3) + vap2cld(ix,iz)
             enddo
         enddo
-
     end subroutine sat_adjust
 
-    
-    subroutine calc_autoconversion
-        use run_constants, only: nz,nx,ny,cldautothresh,autorate
-        use model_vars, only:cld2rain_auto,rcp
+    subroutine autoconversion
+        use model_vars, only: cld2rain_auto, rcp
+        use run_constants, only: nx, nz,cldautothresh,autorate
 
         implicit none
 
-        integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
-        integer :: ix ! counter for x-coordinate
+        integer :: ix,iz
 
-        
-        do iz = 1, nz
-            do iy=1,ny
-                do ix = 1, nx
-                    if (rcp(ix,iy,iz,2) > cldautothresh) then
-                        cld2rain_auto(ix,iy,iz) = autorate * (rcp(ix,iy,iz,2) - cldautothresh)
-                    else
-                        cld2rain_auto(ix,iy,iz) = 0.
-                    endif
-                enddo
+        do iz=1,nz
+            do ix=1,nx
+                if (rcp(ix,iz,2) > cldautothresh) then
+                    cld2rain_auto(ix,iz) = autorate * (rcp(ix,iz,2) - cldautothresh)
+                else
+                    cld2rain_auto(ix,iz) = 0.
+                endif
             enddo
         enddo
+    end subroutine autoconversion
 
-    end subroutine calc_autoconversion
-
-    subroutine calc_accretion
-        use run_constants, only: nz,nx,ny,accrrate,mincld,minrain
+    subroutine accretion
+        use run_constants, only: nz,nx,accrrate,mincld,minrain
         use model_vars, only:cld2rain_accr,rcp,rrp,rhoub
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
         do iz = 1, nz
-            do iy=1,ny
-                do ix = 1, nx
-                    if (rcp(ix,iy,iz,2)>0.) then
-                        cld2rain_accr(ix,iy,iz) = accrrate * rhoub(iz) * rcp(ix,iy,iz,2) * (rrp(ix,iy,iz,2)**(7./8.))
+            do ix = 1, nx
+                if (rcp(ix,iz,2)>0.) then
+                    cld2rain_accr(ix,iz) = accrrate * rhoub(iz) * rcp(ix,iz,2) * (rrp(ix,iz,2)**(7./8.))
 
-                        if (cld2rain_accr(ix,iy,iz)<0.) then
-                            cld2rain_accr(ix,iy,iz)=0.
-                        endif
-                    else 
-                        cld2rain_accr(ix,iy,iz)=0.
-                        rcp(ix,iy,iz,2) = 0.
-                    endif 
+                    if (cld2rain_accr(ix,iz)<0.) then
+                        cld2rain_accr(ix,iz)=0.
+                    endif
+                else 
+                    cld2rain_accr(ix,iz)=0.
+                    rcp(ix,iz,2) = 0.
+                endif 
 
-                enddo
             enddo
         enddo
+        
+    end subroutine accretion
 
-    end subroutine calc_accretion
 
-    subroutine calc_rainevap
+    subroutine rainevap
         use constants, only: p00, cp, rd
-        use run_constants, only: nz,nx,ny,accrrate
+        use run_constants, only: nz,nx,accrrate
         use model_vars, only:rain2vap,rrp,rvp,rvb,rhoub,thb,thp,pib,pip
-        use micro_functions, only: rain_vent
-        use thermo_functions, only: calc_rsat
+        use thermo_functions, only: calc_rsat,rain_vent
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
         integer :: ix ! counter for x-coordinate
 
         real :: fvent,rsat,th,pi,rv,pb,t,p
 
         do iz = 1, nz
-            do iy=1,ny
-                do ix = 1, nx
-                    fvent = rain_vent(rhoub(iz),rrp(ix,iy,iz,2))
+            do ix = 1, nx
+                fvent = rain_vent(rhoub(iz),rrp(ix,iz,2))
 
-                    th = thp(ix,iy,iz,2)+thb(iz)
-                    pi = pip(ix,iy,iz,2)+pib(iz)
-                    t = th*pi
-                    p = p00 * (pi**(cp/rd))
-                    pb = p00*pib(iz) **(cp/rd)
-                    rv = rvp(ix,iy,iz,2)+rvb(iz)
-                    
-                    rsat = calc_rsat(t, p)
+                th = thp(ix,iz,2) + thb(iz)
+                pi = pip(ix,iz,2) + pib(iz)
+                t = th*pi
+                p = p00 * pi**(cp/rd)
+                pb = p00*pib(iz) **(cp/rd)
+                rv = rvp(ix,iz,2) + rvb(iz)
 
-                    !condition here in case it's supersaturated so we aren't condensing onto raindrops
-                    if (rv < rsat) then
-                        rain2vap(ix,iy,iz) = (1/rhoub(iz)) * ((1-(rv/rsat))*fvent*(rhoub(iz)*rrp(ix,iy,iz,2))**0.525) &
-                                                        / (2.03e4 + (9.58e6/(pb*rsat)))
-                    else 
-                        rain2vap(ix,iy,iz) = 0.
-                    endif
-                
-                enddo
+                rsat = calc_rsat(t, p)
+
+                !condition here in case it's supersaturated so we aren't condensing onto raindrops
+                if (rv < rsat) then
+                    rain2vap(ix,iz) = (1/rhoub(iz)) * ((1-(rv/rsat))*fvent*(rhoub(iz)*rrp(ix,iz,2))**0.525) &
+                                                    / (2.03e4 + (9.58e6/(pb*rsat)))
+                else 
+                    rain2vap(ix,iz) = 0.
+                endif
+
             enddo
         enddo
+    end subroutine rainevap
 
-    end subroutine calc_rainevap
-    
     subroutine apply_micro_tends
-        use model_vars, only: rcp_tend_total, rrp_tend_total,pib &
-                            , rain2vap,cld2rain_accr,cld2rain_auto,vap2cld, rcp, rrp,rvp,rvb,thp
-        use run_constants, only: nx,ny,nz,rd2t,rdt,dt
-        use constants, only: cp, lv
+        use model_vars, only: cld2rain_auto, cld2rain_accr, rain2vap, rcp, rrp, rvp, thp &
+                        ,pib,rvp_tend_total,rcp_tend_total,rrp_tend_total,thp_tend_total
+        use run_constants, only: nx, nz,rd2t, d2t,dt
+        use constants, only: lv, cp
 
         implicit none
 
-        integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
-        integer :: ix ! counter for x-coordinate
+        integer :: ix,iz
 
         real :: cldavail, cldsink, cldrat, rainavail,cldex,rainex
 
         do iz = 1, nz
-            do iy=1,ny
-                do ix = 1, nx
-                    ! check that the amount being removed through accretion and autoconversion is less than the existing amount of cloud
-                    !print*,rcp_tend_total(ix,iy,iz),rrp_tend_total(ix,iy,iz)
-                    
-                    cldavail = (rcp(ix,iy,iz,1)*rd2t) + rcp_tend_total(ix,iy,iz)
-                    cldsink = cld2rain_accr(ix,iy,iz) + cld2rain_auto(ix,iy,iz) 
-                    
-                    if (cldavail>0.) then
-                        if (cldsink > cldavail) then
-                            cldrat = cld2rain_accr(ix,iy,iz)/cldsink
+            do ix = 1, nx
+                ! not yet balanced
 
-                            cld2rain_accr(ix,iy,iz) = cldrat * cldavail
-                            cld2rain_auto(ix,iy,iz) = (1-cldrat) * cldavail
-                        endif
-                    else
-                        cld2rain_accr(ix,iy,iz) = 0.
-                        cld2rain_auto(ix,iy,iz) = 0.
+                ! check that the amount being removed through accretion and autoconversion is less than the existing amount of cloud
+                !print*,rcp_tend_total(ix,iz),rrp_tend_total(ix,iz)
+                
+                cldavail = (rcp(ix,iz,1)*rd2t) + rcp_tend_total(ix,iz)
+                cldsink = cld2rain_accr(ix,iz) + cld2rain_auto(ix,iz) 
+                
+                if (cldavail>0) then
+                    if (cldsink > cldavail) then
+                        cldrat = cld2rain_accr(ix,iz)/cldsink
+
+                        cld2rain_accr(ix,iz) = cldrat * cldavail
+                        cld2rain_auto(ix,iz) = (1-cldrat) * cldavail
                     endif
+                else
+                    cld2rain_accr(ix,iz) = 0.
+                    cld2rain_auto(ix,iz) = 0.
+                endif
 
-                    if (cld2rain_accr(ix,iy,iz)<0.) then
-                        cld2rain_accr(ix,iy,iz) = 0.
+                if (cld2rain_accr(ix,iz)<0) then
+                    cld2rain_accr(ix,iz) = 0.
+                endif
+
+                if (cld2rain_auto(ix,iz)<0) then
+                    cld2rain_auto(ix,iz) = 0.
+                endif
+
+                rcp(ix,iz,3) = rcp(ix,iz,3) - dt*(cld2rain_accr(ix,iz) + cld2rain_auto(ix,iz) )
+
+                rainavail = rrp(ix,iz,1)*rd2t + rrp_tend_total(ix,iz)
+
+                if (rainavail>0) then 
+                    if (rain2vap(ix,iz) > rainavail) then
+                        rain2vap(ix,iz) = rainavail
                     endif
+                else
+                    rain2vap(ix,iz) = 0.
+                endif
+                
+                !more checks on negative values -- not sure why this should be needed but if not some of the rain2vap becomes negative sometimes? maybe floating pt math
+                if (rain2vap(ix,iz)<0) then
+                    rain2vap(ix,iz) = 0.
+                endif
 
-                    if (cld2rain_auto(ix,iy,iz)<0.) then
-                        cld2rain_auto(ix,iy,iz) = 0.
-                    endif
-
-                    rcp(ix,iy,iz,3) = rcp(ix,iy,iz,3) - dt*(cld2rain_accr(ix,iy,iz)+cld2rain_auto(ix,iy,iz))
-
-                    rainavail = rrp(ix,iy,iz,1)*rd2t + rrp_tend_total(ix,iy,iz)
-
-                    if (rainavail>0) then 
-                        if (rain2vap(ix,iy,iz) > rainavail) then
-                            rain2vap(ix,iy,iz) = rainavail
-                        endif
-                    else
-                        rain2vap(ix,iy,iz) = 0.
-                    endif
-                    
-                    !more checks on negative values -- not sure why this should be needed but if not some of the rain2vap becomes negative sometimes? maybe floating pt math
-                    if (rain2vap(ix,iy,iz)<0.) then
-                        rain2vap(ix,iy,iz) = 0.
-                    endif
-
-                    rrp(ix,iy,iz,3) = rrp(ix,iy,iz,3) +  dt*(cld2rain_accr(ix,iy,iz)+cld2rain_auto(ix,iy,iz)-rain2vap(ix,iy,iz))
-                    thp(ix,iy,iz,3) = thp(ix,iy,iz,3) -  dt*(lv/(cp*pib(iz))) * (rain2vap(ix,iy,iz))
-                    rvp(ix,iy,iz,3) = rvp(ix,iy,iz,3) +  dt*rain2vap(ix,iy,iz)
-                    
-                enddo
+                rrp(ix,iz,3) = rrp(ix,iz,3) +  dt*(cld2rain_accr(ix,iz) + cld2rain_auto(ix,iz) -rain2vap(ix,iz))
+                thp(ix,iz,3) = thp(ix,iz,3) -  dt*(lv/(cp*pib(iz)))*rain2vap(ix,iz)
+                rvp(ix,iz,3) = rvp(ix,iz,3) + dt*rain2vap(ix,iz)
             enddo
         enddo
+
+
     end subroutine apply_micro_tends
-
-
 
 end module microphysics

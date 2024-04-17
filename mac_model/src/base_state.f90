@@ -9,17 +9,17 @@ module base_state
     subroutine init_base_state()
 
         use constants, only: g,cp,rd,p00,cv
-        use run_constants, only: nz, ztr, ttr, thtr, psurf, wk_flag, dn_flag, base_out
+        use run_constants, only: nz, nx, ztr, ttr, thtr, psurf, wk_flag, dn_flag, base_out
         use thermo_functions, only: calc_thv, calc_rsat, calc_satfrac
-        use model_vars, only:zsn, zmn, thb, rvb, thvb, pib, piwb, rhoub,rhowb,tb,pb,rsatb,rhb,satfracb
+        use model_vars, only:zsn, zwn, thb, rvb, thvb, pib, piwb, rhoub,rhowb,tb,pb,rsatb,rhb,satfracb
     
         implicit none
 
         integer :: iz ! counter for z-coordinate
+        integer :: ix ! counter for x-coordinate
 
         ! initally, set the base state to be horizontally homogenous
-        ! so we just need to loop over all the x values inside the z-loops        
-
+        ! so we just need to loop over all the x values inside the z-loops     
         if (wk_flag==.True.) then
             ! use WK sounding
             
@@ -37,8 +37,10 @@ module base_state
                 else if (zsn(iz) <= 8000.) then
                     rvb(iz) = 2.6E-3 - 6.5E-7*(zsn(iz) - 4000.)
                 else 
-                    rvb(iz) = 0
+                    rvb(iz) = 0.
                 endif 
+
+
             enddo ! end z loop
         else if (dn_flag==.True.) then
             !set base state sounding to be dry and neutral
@@ -48,6 +50,8 @@ module base_state
 
                 ! set base state water vapor mixing ratio to 0 as given
                 rvb(iz) = 0.
+
+
             enddo !end z loop
         endif  ! end WK vs. dry neutral flag
 
@@ -69,10 +73,10 @@ module base_state
         ! this would just be (psurf/p00)**(rd/cp) (see definition of PI in HW1)
         piwb(2) = (psurf/p00)**(rd/cp)
 
-        ! but the grid for PI is offset by half a delta z (which is zun - zmn), 
+        ! but the grid for PI is offset by half a delta z (which is zun - zwn), 
         ! so we must integrate vertically to get PI(z=2) rather than PI(surf) 
         ! using the hydrostatic equation (see HW1) in terms of PI and thetav
-        pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zsn(2)-zmn(2)))
+        pib(2) = piwb(2)-((g/(cp*thvb(2)))*(zsn(2)-zwn(2)))
 
         pib(1) = pib(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
         piwb(1) = piwb(2) ! the first level is fictitious, so just set it to be same as first real level (constant)
@@ -84,7 +88,7 @@ module base_state
         ! note that we are basically assuming thvb scales linearly with height in between the scalar levels
         do iz = 3,nz-1
             pib(iz) = pib(iz-1) - (g/(cp*(thvb(iz-1)+thvb(iz))/2)) * (zsn(iz)-zsn(iz-1))
-            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz-1))) * (zmn(iz)-zmn(iz-1))
+            piwb(iz) = piwb(iz-1) - (g/(cp*thvb(iz-1))) * (zwn(iz)-zwn(iz-1))
         enddo ! end z loop
 
         do iz=2,nz-1
@@ -94,7 +98,7 @@ module base_state
 
                 ! base state temperature
                 tb(iz) = pib(iz)*thb(iz)
-            
+
                 ! base state saturation vapor mixing ratio 
                 ! using Teten's equation as written in HW1
                 rsatb(iz) = calc_rsat(tb(iz),pb(iz))
@@ -104,7 +108,6 @@ module base_state
                 satfracb(iz) = calc_satfrac(rvb(iz),rsatb(iz))
                 rhb(iz) = satfracb(iz)*100
             endif
-            
             ! base state air density on u/scalar grid
             ! we can calculate this exactly from the ideal gas law as written in HW1
             rhoub(iz) = (p00*pib(iz)**(cv/rd))/(rd*thvb(iz))
@@ -117,6 +120,8 @@ module base_state
             !rhowb(iz) = (p00*piwb(iz)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
             rhowb(iz) = (p00*((pib(iz)+pib(iz-1))/2)**(cv/rd))/(rd*(thvb(iz)+thvb(iz-1))/2)
         enddo !end z loop
+
+
 
         !set the fictitious points at model top and bottom for zero gradient
         thvb(nz) = thvb(nz-1)

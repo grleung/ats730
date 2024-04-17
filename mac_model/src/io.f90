@@ -8,21 +8,22 @@ module io
 
     subroutine read_namelist 
         ! so far only need these values in namelist, but will probably need more later on
-        use run_constants, only: nz,dz0,nx,dx,ny,dy,pbc_x,pbc_y,pbc_z,dt,endt,rvpsurf                                       &
-                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq                &
-                                ,wk_flag,dn_flag                                                                            &
-                                ,pert_wind,radx,rady,radz,amp,zcnt,xcnt,ycnt,cx,cy,cz,cs                                    &
-                                ,kmx,kmy,kmz,khx,khy,khz    
+        use run_constants, only: nz,dz0,nx,dx,pbc_x,pbc_z,dt,endt,rvpsurf                                       &
+                                ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq    &
+                                ,wk_flag,dn_flag                                                                &
+                                ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs                                     &
+                                ,kmx,kmz,khx,khz,cldautothresh,autorate,accrrate,Nint   
 
         implicit none 
 
         ! define namelists
         namelist /output/ base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq
-        namelist /grid/ nz,nx,ny,dz0,dx,dy,pbc_x,pbc_y,pbc_z,dt,endt
+        namelist /grid/ nz,nx,dz0,dx,pbc_x,pbc_z,dt,endt
         namelist /base/ wk_flag,dn_flag
         namelist /parcel/ rvpsurf
-        namelist /pert/ pert_wind,radx,rady,radz,amp,zcnt,xcnt,ycnt,cx,cy,cz,cs
-        namelist /diff/ kmx,kmy,kmz,khx,khy,khz  
+        namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
+        namelist /diff/ kmx,kmz,khx,khz
+        namelist /micro/ cldautothresh,autorate,accrrate,Nint
         
         open(unit=1, file='Namelist',action='read')
 
@@ -33,6 +34,7 @@ module io
         read(1,nml=parcel)
         read(1,nml=pert)
         read(1,nml=diff)
+        read(1,nml=micro)
         
         close(1)
 
@@ -93,20 +95,18 @@ module io
     end subroutine write_parcel_traj
 
     subroutine write_current_state
-        use run_constants, only: nz, ny,var_out, var_outpath
-        use model_vars, only: it,zsn,xsn,ysn,thp,pip,up,vp,wp,rvp,rcp,rrp   &
-                            ,thp_tend_total,pip_tend_total,u_tend_total     &
-                            ,v_tend_total,w_tend_total,rvp_tend_total       &
-                            ,rcp_tend_total,rrp_tend_total                  &
-                            ,vap2cld,cld2rain_accr,cld2rain_auto,rain2vap 
+        use run_constants, only: nz, var_out, var_outpath
+        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,rvp,rcp,rrp          &
+                                ,w_xadv,w_zadv,w_buoy,w_pgf,w_tend_total    &
+                                ,vap2cld,rain2vap,cld2rain_accr,cld2rain_auto
 
         implicit none
         
         integer :: iz ! counter for z-coordinate
-        integer :: iy ! counter for y-coordinate
 
         character(len=6) :: timechar
         write(timechar, '(i6)')it
+
 
         if (var_out) then
             ! open the output file we want to write to
@@ -118,149 +118,85 @@ module io
             write(1,*) 'coord xsn'
             write(1, '(1x, *(g0, :, ", "))') xsn(:)
 
-            write(1,*) 'coord ysn'
-            write(1, '(1x, *(g0, :, ", "))') ysn(:)
-
             write(1,*) 'var THP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') thp(:,iy,iz,2)
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') thp(:,iz,2)
             enddo
 
             write(1,*) 'var PIP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') pip(:,iy,iz,2)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') pip(:,iz,2)
             enddo
 
             write(1,*) 'var UP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') up(:,iy,iz,2)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') up(:,iz,2)
             enddo
-            
-            write(1,*) 'var VP'
-            do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') vp(:,iy,iz,2)  
-                enddo
-            enddo
-            
+
             write(1,*) 'var WP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') wp(:,iy,iz,2)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') wp(:,iz,2)
             enddo
-
+            
             write(1,*) 'var RVP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') rvp(:,iy,iz,2)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') rvp(:,iz,2)
             enddo
-            
+
             write(1,*) 'var RCP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') rcp(:,iy,iz,2)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') rcp(:,iz,2)
             enddo
-            
+
             write(1,*) 'var RRP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') rrp(:,iy,iz,2)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') rrp(:,iz,2)
+            enddo
+            
+            write(1,*) 'var WP_XADV'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') w_xadv(:,iz)
             enddo
 
-            write(1,*) 'var THP_TEND'
+            write(1,*) 'var WP_ZADV'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') thp_tend_total(:,iy,iz)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') w_zadv(:,iz)
             enddo
 
-            write(1,*) 'var PIP_TEND'
+            write(1,*) 'var WP_BUOY'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') pip_tend_total(:,iy,iz)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') w_buoy(:,iz)
             enddo
 
-            write(1,*) 'var UP_TEND'
+            write(1,*) 'var WP_PGF'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') u_tend_total(:,iy,iz)  
-                enddo
-            enddo
-
-            write(1,*) 'var VP_TEND'
-            do iz=1,nz
-                do iy=1,ny
-                     write(1, '(1x, *(g0, :, ", "))') v_tend_total(:,iy,iz)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') w_pgf(:,iz)
             enddo
 
             write(1,*) 'var WP_TEND'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iy,iz)  
-                enddo
-            enddo
-
-            write(1,*) 'var RVP_TEND'
-            do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') rvp_tend_total(:,iy,iz)  
-                enddo
-            enddo
-
-            write(1,*) 'var RCP_TEND'
-            do iz=1,nz
-                do iy=1,ny
-                     write(1, '(1x, *(g0, :, ", "))') rcp_tend_total(:,iy,iz)  
-                enddo
-            enddo
-
-            write(1,*) 'var RRP_TEND'
-            do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') rrp_tend_total(:,iy,iz)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iz)
             enddo
 
             write(1,*) 'var VAP2CLD'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') vap2cld(:,iy,iz)  
-                enddo
-            enddo
-
-            write(1,*) 'var CLD2RAIN_ACCR'
-            do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') cld2rain_accr(:,iy,iz)  
-                enddo
-            enddo
-
-            write(1,*) 'var CLD2RAIN_AUTO'
-            do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') cld2rain_auto(:,iy,iz)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') vap2cld(:,iz)
             enddo
 
             write(1,*) 'var RAIN2VAP'
             do iz=1,nz
-                do iy=1,ny
-                    write(1, '(1x, *(g0, :, ", "))') rain2vap(:,iy,iz)  
-                enddo
+                write(1, '(1x, *(g0, :, ", "))') rain2vap(:,iz)
             enddo
 
+            write(1,*) 'var CLD2RAIN_AUTO'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') cld2rain_auto(:,iz)
+            enddo
+
+            write(1,*) 'var CLD2RAIN_ACCR'
+            do iz=1,nz
+                write(1, '(1x, *(g0, :, ", "))') cld2rain_accr(:,iz)
+            enddo
 
             close(1)
         endif 
