@@ -6,9 +6,6 @@ module solve_prog
     contains
     
     subroutine tendencies
-        use microphysics, only: sat_adjust,check_micro_zeros,apply_micro_tends &  
-                            ,autoconversion,accretion,rainevap
-
         implicit none
 
         call zero_tends
@@ -23,51 +20,26 @@ module solve_prog
         print*,'thp tend'
         call calc_rvp_tend
         print*,'rvp tend'
-        call calc_rcp_tend
-        print*,'rcp tend'
-        call calc_rrp_tend
-        print*,'rrp tend'
 
-        call apply_tends
-        print*,'apply tend'
-        call check_micro_zeros
-        print*,'holes filled'
-
-        call autoconversion
-        print*,'autoconversion'
-        call accretion
-        print*,'accretion'
-        call rainevap
-        print*,'rain evap'
-
-        call apply_micro_tends
-        print*,'apply micro tend'
-        call check_micro_zeros
-        print*,'holes filled'
-
-
-        call sat_adjust
-        print*,'saturation adjustment'
-        call check_micro_zeros
-        print*,'holes filled'
+        !add advection/diffusion for aerosol,cloud,rain
 
     end subroutine tendencies
 
     subroutine zero_tends
-        use run_constants, only: nz,nx
-        use model_vars, only:vap2cld,rain2vap,cld2rain_accr,cld2rain_auto                            &
-                            ,u_xadv,u_zadv,u_pgf,u_xdiff,u_zdiff,u_tend_total                        &
+        use run_constants, only: nz,nx,npb,ndb
+        use model_vars, only:u_xadv,u_zadv,u_pgf,u_xdiff,u_zdiff,u_tend_total                        &
                             ,w_xadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_zdiff,w_tend_total                 &
                             ,thp_xadv,thp_zadv,thp_meanadv,thp_xdiff,thp_zdiff,thp_tend_total    &
                             ,pip_xadv,pip_zadv,pip_xdiff,pip_zdiff,pip_tend_total                &
                             ,rvp_xadv,rvp_zadv,rvp_meanadv,rvp_xdiff,rvp_zdiff,rvp_tend_total    &
-                            ,rcp_xadv,rcp_zadv,rcp_xdiff,rcp_zdiff,rcp_tend_total                &
-                            ,rrp_xadv,rrp_zadv,rrp_xdiff,rrp_zdiff,rrp_tend_total   
+                            ,np_tend_total,mp_tend_total,nc_tend_total,mc_tend_total,mpc_tend_total  &
+                            ,nr_tend_total,mr_tend_total,mpr_tend_total
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
+        integer :: iab, idb
 
         do iz = 1, nz
             do ix = 1, nx
@@ -101,22 +73,22 @@ module solve_prog
                 rvp_xdiff(ix,iz)=0.
                 rvp_zdiff(ix,iz)=0.
                 rvp_tend_total(ix,iz)=0.
-                rcp_xadv(ix,iz)=0.
-                rcp_zadv(ix,iz)=0.
-                rcp_xdiff(ix,iz)=0.
-                rcp_zdiff(ix,iz)=0.
-                rcp_tend_total(ix,iz)=0.
-                rrp_xadv(ix,iz)=0.
-                rrp_zadv(ix,iz)=0.
-                rrp_xdiff(ix,iz)=0.
-                rrp_zdiff(ix,iz)=0.
-                rrp_tend_total(ix,iz)=0.
-                
-                vap2cld(ix,iz)=0.
-                rain2vap(ix,iz)=0.
-                cld2rain_auto(ix,iz)=0.
-                cld2rain_accr(ix,iz)=0.
 
+                do iab=1,npb
+                    np_tend_total(ix,iz,iab) = 0.
+                    mp_tend_total(ix,iz,iab) = 0.
+
+                    do idb=1,ndb
+                        nc_tend_total(ix,iz,iab,idb) = 0.
+                        mc_tend_total(ix,iz,iab,idb) = 0.
+                        mpc_tend_total(ix,iz,iab,idb) = 0.
+
+                        nr_tend_total(ix,iz,iab,idb) = 0.
+                        mr_tend_total(ix,iz,iab,idb) = 0.
+                        mpr_tend_total(ix,iz,iab,idb) = 0.
+                    enddo
+                enddo
+                
             enddo
         enddo 
     end subroutine zero_tends
@@ -332,90 +304,24 @@ module solve_prog
 
     end subroutine calc_rvp_tend
 
-    subroutine calc_rcp_tend
-        use run_constants, only: nz,nx,khx,khz,rdx,rdz,cs
-        use constants, only: cp
-        use model_vars, only:rhoub,rhowb,up,wp,rcp &
-                        ,rcp_xadv,rcp_zadv,rcp_xdiff,rcp_zdiff,rcp_tend_total
-
-        implicit none
-
-        integer :: iz ! counter for z-coordinate
-        integer :: ix ! counter for x-coordinate
-
-        ! calculate tendency in rcp
-        ! loop over real/unique points
-        do ix = 2, nx-1
-            do iz = 2, nz-1
-                rcp_xadv(ix,iz) = - rdx                                                                   &
-                                    * 0.5 * ((up(ix+1,iz,2) * (rcp(ix+1,iz,2) +  rcp(ix,iz,2)))     &
-                                    -        (up(ix,iz,2)   * (rcp(ix,iz,2)   +  rcp(ix-1,iz,2))))
-
-                rcp_zadv(ix,iz) = - rdz/(rhoub(iz))                                                 &
-                                    * 0.5 *  ((rhowb(iz+1) *    wp(ix,iz+1,2)     * (rcp(ix,iz+1,2)    +   rcp(ix,iz,2))) &
-                                    -         (rhowb(iz)   *    wp(ix,iz,2)     * (rcp(ix,iz,2)    +   rcp(ix,iz-1,2))))
-
-                rcp_xdiff(ix,iz) = khx * rdx * rdx * (rcp(ix-1,iz,1) - (2*rcp(ix,iz,1)) + rcp(ix+1,iz,1))
-
-                rcp_zdiff(ix,iz) = khz * rdz * rdz * (rcp(ix,iz-1,1) - (2*rcp(ix,iz,1)) + rcp(ix,iz+1,1))
-
-                rcp_tend_total(ix,iz) = rcp_xadv(ix,iz) + rcp_zadv(ix,iz) + rcp_xdiff(ix,iz) + rcp_zdiff(ix,iz)
-            enddo ! end x loop
-        enddo ! end z loop
-    end subroutine calc_rcp_tend
-
-    subroutine calc_rrp_tend
-        use run_constants, only: nz,nx,khx,khz,rdx,rdz,cs
-        use constants, only: cp
-        use model_vars, only:rhoub,rhowb,up,wp,rrp &
-                        ,rrp_xadv,rrp_zadv,rrp_xdiff,rrp_zdiff,rrp_tend_total
-        use thermo_functions, only: rain_fallspeed
-
-        implicit none
-
-        integer :: iz ! counter for z-coordinate
-        integer :: ix ! counter for x-coordinate
-
-        ! calculate tendency in rrp
-        ! loop over real/unique points
-        do ix = 2, nx-1
-            do iz = 2, nz-1
-                rrp_xadv(ix,iz) = - rdx                                                                   &
-                                    * 0.5 * ((up(ix+1,iz,2) * (rrp(ix+1,iz,2) +  rrp(ix,iz,2)))     &
-                                    -        (up(ix,iz,2)   * (rrp(ix,iz,2)   +  rrp(ix-1,iz,2))))
-
-                rrp_zadv(ix,iz) = - rdz/(rhoub(iz))                                                                                             &
-                                    * 0.5 *  ((rhowb(iz+1) *    (wp(ix,iz+1,2)-rain_fallspeed(rhowb(iz+1),0.5*(rrp(ix,iz+1,2)+rrp(ix,iz,2))))   &
-                                                                    * (rrp(ix,iz+1,2)    +   rrp(ix,iz,2)))                                     &
-                                    -         (rhowb(iz)   *    (wp(ix,iz,2) - rain_fallspeed(rhowb(iz+1),0.5*(rrp(ix,iz,2)+rrp(ix,iz-1,2))))   & 
-                                                                 * (rrp(ix,iz,2)    +   rrp(ix,iz-1,2))))
-
-                rrp_xdiff(ix,iz) = khx * rdx * rdx * (rrp(ix-1,iz,1) - (2*rrp(ix,iz,1)) + rrp(ix+1,iz,1))
-
-                rrp_zdiff(ix,iz) = khz * rdz * rdz * (rrp(ix,iz-1,1) - (2*rrp(ix,iz,1)) + rrp(ix,iz+1,1))
-
-                rrp_tend_total(ix,iz) = rrp_xadv(ix,iz) + rrp_zadv(ix,iz) + rrp_xdiff(ix,iz) + rrp_zdiff(ix,iz)
-            enddo ! end x loop
-        enddo ! end z loop
-    end subroutine calc_rrp_tend
-
-
     
     subroutine apply_tends
-        use run_constants, only: nz,nx,dt
-        use model_vars, only:it,thp,pip,up,wp,rvp,rcp,rrp                                   &
-                            ,u_tend_total,w_tend_total,thp_tend_total,pip_tend_total                    &
-                            ,rvp_tend_total,rcp_tend_total,rrp_tend_total   
+        use run_constants, only: nz,nx,dt,npb,ndb
+        use model_vars, only:it,thp,pip,up,wp,rvp,np,mp,nc,mc,mpc,nr,mr,mpr                                 &
+                            ,u_tend_total,w_tend_total,thp_tend_total,pip_tend_total,rvp_tend_total &
+                            ,np_tend_total,mp_tend_total,nc_tend_total,mc_tend_total        &
+                            ,mpc_tend_total,nr_tend_total,mr_tend_total,mpr_tend_total
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
+        integer :: iab,idb
+
         real :: rdx,rdz,d2t
         
         d2t       = (dt+dt)         ! 2*dt
         
-
         ! calculate actual future values
         ! loop over real/unique points
         do ix = 2, nx-1
@@ -426,16 +332,41 @@ module solve_prog
                     thp(ix,iz,3) = thp(ix,iz,2) + (dt * thp_tend_total(ix,iz))
                     pip(ix,iz,3) = pip(ix,iz,2) + (dt * pip_tend_total(ix,iz))
                     rvp(ix,iz,3) = rvp(ix,iz,2) + (dt * rvp_tend_total(ix,iz))
-                    rcp(ix,iz,3) = rcp(ix,iz,2) + (dt * rcp_tend_total(ix,iz))
-                    rrp(ix,iz,3) = rrp(ix,iz,2) + (dt * rrp_tend_total(ix,iz))
+
+                    do iab=1,npb
+                        np(ix,iz,iab,3) = np(ix,iz,iab,2) + (dt * np_tend_total(ix,iz,iab)) 
+                        mp(ix,iz,iab,3) = mp(ix,iz,iab,2) + (dt * mp_tend_total(ix,iz,iab))
+
+                        do idb=1,ndb
+                            nc(ix,iz,iab,idb,3) = nc(ix,iz,iab,idb,2) + (dt * nc_tend_total(ix,iz,iab,idb)) 
+                            mc(ix,iz,iab,idb,3) = mc(ix,iz,iab,idb,2) + (dt * mc_tend_total(ix,iz,iab,idb))                        
+                            mpc(ix,iz,iab,idb,3) = mpc(ix,iz,iab,idb,2) + (dt * mpc_tend_total(ix,iz,iab,idb))
+                            
+                            nr(ix,iz,iab,idb,3) = nr(ix,iz,iab,idb,2) + (dt * nr_tend_total(ix,iz,iab,idb)) 
+                            mr(ix,iz,iab,idb,3) = mr(ix,iz,iab,idb,2) + (dt * mr_tend_total(ix,iz,iab,idb))
+                            mpr(ix,iz,iab,idb,3) = mpr(ix,iz,iab,idb,2) + (dt * mpr_tend_total(ix,iz,iab,idb))
+                        enddo
+                    enddo 
                 else
-                    up(ix,iz,3) = up(ix,iz,1) + (d2t * u_tend_total(ix,iz))
                     wp(ix,iz,3) = wp(ix,iz,1) + (d2t * w_tend_total(ix,iz))
                     thp(ix,iz,3) = thp(ix,iz,1) + (d2t * thp_tend_total(ix,iz))
                     pip(ix,iz,3) = pip(ix,iz,1) + (d2t * pip_tend_total(ix,iz))
                     rvp(ix,iz,3) = rvp(ix,iz,1) + (d2t * rvp_tend_total(ix,iz))
-                    rcp(ix,iz,3) = rcp(ix,iz,1) + (d2t * rcp_tend_total(ix,iz))
-                    rrp(ix,iz,3) = rrp(ix,iz,1) + (d2t * rrp_tend_total(ix,iz))
+
+                    do iab=1,npb
+                        np(ix,iz,iab,3) = np(ix,iz,iab,1) + (d2t * np_tend_total(ix,iz,iab)) 
+                        mp(ix,iz,iab,3) = mp(ix,iz,iab,1) + (d2t * mp_tend_total(ix,iz,iab))
+
+                        do idb=1,ndb
+                            nc(ix,iz,iab,idb,3) = nc(ix,iz,iab,idb,1) + (d2t * nc_tend_total(ix,iz,iab,idb)) 
+                            mc(ix,iz,iab,idb,3) = mc(ix,iz,iab,idb,1) + (d2t * mc_tend_total(ix,iz,iab,idb))
+                            mpc(ix,iz,iab,idb,3) = mpc(ix,iz,iab,idb,1) + (d2t * mpc_tend_total(ix,iz,iab,idb))
+                            
+                            nr(ix,iz,iab,idb,3) = nr(ix,iz,iab,idb,1) + (d2t * nr_tend_total(ix,iz,iab,idb)) 
+                            mr(ix,iz,iab,idb,3) = mr(ix,iz,iab,idb,1) + (d2t * mr_tend_total(ix,iz,iab,idb))
+                            mpr(ix,iz,iab,idb,3) = mpr(ix,iz,iab,idb,1) + (d2t * mpr_tend_total(ix,iz,iab,idb))
+                        enddo
+                    enddo 
                 endif
             enddo ! end x loop
         enddo ! end z loop

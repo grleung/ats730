@@ -95,7 +95,7 @@ module run_constants
         bin_flag = .True.    ! flag to use bin microphysics or not
 
     integer :: &
-        nab = 20      &   ! number of aerosol bins
-    ,   ndb = 20         ! number of drop/droplet bins
+        npb = 42      &   ! number of aerosol bins
+    ,   ndb = 40         ! number of drop/droplet bins
 
 end module run_constants

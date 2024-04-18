@@ -8,11 +8,12 @@ module initial_perturb
 
     subroutine init_perturb()
         use constants, only: g,cp,trigpi
-        use run_constants, only: nz, nx, dz0,radx,radz,amp,zcnt,xcnt, pbc_x, pbc_z,pert_wind
-        use model_vars, only:zsn, xsn,thb,rvb,thvb,rhoub,thp,pip,pp,up,wp,rvp,rcp,rrp,thvp
+        use run_constants, only: nz, nx, npb,ndb,dz0,radx,radz,amp,zcnt,xcnt, pbc_x, pbc_z,pert_wind,bin_flag
+        use model_vars, only:zsn, xsn,thb,rvb,thvb,rhoub,thp,pip,pp,up,wp,rvp,thvp
         use boundaries, only: enforce_bounds_x,enforce_bounds_z
         use thermo_functions, only:calc_thv
-
+        use model_vars, only: np,mp,nc,mc,mpc,nr,mr,mpr
+        
         implicit none
 
         integer :: iz ! counter for z-coordinate
@@ -48,8 +49,6 @@ module initial_perturb
         do ix = 2,nx-1
             do iz = 2,nz-1
                 rvp(ix,iz,2) = 0.
-                rcp(ix,iz,2) = 0.
-                rrp(ix,iz,2) = 0.
                 up(ix,iz,2) = 0.
                 wp(ix,iz,2) = 0.
             enddo
@@ -67,8 +66,6 @@ module initial_perturb
                 up(ix,iz,1) = up(ix,iz,2)
                 wp(ix,iz,1) = wp(ix,iz,2)
                 rvp(ix,iz,1) = rvp(ix,iz,2)
-                rcp(ix,iz,1) = rcp(ix,iz,2)
-                rrp(ix,iz,1) = rrp(ix,iz,2)
             enddo
         enddo
         

@@ -6,33 +6,41 @@ module timestep
     contains
     
     subroutine step_time
-        use model_vars, only: thp,pip,pp,up,wp,rvp,rcp,rrp
-        use run_constants, only: nz,nx
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mc,mpc,nr,mr,mpr
+        use run_constants, only: nz,nx,npb,ndb
 
         implicit none
 
         integer :: iz ! counter for z
         integer :: ix ! counter for x
+        integer :: iab,idb,it
 
         ! step forward in time
         do ix = 1, nx
             do iz = 1, nz
-                up(ix,iz,1) = up(ix,iz,2)
-                up(ix,iz,2) = up(ix,iz,3)
-                wp(ix,iz,1) = wp(ix,iz,2)
-                wp(ix,iz,2) = wp(ix,iz,3)
-                thp(ix,iz,1) = thp(ix,iz,2)
-                thp(ix,iz,2) = thp(ix,iz,3)
-                pip(ix,iz,1) = pip(ix,iz,2)
-                pip(ix,iz,2) = pip(ix,iz,3)
-                rvp(ix,iz,1) = rvp(ix,iz,2)
-                rvp(ix,iz,2) = rvp(ix,iz,3)
-                rcp(ix,iz,1) = rcp(ix,iz,2)
-                rcp(ix,iz,2) = rcp(ix,iz,3)
-                rrp(ix,iz,1) = rrp(ix,iz,2)
-                rrp(ix,iz,2) = rrp(ix,iz,3)
-            enddo ! end x loop
-        enddo ! end z loop
+                do it = 1,2
+                    up(ix,iz,it) = up(ix,iz,it+1)
+                    wp(ix,iz,it) = wp(ix,iz,it+1)
+                    thp(ix,iz,it) = thp(ix,iz,it+1)
+                    pip(ix,iz,it) = pip(ix,iz,it+1)
+                    rvp(ix,iz,it) = rvp(ix,iz,it+1)
+
+                    do iab=1,npb
+                        np(ix,iz,iab,it) = np(ix,iz,iab,it+1)
+                        mp(ix,iz,iab,it) = mp(ix,iz,iab,it+1)
+                        
+                        do idb=1,ndb
+                            nc(ix,iz,iab,idb,it) = nc(ix,iz,iab,idb,it+1)
+                            mc(ix,iz,iab,idb,it) = mc(ix,iz,iab,idb,it+1)
+                            mpc(ix,iz,iab,idb,it) = mpc(ix,iz,iab,idb,it+1)
+                            nr(ix,iz,iab,idb,it) = nr(ix,iz,iab,idb,it+1)
+                            mr(ix,iz,iab,idb,it) = mr(ix,iz,iab,idb,it+1)
+                            mpr(ix,iz,iab,idb,it) = mpr(ix,iz,iab,idb,it+1)
+                        enddo
+                    enddo
+                enddo
+            enddo ! end z loop
+        enddo ! end x loop
         
     end subroutine step_time
 

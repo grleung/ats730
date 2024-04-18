@@ -15,6 +15,7 @@ program MAC
     use solve_prog, only: tendencies
     use boundaries, only: enforce_bounds_x, enforce_bounds_z
     use timestep, only: step_time
+    use aerosol, only: init_aerosol,microphysics
 
     implicit none
 
@@ -37,9 +38,12 @@ program MAC
     call write_base_state
     print*,'base written'
 
+    call init_aerosol
+    print*,'aerosol init'
+
     ! Calculate parcel CAPE
-    call calculate_parcel_cape
-    call write_parcel_traj
+    !call calculate_parcel_cape
+    !call write_parcel_traj
 
     ! initialize perturbation from base state
     call init_perturb
@@ -55,6 +59,7 @@ program MAC
         call enforce_bounds_x
         print*,'bounds enforced'
         call tendencies 
+        call microphysics
         print*,'done tend'
         call enforce_bounds_z
         call enforce_bounds_x
