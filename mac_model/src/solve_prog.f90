@@ -164,7 +164,7 @@ module solve_prog
                                         - (rhowb(iz)*(0.5*(wp(ix,iz,2)+wp(ix,iz-1,2)))**2))
 
                 ! third term in w-tendency equation: pressure gradient term 
-                w_pgf(ix,iz) = -cp * rdz * 0.25 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
+                w_pgf(ix,iz) = -cp * rdz * 0.5 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
 
                 ! fourth term in w-tendency equation: pressure gradient term 
                 w_buoy(ix,iz) = g * ((thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))                  &
