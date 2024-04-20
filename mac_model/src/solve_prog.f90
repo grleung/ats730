@@ -20,7 +20,12 @@ module solve_prog
         print*,'thp tend'
         call calc_rvp_tend
         print*,'rvp tend'
+        call calc_aero_tend
+        print*,'aero tend'
 
+        call apply_tends
+
+        
         !add advection/diffusion for aerosol,cloud,rain
 
     end subroutine tendencies
@@ -169,7 +174,7 @@ module solve_prog
                 ! fourth term in w-tendency equation: pressure gradient term 
                 w_buoy(ix,iz) = g * ((thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))                  &
                                     + 0.61*0.5*(rvp(ix,iz,2)+rvp(ix,iz-1,2))                            &
-                                    - 0.5*(rcp(ix,iz,2)+rcp(ix,iz-1,2)+rrp(ix,iz,2)+rrp(ix,iz-1,2))     &
+                                    !- 0.5*(rcp(ix,iz,2)+rcp(ix,iz-1,2)+rrp(ix,iz,2)+rrp(ix,iz-1,2))     &
                                     )
 
                 ! fifth term in w-tendency equation: horizontal diffusion
@@ -303,6 +308,45 @@ module solve_prog
         enddo ! end z loop
 
     end subroutine calc_rvp_tend
+
+    subroutine calc_aero_tend
+        use run_constants, only: nz,nx,npb,khx,khz,rdx,rdz,cs
+        use constants, only: cp
+        use model_vars, only:rvb,rhoub,rhowb,up,wp,np,mp &
+                        ,np_tend_total,mp_tend_total
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: ix ! counter for x-coordinate
+        integer :: ipb ! counter for particle bins
+
+        real :: mp_each
+
+
+        do ix = 2, nx-1
+            do iz = 2, nz-1
+                do ipb=1,npb
+                    mp_tend_total(ix,iz,ipb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mp(ix+1,iz,ipb,2)+mp(ix,iz,ipb,2)))         &
+                                                            -(up(ix+1,iz,2)*(mp(ix,iz,ipb,2)+mp(ix-1,iz,ipb,2)))) &
+                                            - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mp(ix,iz+1,ipb,2)+mp(ix,iz,ipb,2))) &
+                                                                        - (rhowb(iz)*wp(ix,iz,2)*(mp(ix,iz,ipb,2)+mp(ix,iz-1,ipb,2)))) &
+                                            + (khx * rdx * rdx * (mp(ix-1,iz,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix+1,iz,ipb,1))) &
+                                            + (khz * rdz * rdz * (mp(ix,iz-1,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix,iz+1,ipb,1))) 
+
+                    if (np_tend_total(ix,iz,ipb)>0) then
+                        mp_each = mp_tend_total(ix,iz,ipb)/np_tend_total(ix,iz,ipb)
+                        np_tend_total(ix,iz,ipb) = mp_tend_total(ix,iz,ipb)/mp_each
+                    endif
+
+
+                    
+                enddo
+            enddo ! end x loop
+        enddo ! end z loop
+
+    end subroutine calc_aero_tend
+
 
     
     subroutine apply_tends

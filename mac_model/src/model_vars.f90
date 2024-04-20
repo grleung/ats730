@@ -15,6 +15,7 @@ module model_vars
         ,   xsn    & !  physical horizontal position of scalar ("s" for scalar) grid [m]
         ,   xun      !  physical horizontal position of horizontal velocity ("u" for u) grid [m]
 
+
     ! base state thermodynamic variables (only profile in nz)
     real, allocatable, dimension(:)  :: &
             thb         & !  base state potential temperature ("th" for theta) [K]
@@ -73,6 +74,10 @@ module model_vars
             ,rvp_xadv,rvp_zadv,rvp_meanadv,rvp_xdiff,rvp_zdiff,rvp_tend_total    &
             ,rcp_xadv,rcp_zadv,rcp_xdiff,rcp_zdiff,rcp_tend_total                &
             ,rrp_xadv,rrp_zadv,rrp_xdiff,rrp_zdiff,rrp_tend_total                       
+
+    ! microphysics/droplet bin edges 
+    real, allocatable, dimension(:) :: &
+            mdb     ! mass of cloud bins (edges) [kg]
 
     ! aerosol bin microphysics variables (array in nx,nz,na,3 time dims)
     real, allocatable, dimension(:,:,:,:) :: &

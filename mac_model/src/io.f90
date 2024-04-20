@@ -63,6 +63,7 @@ module io
         endif 
 
     end subroutine write_base_state
+    
 
     subroutine write_parcel_traj 
         use run_constants, only: nz, parcel_out, parcel_outpath
@@ -94,11 +95,71 @@ module io
 
     end subroutine write_parcel_traj
 
+    subroutine write_current_micro
+        use run_constants, only: nz,nx,npb,ndb,var_out, var_outpath
+        use model_vars, only: it,np,mp,nc,mc,mpc
+
+        use, intrinsic :: ieee_arithmetic
+
+        implicit none
+        
+        integer :: iz,ipb,idb,ix! counter 
+
+        character(len=6) :: timechar
+        write(timechar, '(i6)')it
+
+        if (var_out) then
+            ! open the output file we want to write to
+            open(unit = 1, file=trim(var_outpath)//'timestep_'//trim(adjustl(timechar))//'_micro.txt')
+
+            write(1,*) 'var NP'
+            do iz=1,nz
+                do ipb=1,npb
+                    write(1, '(1x, *(g0, :, ", "))') np(:,iz,ipb,2)
+                enddo 
+            enddo
+
+            write(1,*) 'var MP'
+            do iz=1,nz
+                do ipb=1,npb
+                    write(1, '(1x, *(g0, :, ", "))') mp(:,iz,ipb,2)
+                enddo 
+            enddo
+        
+            write(1,*) 'var NC'
+            do iz=1,nz
+                do ipb=1,npb
+                    do idb=1,ndb
+                        write(1, '(1x, *(g0, :, ", "))') nc(:,iz,ipb,idb,2) 
+                    enddo
+                enddo 
+            enddo
+
+            write(1,*) 'var MC'
+            do iz=1,nz
+                do ipb=1,npb
+                    do idb=1,ndb
+                        write(1, '(1x, *(g0, :, ", "))') mc(:,iz,ipb,idb,2)
+                    enddo
+                enddo 
+            enddo
+
+            write(1,*) 'var MPC'
+            do iz=1,nz
+                do ipb=1,npb
+                    do idb=1,ndb
+                        write(1, '(1x, *(g0, :, ", "))') mpc(:,iz,ipb,idb,2)
+                    enddo
+                enddo 
+            enddo
+            close(1)
+        endif 
+        
+    end subroutine write_current_micro
+
     subroutine write_current_state
         use run_constants, only: nz, var_out, var_outpath
-        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,rvp,rcp,rrp          &
-                                ,w_xadv,w_zadv,w_buoy,w_pgf,w_tend_total    &
-                                ,vap2cld,rain2vap,cld2rain_accr,cld2rain_auto
+        use model_vars, only: it,zsn,xsn,thp,pip,up,wp,rvp          
 
         implicit none
         
@@ -142,63 +203,6 @@ module io
             do iz=1,nz
                 write(1, '(1x, *(g0, :, ", "))') rvp(:,iz,2)
             enddo
-
-            write(1,*) 'var RCP'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') rcp(:,iz,2)
-            enddo
-
-            write(1,*) 'var RRP'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') rrp(:,iz,2)
-            enddo
-            
-            write(1,*) 'var WP_XADV'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_xadv(:,iz)
-            enddo
-
-            write(1,*) 'var WP_ZADV'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_zadv(:,iz)
-            enddo
-
-            write(1,*) 'var WP_BUOY'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_buoy(:,iz)
-            enddo
-
-            write(1,*) 'var WP_PGF'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_pgf(:,iz)
-            enddo
-
-            write(1,*) 'var WP_TEND'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') w_tend_total(:,iz)
-            enddo
-
-            write(1,*) 'var VAP2CLD'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') vap2cld(:,iz)
-            enddo
-
-            write(1,*) 'var RAIN2VAP'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') rain2vap(:,iz)
-            enddo
-
-            write(1,*) 'var CLD2RAIN_AUTO'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') cld2rain_auto(:,iz)
-            enddo
-
-            write(1,*) 'var CLD2RAIN_ACCR'
-            do iz=1,nz
-                write(1, '(1x, *(g0, :, ", "))') cld2rain_accr(:,iz)
-            enddo
-
-            close(1)
         endif 
 
     end subroutine write_current_state

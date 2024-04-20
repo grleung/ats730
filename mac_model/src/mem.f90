@@ -47,6 +47,7 @@ module mem
         allocate (pp(nx,nz))
         allocate (thvp(nx,nz))
 
+        allocate(mdb(ndb))
         allocate(np(nx,nz,npb,3))
         allocate(mp(nx,nz,npb,3))
         allocate(nc(nx,nz,npb,ndb,3))
@@ -195,7 +196,8 @@ module mem
         deallocate (pip_xdiff(nx,nz))
         deallocate (pip_zdiff(nx,nz))
         deallocate (pip_tend_total(nx,nz))
-        
+
+        deallocate(mdb(ndb))
         deallocate(np_tend_total(nx,nz,npb))
         deallocate(mp_tend_total(nx,nz,npb))
         deallocate(nc_tend_total(nx,nz,npb,ndb))

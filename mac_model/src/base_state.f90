@@ -40,7 +40,6 @@ module base_state
                     rvb(iz) = 0.
                 endif 
 
-
             enddo ! end z loop
         else if (dn_flag==.True.) then
             !set base state sounding to be dry and neutral
@@ -50,8 +49,6 @@ module base_state
 
                 ! set base state water vapor mixing ratio to 0 as given
                 rvb(iz) = 0.
-
-
             enddo !end z loop
         endif  ! end WK vs. dry neutral flag
 

@@ -18,6 +18,7 @@ module initial_perturb
 
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
+        integer :: ipb,idb
         real :: rad ! distance from center of perturbation
 
         do iz = 2, nz-1
@@ -66,9 +67,15 @@ module initial_perturb
                 up(ix,iz,1) = up(ix,iz,2)
                 wp(ix,iz,1) = wp(ix,iz,2)
                 rvp(ix,iz,1) = rvp(ix,iz,2)
+
+                thp(ix,iz,3) = 0.
+                pip(ix,iz,3) = 0.
+                up(ix,iz,3) = 0.
+                wp(ix,iz,3) = 0.
+                rvp(ix,iz,3) = 0.
             enddo
         enddo
-        
+                
         !calculate perturbation pressure in Pa
         do iz = 1,nz
             do ix = 1,nx

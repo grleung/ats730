@@ -8,7 +8,7 @@ program MAC
     use mem, only: allocate_mem, deallocate_mem
     use base_state, only: init_base_state
     use cape, only: calculate_parcel_cape
-    use io, only: read_namelist, write_parcel_traj, write_base_state,write_current_state
+    use io, only: read_namelist, write_parcel_traj, write_base_state,write_current_state,write_current_micro
     use initial_perturb, only: init_perturb
     use advection, only: advect
     use model_vars, only: it
@@ -59,15 +59,20 @@ program MAC
         call enforce_bounds_x
         print*,'bounds enforced'
         call tendencies 
-        call microphysics
         print*,'done tend'
+        call microphysics_driv
+        print*,'done micro'
         call enforce_bounds_z
         call enforce_bounds_x
         print*,'bounds enforced'
         call step_time
+        print*,'step time'
 
         if (modulo(it,outfreq)==0) then
             call write_current_state
+            print*,'state write'
+            call write_current_micro
+            print*,'micro write'
         endif
     
         print*,it
