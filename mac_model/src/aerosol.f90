@@ -86,7 +86,7 @@ module aerosol
         integer :: ipb,idb,ix,iz,it ! counter for aerosol bins 
         real :: a = 0.
 
-        ! set up mass doubling bins, define both bin centers and edges
+        ! set up mass doubling bins, define both bin centers (_c) and edges (_e)
         dp_e(1) = dpi
         mp_e(1) = calc_mass(dpi,rhop)
         mp_c(1) = mp_e(1) * ratio**0.5
@@ -100,13 +100,14 @@ module aerosol
             dp_c(ipb) = calc_dp(mp_c(ipb),rhop)
         enddo
 
+        ! define extra point for largest bin edge
         mp_e(npb+1) = mp_e(npb)*ratio
         dp_e(npb+1) = calc_dp(mp_e(npb+1),rhop)
-
 
         print*,'bins ok'
 
         ! set up lognormal distribution
+        ! for now this is based on unimodal distribution with a peak at dpg (hard coded), but should be easy to change this to be Namelist param
         do it =1,3
             do ix=2,nx-1
                 do iz=2,nz-1
@@ -137,7 +138,6 @@ module aerosol
             mdb(idb) = mdb(idb-1) * ratio !mass doubling bins
         enddo
     
-
     end subroutine init_aerosol
 
 
@@ -170,7 +170,7 @@ module aerosol
         use constants, only: cp, rd, p00, lv
         use run_constants, only: nx,nz,npb,ndb
         use model_vars, only: mdb, thp, pip, rvp, thb, pib, rvb, np, mp,nc,mc,mpc
-        use thermo_functions, only: calc_rsat
+        use thermo_functions, only: calc_rsat,calc_satfrac
 
         implicit none
 
@@ -184,35 +184,40 @@ module aerosol
         !first loop over all spatial points
         do iz=2,nz-1
             do ix=2,nx-1
+                ! calculate actual values instead of perturbation values of theta, pressure, rv
                 th = thp(ix,iz,3) + thb(iz)
                 pi = pip(ix,iz,3) + pib(iz)
                 t = th*pi
                 p = p00 * (pi**(cp/rd))
                 rv = rvp(ix,iz,3) + rvb(iz)
                 rvsat = calc_rsat(t,p)
-                Samb = rv/rvsat
+                Samb = calc_satfrac(rv,rvsat)
 
                 ! if the grid point is supersaturated and
-                ! there are fewer cloud droplets than available CCN locally
                 if (Samb>1.) then
-                    ! calculate local CCN concentration
+                    ! and there are fewer cloud droplets than available CCN locally
+                    ! this is what HUCM does -- I don't think it is that well physically-justified, but ok for now
                     if (SUM(nc(ix,iz,:,:,3)<SUM(np(ix,iz,:,3)))) then
-                        ! calculate local total cloud drop concentration
+                        ! then we should activate particles! 
                         do ipb=1,npb
+                            ! for each particle bin, check if there are any particles at all (saves us some time looping over bins that have no aerosol)
                             if ((np(ix,iz,ipb,3) > 0.) .and. (mp(ix,iz,ipb,3) > 0.)) then
                                 ma = mp(ix,iz,ipb,3)/np(ix,iz,ipb,3) ! mean mass of aerosol particle in bin
-                                dp = calc_dp(ma, rhop)
-                                Sc = calc_scrit(dp, t, kappa)
+                                dp = calc_dp(ma, rhop) ! mean particle diameter in bin
+                                Sc = calc_scrit(dp, t, kappa) !corresponding mean critical saturation in bin
 
-                                if (Samb>Sc) then !if ambinet supersaturation is above critical, do activation
+                                if (Samb>Sc) then !if ambient supersaturation is above critical, do activation
                                     ! determine which cloud bin the activate droplets should go into
                                     if ((5*ma) < mdb(1)) then
+                                        ! if the mean aerosol size is way smaller than the first bin, just shove them in first droplet bin
                                         idb = 1
                                     else
+                                        ! else, find the appropriate bin where droplet size is just smaller than our activated particle
                                         idb = COUNT(mdb(:)<(5*ma))
                                     endif
                                     
-                                    ! add cloud droplets & mass & aerosol mass
+                                    ! add liquid number & mass & aerosol mass
+                                    ! we assume all the particles within a bin activate at the same time if they hit the mean critical supersat for the bin
                                     nc(ix,iz,ipb,idb,3) = nc(ix,iz,ipb,idb,3) + np(ix,iz,ipb,3) 
                                     mc(ix,iz,ipb,idb,3) = mc(ix,iz,ipb,idb,3) + (mdb(idb)-ma)
                                     mpc(ix,iz,ipb,idb,3) = mpc(ix,iz,ipb,idb,3) + (np(ix,iz,ipb,3)*ma)
@@ -242,6 +247,8 @@ module aerosol
 
         implicit none
 
+
+        !should make these namelist parameters
         real :: kappa=0.5       !hygroscopicity parameter, assume 0.5
         real :: rhop = 1400.    !density of particle, assume ammonium sulfate
         
@@ -249,8 +256,8 @@ module aerosol
         real :: th, pi, rv, t, p, rvsat, Samb,Sc ! temporary variables for saturation calc
         real :: md_each,mw_each,mp_each,mdf_each! temporary variables for activation cal
         real :: dpd_each,dpw_each,dpp_each,lambd, Seq, G, Im,A,beta, condensed_water
-        real :: t1=0., t2=0., t3=0.
-        integer :: jdb
+        real :: t1=0., t2=0., t3=0. !more temporary variables
+        integer :: jdb ! index of new bin after condensation
 
         real :: ncf(npb,ndb),mcf(npb,ndb),mpcf(npb,ndb)
 
@@ -265,6 +272,7 @@ module aerosol
                 rvsat = calc_rsat(t,p)
                 Samb = rv/rvsat
 
+                ! calculate some terms for Kohler curve later -- these only depend on temp and pressure, so do them per spatial point
                 A=4*MW_w*sigma_w/(rd*t*rhol)
                 lambd = calc_lambd(p,t)
 
@@ -280,30 +288,25 @@ module aerosol
                 do ipb=1,npb
                     do idb=1,ndb
                         if ((nc(ix,iz,ipb,idb,3) > 0.) .and. (mc(ix,iz,ipb,idb,3) > 0.)) then
-                            !print*,'mc',mc(ix,iz,ipb,idb,3)
-                            !print*,'nc',nc(ix,iz,ipb,idb,3)
-
                             mw_each = mc(ix,iz,ipb,idb,3)/nc(ix,iz,ipb,idb,3) !water mass per particle
                             if (mw_each<0.) then
-                                print*,mw_each ! id on't understand why but if i comment this out it doens't work and gets fp error
+                                print*,mw_each ! i don't understand why but if i comment this out it doens't work and gets fp error
                             endif 
-                            mp_each = mpc(ix,iz,ipb,idb,3)/nc(ix,iz,ipb,idb,3) !dry mass per particle
-                            !print*,mp_each
-                            md_each = mw_each + mp_each !total cloud droplet mass per particle
-                            !print*,'mass',mw_each,mp_each,md_each
 
+                            mp_each = mpc(ix,iz,ipb,idb,3)/nc(ix,iz,ipb,idb,3) !dry mass per particle
+                            md_each = mw_each + mp_each !total cloud droplet mass per particle
+                            
+                            ! calculate the equivalent diameter for the mass of water, mass of particle
+                            ! then calculate the resulting droplet diameter as cubed sum
                             dpw_each = calc_dp(mw_each,rhol)
                             dpp_each = calc_dp(mp_each,rhop)
                             dpd_each = ((dpw_each**3.) + (dpp_each**3.))**(1/3.)
 
-                            !print*,'dp',dpw_each,dpp_each,dpd_each
-
-                            beta = calc_dahneke(dpd_each, lambd, 1.)
-                            !print*,'beta',beta
-                            
+                            ! now that we know droplet size, do full Kohler calculation for Seq 
                             Seq = (dpd_each**3 - dpp_each**3)/(dpd_each**3 - (1-kappa)*dpp_each**3) * EXP(A/dpd_each)
-                            !print*,'Seq',Seq
-
+                            
+                            ! calculating the amount of condensation following Pruppracher & Klemt
+                            ! this is not elegant code but if I don't have this print statement then I get non-normal values
                             t1 = (R*t)/(calc_esat(t)*dg*MW_w)
                             t2 = (lv/(kair*t))
                             t3 = (lv*MW_w/(R*t)-1)
@@ -312,24 +315,28 @@ module aerosol
                             endif
 
                             G = t1 + (t2*t3)
-                            !print*,'G',G
                             
+                            ! calculate dahneke parameter
+                            beta = calc_dahneke(dpd_each, lambd, 1.)
+
+                            ! amount of water condensed this timestep
                             Im = 2*trigpi*dpd_each*beta*(Samb-Seq)*(1/G)
 
+                            ! the final amount of droplet mass will be the original mass + Im * timestep
                             mdf_each = md_each + (Im*d2t)
-                            !print*,Im,md_each,mdf_each
-                        
+                            
                             ! if the new mass per droplet is more than the smallest cloud bin
                             if (mdf_each>mdb(1)) then
+                                ! then we need to find which bin to put the new droplet in 
                                 condensed_water = (Im*d2t) * nc(ix,iz,ipb,idb,3) 
 
                                 ! what bin should newly grown (or shrunk) drop go to 
                                 jdb = COUNT(mdb(:)<mdf_each)
 
+                                ! assign these post-condensation values to temporary arrays
                                 ncf(ipb,jdb) = ncf(ipb,jdb)  +  nc(ix,iz,ipb,idb,3) 
                                 mcf(ipb,jdb) = mcf(ipb,jdb)  + condensed_water
                                 mpcf(ipb,jdb) = mpcf(ipb,jdb)  +  (mp_each * nc(ix,iz,ipb,idb,3))
-                                !print*,'condensed', condensed_water
                             else
                                 !otherwise the evaporation has made droplet smaller than smallest possible droplet, return aerosol to environment
                                 condensed_water = md_each * nc(ix,iz,ipb,idb,3) 
@@ -346,6 +353,7 @@ module aerosol
                     enddo ! end droplet bin loop
                 enddo ! end particle bin loop
 
+                ! move from temporary arrays to final
                 do ipb=1,npb
                     do idb=1,ndb
                         nc(ix,iz,ipb,idb,3)  = ncf(ipb,idb)

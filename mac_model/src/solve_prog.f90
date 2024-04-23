@@ -146,7 +146,7 @@ module solve_prog
     subroutine calc_w_tend
         use run_constants, only: nz,nx,kmx,kmz,rdx,rdz,d2t
         use constants, only: cp,g
-        use model_vars, only:thvb,thb,rhoub,rhowb,pip,up,wp,thp,rvp,rcp,rrp &
+        use model_vars, only:thvb,thb,rhoub,rhowb,pip,up,wp,thp,rvp,mc &
                             ,w_xadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_zdiff,w_tend_total    
 
         implicit none
@@ -176,7 +176,7 @@ module solve_prog
                 ! fourth term in w-tendency equation: pressure gradient term 
                 w_buoy(ix,iz) = g * ((thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))                  &
                                     + 0.61*0.5*(rvp(ix,iz,2)+rvp(ix,iz-1,2))                            &
-                                    !- 0.5*(rcp(ix,iz,2)+rcp(ix,iz-1,2)+rrp(ix,iz,2)+rrp(ix,iz-1,2))     &
+                                    - 0.5*(SUM(mc(ix,iz,:,:,2))+SUM(mc(ix,iz-1,:,:,2)))     &
                                     )
 
                 ! fifth term in w-tendency equation: horizontal diffusion
