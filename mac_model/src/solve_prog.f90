@@ -356,6 +356,58 @@ module solve_prog
 
     end subroutine calc_aero_tend
 
+    
+
+    subroutine calc_liquid_tend
+        use run_constants, only: nz,nx,npb,ndb,khx,khz,rdx,rdz,cs
+        use constants, only: cp
+        use model_vars, only:rvb,rhoub,rhowb,up,wp,nc,mc,mpc &
+                        ,nc_tend_total,mc_tend_total,mpc_tend_total
+
+        implicit none
+
+        integer :: iz ! counter for z-coordinate
+        integer :: ix ! counter for x-coordinate
+        integer :: ipb ! counter for particle bins
+        integer :: idb !counter for droplet bins
+
+        real :: mp_each
+
+
+        do ix = 2, nx-1
+            do iz = 2, nz-1
+                do ipb=1,npb
+                    do idb=1,ndb
+                        mc_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mc(ix+1,iz,ipb,idb,2)+mc(ix,iz,ipb,idb,2)))         &
+                                                                -(up(ix+1,iz,2)*(mc(ix,iz,ipb,idb,2)+mc(ix-1,iz,ipb,idb,2)))) &
+                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mc(ix,iz+1,ipb,idb,2)+mc(ix,iz,ipb,idb,2))) &
+                                                                            - (rhowb(iz)*wp(ix,iz,2)*(mc(ix,iz,ipb,idb,2)+mc(ix,iz-1,ipb,idb,2)))) &
+                                                + (khx * rdx * rdx * (mc(ix-1,iz,ipb,idb,1) - 2*mc(ix,iz,ipb,idb,1) + mc(ix+1,iz,ipb,idb,1))) &
+                                                + (khz * rdz * rdz * (mc(ix,iz-1,ipb,idb,1) - 2*mc(ix,iz,ipb,idb,1) + mc(ix,iz+1,ipb,idb,1))) 
+
+                        nc_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(nc(ix+1,iz,ipb,idb,2)+nc(ix,iz,ipb,idb,2)))         &
+                                                                -(up(ix+1,iz,2)*(nc(ix,iz,ipb,idb,2)+nc(ix-1,iz,ipb,idb,2)))) &
+                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(nc(ix,iz+1,ipb,idb,2)+nc(ix,iz,ipb,idb,2))) &
+                                                                            - (rhowb(iz)*wp(ix,iz,2)*(nc(ix,iz,ipb,idb,2)+nc(ix,iz-1,ipb,idb,2)))) &
+                                                + (khx * rdx * rdx * (nc(ix-1,iz,ipb,idb,1) - 2*nc(ix,iz,ipb,idb,1) + nc(ix+1,iz,ipb,idb,1))) &
+                                                + (khz * rdz * rdz * (nc(ix,iz-1,ipb,idb,1) - 2*nc(ix,iz,ipb,idb,1) + nc(ix,iz+1,ipb,idb,1))) 
+
+                        mpc_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mpc(ix+1,iz,ipb,idb,2)+mpc(ix,iz,ipb,idb,2)))         &
+                                                                -(up(ix+1,iz,2)*(mpc(ix,iz,ipb,idb,2)+mpc(ix-1,iz,ipb,idb,2)))) &
+                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mpc(ix,iz+1,ipb,idb,2)+mpc(ix,iz,ipb,idb,2))) &
+                                                                            - (rhowb(iz)*wp(ix,iz,2)*(mpc(ix,iz,ipb,idb,2)+mpc(ix,iz-1,ipb,idb,2)))) &
+                                                + (khx * rdx * rdx * (mpc(ix-1,iz,ipb,idb,1) - 2*mpc(ix,iz,ipb,idb,1) + mpc(ix+1,iz,ipb,idb,1))) &
+                                                + (khz * rdz * rdz * (mpc(ix,iz-1,ipb,idb,1) - 2*mpc(ix,iz,ipb,idb,1) + mpc(ix,iz+1,ipb,idb,1))) 
+
+                        enddo
+                enddo
+            enddo ! end x loop
+        enddo ! end z loop
+
+    end subroutine calc_liquid_tend
+
+    
+
 
     
     subroutine apply_tends
@@ -395,9 +447,9 @@ module solve_prog
                             mc(ix,iz,iab,idb,3) = mc(ix,iz,iab,idb,2) + (dt * mc_tend_total(ix,iz,iab,idb))                        
                             mpc(ix,iz,iab,idb,3) = mpc(ix,iz,iab,idb,2) + (dt * mpc_tend_total(ix,iz,iab,idb))
                             
-                            nr(ix,iz,iab,idb,3) = nr(ix,iz,iab,idb,2) + (dt * nr_tend_total(ix,iz,iab,idb)) 
-                            mr(ix,iz,iab,idb,3) = mr(ix,iz,iab,idb,2) + (dt * mr_tend_total(ix,iz,iab,idb))
-                            mpr(ix,iz,iab,idb,3) = mpr(ix,iz,iab,idb,2) + (dt * mpr_tend_total(ix,iz,iab,idb))
+                            !nr(ix,iz,iab,idb,3) = nr(ix,iz,iab,idb,2) + (dt * nr_tend_total(ix,iz,iab,idb)) 
+                            !mr(ix,iz,iab,idb,3) = mr(ix,iz,iab,idb,2) + (dt * mr_tend_total(ix,iz,iab,idb))
+                            !mpr(ix,iz,iab,idb,3) = mpr(ix,iz,iab,idb,2) + (dt * mpr_tend_total(ix,iz,iab,idb))
                         enddo
                     enddo 
                 else
@@ -416,9 +468,9 @@ module solve_prog
                             mc(ix,iz,iab,idb,3) = mc(ix,iz,iab,idb,1) + (d2t * mc_tend_total(ix,iz,iab,idb))
                             mpc(ix,iz,iab,idb,3) = mpc(ix,iz,iab,idb,1) + (d2t * mpc_tend_total(ix,iz,iab,idb))
                             
-                            nr(ix,iz,iab,idb,3) = nr(ix,iz,iab,idb,1) + (d2t * nr_tend_total(ix,iz,iab,idb)) 
-                            mr(ix,iz,iab,idb,3) = mr(ix,iz,iab,idb,1) + (d2t * mr_tend_total(ix,iz,iab,idb))
-                            mpr(ix,iz,iab,idb,3) = mpr(ix,iz,iab,idb,1) + (d2t * mpr_tend_total(ix,iz,iab,idb))
+                            !nr(ix,iz,iab,idb,3) = nr(ix,iz,iab,idb,1) + (d2t * nr_tend_total(ix,iz,iab,idb)) 
+                            !mr(ix,iz,iab,idb,3) = mr(ix,iz,iab,idb,1) + (d2t * mr_tend_total(ix,iz,iab,idb))
+                            !mpr(ix,iz,iab,idb,3) = mpr(ix,iz,iab,idb,1) + (d2t * mpr_tend_total(ix,iz,iab,idb))
                         enddo
                     enddo 
                 endif
