@@ -22,6 +22,8 @@ module solve_prog
         print*,'rvp tend'
         call calc_aero_tend
         print*,'aero tend'
+        call calc_liquid_tend
+        print*,'liquid tend'
 
         call apply_tends
 
@@ -169,7 +171,7 @@ module solve_prog
                                         - (rhowb(iz)*(0.5*(wp(ix,iz,2)+wp(ix,iz-1,2)))**2))
 
                 ! third term in w-tendency equation: pressure gradient term 
-                w_pgf(ix,iz) = -cp * rdz * 0.5 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
+                w_pgf(ix,iz) = -cp * rdz * 0.25 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
 
                 ! fourth term in w-tendency equation: pressure gradient term 
                 w_buoy(ix,iz) = g * ((thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))                  &
@@ -334,11 +336,18 @@ module solve_prog
                                             + (khx * rdx * rdx * (mp(ix-1,iz,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix+1,iz,ipb,1))) &
                                             + (khz * rdz * rdz * (mp(ix,iz-1,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix,iz+1,ipb,1))) 
 
-                    if (np_tend_total(ix,iz,ipb)>0) then
-                        mp_each = mp_tend_total(ix,iz,ipb)/np_tend_total(ix,iz,ipb)
-                        np_tend_total(ix,iz,ipb) = mp_tend_total(ix,iz,ipb)/mp_each
-                    endif
 
+                    !if (np_tend_total(ix,iz,ipb)>0) then
+                    !    mp_each = mp_tend_total(ix,iz,ipb)/np_tend_total(ix,iz,ipb)
+                    !    np_tend_total(ix,iz,ipb) = mp_tend_total(ix,iz,ipb)/mp_each
+                    !endif
+
+                    np_tend_total(ix,iz,ipb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(np(ix+1,iz,ipb,2)+np(ix,iz,ipb,2)))         &
+                                                            -(up(ix+1,iz,2)*(np(ix,iz,ipb,2)+np(ix-1,iz,ipb,2)))) &
+                                            - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(np(ix,iz+1,ipb,2)+np(ix,iz,ipb,2))) &
+                                                                        - (rhowb(iz)*wp(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix,iz-1,ipb,2)))) &
+                                            + (khx * rdx * rdx * (np(ix-1,iz,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix+1,iz,ipb,1))) &
+                                            + (khz * rdz * rdz * (np(ix,iz-1,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix,iz+1,ipb,1))) 
 
                     
                 enddo
@@ -392,6 +401,7 @@ module solve_prog
                         enddo
                     enddo 
                 else
+                    up(ix,iz,3) = up(ix,iz,1) + (d2t * u_tend_total(ix,iz))
                     wp(ix,iz,3) = wp(ix,iz,1) + (d2t * w_tend_total(ix,iz))
                     thp(ix,iz,3) = thp(ix,iz,1) + (d2t * thp_tend_total(ix,iz))
                     pip(ix,iz,3) = pip(ix,iz,1) + (d2t * pip_tend_total(ix,iz))

@@ -39,7 +39,7 @@ program MAC
     print*,'base written'
 
     call init_aerosol
-    print*,'aerosol init'
+    !print*,'aerosol init'
 
     ! Calculate parcel CAPE
     !call calculate_parcel_cape
