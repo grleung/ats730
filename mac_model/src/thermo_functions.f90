@@ -38,29 +38,22 @@ module thermo_functions
         calc_satfrac = rv/rsat
     end function calc_satfrac
 
-    real function rain_fallspeed(rho, rr)
-        use run_constants, only: minrain,Nint
-        use constants, only: g, rhol,trigpi
+    real function calc_rhoair(t,p)
+        use constants, only: rd, MW_air
 
+        implicit none 
+        real :: p, t
+
+        calc_rhoair = MW_air*p /(rd*t)
+
+    end function calc_rhoair
+
+    real function calc_esat(T)
         implicit none
-        real :: rho,rr,lambda, k=1.83
-        ! calculates terminal velocity of raindrops 
-        ! given air density (rhob) and slope parameter (lambda)
 
-        ! check that rain is above some minimum value, or else there will be inf values of lambda
-        if (rr >= minrain) then
-            lambda = ((rhol*Nint*trigpi)/(rho*rr))**.25
-            rain_fallspeed = k * (g*rhol/rho)**.5 * GAMMA(4.5) * lambda**(-0.5)
-        else
-            rain_fallspeed = 0.
-        endif 
-    end function rain_fallspeed
+        real :: T
 
-    real function rain_vent(rho, rr)
-        implicit none
-        real :: rho,rr
-
-        rain_vent = 1.6 + 30.39*(rho*rr)**.2046
-    end function rain_vent
+        calc_esat = 100.*EXP(53.68-(6743./T) - (4.845*LOG(T)))
+    end function calc_esat
 
 end module thermo_functions

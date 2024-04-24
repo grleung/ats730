@@ -6,15 +6,14 @@ module timestep
     contains
     
     subroutine step_time
-        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mc,mpc,nr,mr,mpr
-        use run_constants, only: nz,nx,npb,ndb
-        use aerosol, only: check_negs
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mlc,mpc
+        use run_constants, only: nz,nx,npartbin,ndropbin
 
         implicit none
 
         integer :: iz ! counter for z
         integer :: ix ! counter for x
-        integer :: ipb,idb,it
+        integer :: ipartbin,idropbin,it
 
 
         print*,'step time start'
@@ -28,18 +27,14 @@ module timestep
                 pip(ix,iz,1) = pip(ix,iz,2)
                 rvp(ix,iz,1) = rvp(ix,iz,2)
 
-                do ipb=1,npb
-                    np(ix,iz,ipb,1) = np(ix,iz,ipb,2)
-                    mp(ix,iz,ipb,1) = mp(ix,iz,ipb,2)
+                do ipartbin=1,npartbin
+                    np(ix,iz,ipartbin,1) = np(ix,iz,ipartbin,2)
+                    mp(ix,iz,ipartbin,1) = mp(ix,iz,ipartbin,2)
                     
-                    do idb=1,ndb
-                        ! smth is happening here idk what but after setting current there's smth wrong
-                        mc(ix,iz,ipb,idb,1) = mc(ix,iz,ipb,idb,2)
-                        mpc(ix,iz,ipb,idb,1) = mpc(ix,iz,ipb,idb,2)
-                        nr(ix,iz,ipb,idb,1) = nr(ix,iz,ipb,idb,2)
-                        mr(ix,iz,ipb,idb,1) = mr(ix,iz,ipb,idb,2)
-                        mpr(ix,iz,ipb,idb,1) = mpr(ix,iz,ipb,idb,2)
-                        nc(ix,iz,ipb,idb,1) = nc(ix,iz,ipb,idb,2)
+                    do idropbin=1,ndropbin
+                        mlc(ix,iz,ipartbin,idropbin,1) = mlc(ix,iz,ipartbin,idropbin,2)
+                        mpc(ix,iz,ipartbin,idropbin,1) = mpc(ix,iz,ipartbin,idropbin,2)
+                        nc(ix,iz,ipartbin,idropbin,1) = nc(ix,iz,ipartbin,idropbin,2)
                     enddo
                 enddo
 
@@ -49,32 +44,25 @@ module timestep
                 pip(ix,iz,2) = pip(ix,iz,3)
                 rvp(ix,iz,2) = rvp(ix,iz,3)
 
-                do ipb=1,npb
-                    np(ix,iz,ipb,2) = np(ix,iz,ipb,3)
-                    mp(ix,iz,ipb,2) = mp(ix,iz,ipb,3)
+                do ipartbin=1,npartbin
+                    np(ix,iz,ipartbin,2) = np(ix,iz,ipartbin,3)
+                    mp(ix,iz,ipartbin,2) = mp(ix,iz,ipartbin,3)
                     
-                    do idb=1,ndb
-                        ! smth is happening here idk what but after setting current there's smth wrong
-                        mc(ix,iz,ipb,idb,2) = mc(ix,iz,ipb,idb,3)
-                        mpc(ix,iz,ipb,idb,2) = mpc(ix,iz,ipb,idb,3)
-                        nr(ix,iz,ipb,idb,2) = nr(ix,iz,ipb,idb,3)
-                        mr(ix,iz,ipb,idb,2) = mr(ix,iz,ipb,idb,3)
-                        mpr(ix,iz,ipb,idb,2) = mpr(ix,iz,ipb,idb,3)
-
-                        if (nc(ix,iz,ipb,idb,3)<0.) then
+                    do idropbin=1,ndropbin
+                        mlc(ix,iz,ipartbin,idropbin,2) = mlc(ix,iz,ipartbin,idropbin,3)
+                        mpc(ix,iz,ipartbin,idropbin,2) = mpc(ix,iz,ipartbin,idropbin,3)
+                        
+                        if (nc(ix,iz,ipartbin,idropbin,3)<0.) then
                             print*,''
-                            nc(ix,iz,ipb,idb,2) = 0.
+                            nc(ix,iz,ipartbin,idropbin,2) = 0.
                         else
-                            nc(ix,iz,ipb,idb,2) = nc(ix,iz,ipb,idb,3)
+                            nc(ix,iz,ipartbin,idropbin,2) = nc(ix,iz,ipartbin,idropbin,3)
                         endif 
                     enddo
                 enddo
                 !enddo
             enddo ! end z loop
         enddo ! end x loop
-
-        call check_negs
-
 
         print*,MAXVAL(wp(:,:,2))
         print*,MAXVAL(rvp(:,:,2))

@@ -8,17 +8,16 @@ module initial_perturb
 
     subroutine init_perturb()
         use constants, only: g,cp,trigpi
-        use run_constants, only: nz, nx, npb,ndb,dz0,radx,radz,amp,zcnt,xcnt, pbc_x, pbc_z,pert_wind,bin_flag
+        use run_constants, only: nz, nx, npartbin,ndropbin,dz0,radx,radz,amp,zcnt,xcnt, pbc_x, pbc_z,pert_wind
         use model_vars, only:zsn, xsn,thb,rvb,thvb,rhoub,thp,pip,pp,up,wp,rvp,thvp
         use boundaries, only: enforce_bounds_x,enforce_bounds_z
         use thermo_functions, only:calc_thv
-        use model_vars, only: np,mp,nc,mc,mpc,nr,mr,mpr
         
         implicit none
 
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
-        integer :: ipb,idb
+        integer :: ipartbin,idropbin
         real :: rad ! distance from center of perturbation
 
         do iz = 2, nz-1

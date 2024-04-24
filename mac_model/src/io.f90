@@ -12,7 +12,8 @@ module io
                                 ,base_out,base_outpath,parcel_out,parcel_outpath,var_out,var_outpath,outfreq    &
                                 ,wk_flag,dn_flag                                                                &
                                 ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs                                     &
-                                ,kmx,kmz,khx,khz,cldautothresh,autorate,accrrate,nint                           
+                                ,kmx,kmz,khx,khz                         &
+                                ,ntot,dpg,sigma,kappa,rhop,npartbin,ndropbin
 
         implicit none 
 
@@ -23,7 +24,7 @@ module io
         namelist /parcel/ rvpsurf
         namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
         namelist /diff/ kmx,kmz,khx,khz
-        namelist /micro/ cldautothresh,autorate,accrrate,nint
+        namelist /aero/ npartbin,ndropbin,ntot,dpg,sigma,kappa,rhop
         
         open(unit=1, file='Namelist',action='read')
 
@@ -34,7 +35,7 @@ module io
         read(1,nml=parcel)
         read(1,nml=pert)
         read(1,nml=diff)
-        read(1,nml=micro)
+        read(1,nml=aero)
         
         close(1)
 
@@ -96,8 +97,8 @@ module io
     end subroutine write_parcel_traj
 
     subroutine write_current_micro
-        use run_constants, only: nz,nx,npb,ndb,var_out, var_outpath
-        use model_vars, only: it,np,mp,nc,mc,mpc
+        use run_constants, only: nz,nx,npartbin,ndropbin,var_out, var_outpath
+        use model_vars, only: it,np,mp,nc,mlc,mpc
 
         use, intrinsic :: ieee_arithmetic
 
@@ -114,22 +115,22 @@ module io
 
             write(1,*) 'var NP'
             do iz=1,nz
-                do ipb=1,npb
+                do ipb=1,npartbin
                     write(1, '(1x, *(g0, :, ", "))') np(:,iz,ipb,2)
                 enddo 
             enddo
 
             write(1,*) 'var MP'
             do iz=1,nz
-                do ipb=1,npb
+                do ipb=1,npartbin
                     write(1, '(1x, *(g0, :, ", "))') mp(:,iz,ipb,2)
                 enddo 
             enddo
         
             write(1,*) 'var NC'
             do iz=1,nz
-                do ipb=1,npb
-                    do idb=1,ndb
+                do ipb=1,npartbin
+                    do idb=1,ndropbin
                         write(1, '(1x, *(g0, :, ", "))') nc(:,iz,ipb,idb,2) 
                     enddo
                 enddo 
@@ -137,17 +138,17 @@ module io
 
             write(1,*) 'var MC'
             do iz=1,nz
-                do ipb=1,npb
-                    do idb=1,ndb
-                        write(1, '(1x, *(g0, :, ", "))') mc(:,iz,ipb,idb,2)
+                do ipb=1,npartbin
+                    do idb=1,ndropbin
+                        write(1, '(1x, *(g0, :, ", "))') mlc(:,iz,ipb,idb,2)
                     enddo
                 enddo 
             enddo
 
             write(1,*) 'var MPC'
             do iz=1,nz
-                do ipb=1,npb
-                    do idb=1,ndb
+                do ipb=1,npartbin
+                    do idb=1,ndropbin
                         write(1, '(1x, *(g0, :, ", "))') mpc(:,iz,ipb,idb,2)
                     enddo
                 enddo 

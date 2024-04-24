@@ -76,8 +76,9 @@ module model_vars
             ,rrp_xadv,rrp_zadv,rrp_xdiff,rrp_zdiff,rrp_tend_total                       
 
     ! microphysics/droplet bin edges 
-    real, allocatable, dimension(:) :: &
-            mdb     ! mass of cloud bins (edges) [kg]
+    real, allocatable, dimension(:) ::  &
+            mdropbin_lims         &! mass of cloud bins (edges) [kg]
+        ,   mpartbin_lims         ! mass of particle bins (edges) [kg]
 
     ! aerosol bin microphysics variables (array in nx,nz,na,3 time dims)
     real, allocatable, dimension(:,:,:,:) :: &
@@ -85,21 +86,18 @@ module model_vars
     
     ! water bin microphysics variables (array in nx,nz,na,nd,3 time dims)
     real, allocatable, dimension(:,:,:,:,:) :: &
-            nc, mc   & ! cloud number and mass
-        ,   nac, mpc & ! aerosol in cloud number and mass
-        ,   nr, mr   & ! rain number and mass
-        ,   mpr        ! aerosol in rain mass only
+            nc, mlc, mpc  ! aerosol in cloud number and liquid mass and aerosol particle mass
+            !mlc is only the liquid mass
+            ! but the axes go along the size of the particle only and the size of the total drop (liquid + particle)
 
     ! aerosol bin microphysics variables (array in nx,nz,na,3 time dims)
     real, allocatable, dimension(:,:,:) :: &
-            np_tend_total, mp_tend_total   ! aerosol Particle number and mass
+            np_tend_total, mp_tend_total   ! aerosol Particle number and mass tendency
     
     ! water bin microphysics variables (array in nx,nz,na,nd,3 time dims)
     real, allocatable, dimension(:,:,:,:) :: &
-            nc_tend_total, mc_tend_total   & ! cloud number and mass
-        ,   mpc_tend_total & ! aerosol in cloud number and mass
-        ,   nr_tend_total, mr_tend_total   & ! rain number and mass
-        ,   mpr_tend_total        ! aerosol in rain mass only
+            nc_tend_total, mlc_tend_total   & ! cloud number and mass
+        ,   mpc_tend_total  ! aerosol in cloud number and mass
     
     
     contains

@@ -80,22 +80,17 @@ module run_constants
         ,   rdt =   1/3.    &
         ,   rd2t=   1/6.    
 
-    ! microphysics constants
-    real ::  &
-        minmix = 1.e-10         &
-    ,   minrain = 1.e-10        & 
-    ,   mincld  = 1.e-10        &  
-    ,   Nint    = 8.e6          &
-    ,   cldautothresh = 1.e-3   &
-    ,   autorate = 1.e-3         &
-    ,   accrrate = 2.2 
-
     ! bin microphysics
-    logical :: &
-        bin_flag = .True.    ! flag to use bin microphysics or not
-
     integer :: &
-        npb = 42      &   ! number of aerosol bins
-    ,   ndb = 40         ! number of drop/droplet bins
+        npartbin = 42      &   ! number of aerosol bins
+    ,   ndropbin = 40         ! number of drop/droplet bins
+
+    real :: &
+        ntot    =   1000.   & ! total number of aerosol particles [#/kg]
+    ,   dpg     =   100.e-9 & ! median particle diameter [m]
+    ,   sigma   =   1.8     & ! width of log-normal distribution
+    ,   kappa   =   0.5     & ! particle hygroscopicity parameter, assume 0.5 which is pretty middle of the road
+    ,   rhop    =   1400.     ! particle density [kg/m3]
+    
 
 end module run_constants

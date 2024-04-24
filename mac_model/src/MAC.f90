@@ -15,7 +15,9 @@ program MAC
     use solve_prog, only: tendencies
     use boundaries, only: enforce_bounds_x, enforce_bounds_z
     use timestep, only: step_time
-    use aerosol, only: init_aerosol,microphysics_driv
+    use aerosol, only: init_aerosol
+    use microphysics, only: microphysics_driv
+
 
     implicit none
 

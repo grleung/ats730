@@ -6,8 +6,8 @@ module boundaries
     contains
     
     subroutine enforce_bounds_x
-        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mc,mpc,nr,mr,mpr
-        use run_constants, only: nz,nx,pbc_x,npb,ndb
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mlc,mpc
+        use run_constants, only: nz,nx,pbc_x,npartbin,ndropbin
 
         implicit none
 
@@ -35,7 +35,7 @@ module boundaries
                     rvp(1,iz,it) = rvp(nx-1,iz,it)
                     rvp(nx,iz,it) = rvp(2,iz,it)
 
-                    do ipb=1,npb
+                    do ipb=1,npartbin
                         !np,mp,nc,mc,npc,mpc,nr,mr,mpr
                         np(1,iz,ipb,it) = np(nx-1,iz,ipb,it)
                         np(nx,iz,ipb,it) = np(2,iz,ipb,it)
@@ -43,24 +43,15 @@ module boundaries
                         mp(1,iz,ipb,it) = mp(nx-1,iz,ipb,it)
                         mp(nx,iz,ipb,it) = mp(2,iz,ipb,it)
 
-                        do idb=1,ndb
+                        do idb=1,ndropbin
                             nc(1,iz,ipb,idb,it) = nc(nx-1,iz,ipb,idb,it)
                             nc(nx,iz,ipb,idb,it) = nc(2,iz,ipb,idb,it)
 
-                            mc(1,iz,ipb,idb,it) = mc(nx-1,iz,ipb,idb,it)
-                            mc(nx,iz,ipb,idb,it) = mc(2,iz,ipb,idb,it)
+                            mlc(1,iz,ipb,idb,it) = mlc(nx-1,iz,ipb,idb,it)
+                            mlc(nx,iz,ipb,idb,it) = mlc(2,iz,ipb,idb,it)
 
                             mpc(1,iz,ipb,idb,it) = mpc(nx-1,iz,ipb,idb,it)
                             mpc(nx,iz,ipb,idb,it) = mpc(2,iz,ipb,idb,it)
-
-                            nr(1,iz,ipb,idb,it) = nr(nx-1,iz,ipb,idb,it)
-                            nr(nx,iz,ipb,idb,it) = nr(2,iz,ipb,idb,it)
-
-                            mr(1,iz,ipb,idb,it) = mr(nx-1,iz,ipb,idb,it)
-                            mr(nx,iz,ipb,idb,it) = mr(2,iz,ipb,idb,it)
-
-                            mpr(1,iz,ipb,idb,it) = mpr(nx-1,iz,ipb,idb,it)
-                            mpr(nx,iz,ipb,idb,it) = mpr(2,iz,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
@@ -84,7 +75,7 @@ module boundaries
                     rvp(1,iz,it) = rvp(2,iz,it)
                     rvp(nx,iz,it) = rvp(nx-1,iz,it)
 
-                    do ipb=1,npb
+                    do ipb=1,npartbin
                         !np,mp,nc,mc,npc,mpc,nr,mr,mpr
                         np(1,iz,ipb,it) = np(2,iz,ipb,it)
                         np(nx,iz,ipb,it) = np(nx-1,iz,ipb,it)
@@ -92,24 +83,15 @@ module boundaries
                         mp(1,iz,ipb,it) = mp(2,iz,ipb,it)
                         mp(nx,iz,ipb,it) = mp(nx-1,iz,ipb,it)
 
-                        do idb=1,ndb
+                        do idb=1,ndropbin
                             nc(1,iz,ipb,idb,it) = nc(2,iz,ipb,idb,it)
                             nc(nx,iz,ipb,idb,it) = nc(nx-1,iz,ipb,idb,it)
 
-                            mc(1,iz,ipb,idb,it) = mc(2,iz,ipb,idb,it)
-                            mc(nx,iz,ipb,idb,it) = mc(nx-1,iz,ipb,idb,it)
+                            mlc(1,iz,ipb,idb,it) = mlc(2,iz,ipb,idb,it)
+                            mlc(nx,iz,ipb,idb,it) = mlc(nx-1,iz,ipb,idb,it)
 
                             mpc(1,iz,ipb,idb,it) = mpc(2,iz,ipb,idb,it)
                             mpc(nx,iz,ipb,idb,it) = mpc(nx-1,iz,ipb,idb,it)
-
-                            nr(1,iz,ipb,idb,it) = nr(2,iz,ipb,idb,it)
-                            nr(nx,iz,ipb,idb,it) = nr(nx-1,iz,ipb,idb,it)
-
-                            mr(1,iz,ipb,idb,it) = mr(2,iz,ipb,idb,it)
-                            mr(nx,iz,ipb,idb,it) = mr(nx-1,iz,ipb,idb,it)
-
-                            mpr(1,iz,ipb,idb,it) = mpr(2,iz,ipb,idb,it)
-                            mpr(nx,iz,ipb,idb,it) = mpr(nx-1,iz,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
@@ -119,8 +101,8 @@ module boundaries
     end subroutine enforce_bounds_x
 
     subroutine enforce_bounds_z
-        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mc,mpc,nr,mr,mpr
-        use run_constants, only: nz,nx,pbc_z,npb,ndb
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mlc,mpc
+        use run_constants, only: nz,nx,pbc_z,npartbin,ndropbin
 
         implicit none
 
@@ -148,7 +130,7 @@ module boundaries
                     rvp(ix,1,it) = rvp(ix,nz-1,it)
                     rvp(ix,nz,it) = rvp(ix,2,it)
                     
-                    do ipb=1,npb
+                    do ipb=1,npartbin
                         !np,mp,nc,mc,npc,mpc,nr,mr,mpr
                         np(ix,1,ipb,it) = np(ix,nz-1,ipb,it)
                         np(ix,nz,ipb,it) = np(ix,2,ipb,it)
@@ -156,24 +138,15 @@ module boundaries
                         mp(ix,1,ipb,it) = mp(ix,nz-1,ipb,it)
                         mp(ix,nz,ipb,it) = mp(ix,2,ipb,it)
 
-                        do idb=1,ndb
+                        do idb=1,ndropbin
                             nc(ix,1,ipb,idb,it) = nc(ix,nz-1,ipb,idb,it)
                             nc(ix,nz,ipb,idb,it) = nc(ix,2,ipb,idb,it)
 
-                            mc(ix,1,ipb,idb,it) = mc(ix,nz-1,ipb,idb,it)
-                            mc(ix,nz,ipb,idb,it) = mc(ix,2,ipb,idb,it)
+                            mlc(ix,1,ipb,idb,it) = mlc(ix,nz-1,ipb,idb,it)
+                            mlc(ix,nz,ipb,idb,it) = mlc(ix,2,ipb,idb,it)
 
                             mpc(ix,1,ipb,idb,it) = mpc(ix,nz-1,ipb,idb,it)
                             mpc(ix,nz,ipb,idb,it) = mpc(ix,2,ipb,idb,it)
-
-                            nr(ix,1,ipb,idb,it) = nr(ix,nz-1,ipb,idb,it)
-                            nr(ix,nz,ipb,idb,it) = nr(ix,2,ipb,idb,it)
-
-                            mr(ix,1,ipb,idb,it) = mr(ix,nz-1,ipb,idb,it)
-                            mr(ix,nz,ipb,idb,it) = mr(ix,2,ipb,idb,it)
-
-                            mpr(ix,1,ipb,idb,it) = mpr(ix,nz-1,ipb,idb,it)
-                            mpr(ix,nz,ipb,idb,it) = mpr(ix,2,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
@@ -199,7 +172,7 @@ module boundaries
                     rvp(ix,1,it) = rvp(ix,2,it)
                     rvp(ix,nz,it) = rvp(ix,nz-1,it)
 
-                    do ipb=1,npb
+                    do ipb=1,npartbin
                         !np,mp,nc,mc,npc,mpc,nr,mr,mpr
                         np(ix,1,ipb,it) = np(ix,2,ipb,it)
                         np(ix,nz,ipb,it) = np(ix,nz-1,ipb,it)
@@ -207,24 +180,15 @@ module boundaries
                         mp(ix,1,ipb,it) = mp(ix,2,ipb,it)
                         mp(ix,nz,ipb,it) = mp(ix,nz-1,ipb,it)
 
-                        do idb=1,ndb
+                        do idb=1,ndropbin
                             nc(ix,1,ipb,idb,it) = nc(ix,2,ipb,idb,it)
                             nc(ix,nz,ipb,idb,it) = nc(ix,nz-1,ipb,idb,it)
 
-                            mc(ix,1,ipb,idb,it) = mc(ix,2,ipb,idb,it)
-                            mc(ix,nz,ipb,idb,it) = mc(ix,nz-1,ipb,idb,it)
+                            mlc(ix,1,ipb,idb,it) = mlc(ix,2,ipb,idb,it)
+                            mlc(ix,nz,ipb,idb,it) = mlc(ix,nz-1,ipb,idb,it)
 
                             mpc(ix,1,ipb,idb,it) = mpc(ix,2,ipb,idb,it)
                             mpc(ix,nz,ipb,idb,it) = mpc(ix,nz-1,ipb,idb,it)
-
-                            nr(ix,1,ipb,idb,it) = nr(ix,2,ipb,idb,it)
-                            nr(ix,nz,ipb,idb,it) = nr(ix,nz-1,ipb,idb,it)
-
-                            mr(ix,1,ipb,idb,it) = mr(ix,2,ipb,idb,it)
-                            mr(ix,nz,ipb,idb,it) = mr(ix,nz-1,ipb,idb,it)
-
-                            mpr(ix,1,ipb,idb,it) = mpr(ix,2,ipb,idb,it)
-                            mpr(ix,nz,ipb,idb,it) = mpr(ix,nz-1,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
