@@ -6,7 +6,7 @@ module timestep
     contains
     
     subroutine step_time
-        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mlc,mpc
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nd,mld,mpd
         use run_constants, only: nz,nx,npartbin,ndropbin
 
         implicit none
@@ -32,9 +32,9 @@ module timestep
                     mp(ix,iz,ipartbin,1) = mp(ix,iz,ipartbin,2)
                     
                     do idropbin=1,ndropbin
-                        mlc(ix,iz,ipartbin,idropbin,1) = mlc(ix,iz,ipartbin,idropbin,2)
-                        mpc(ix,iz,ipartbin,idropbin,1) = mpc(ix,iz,ipartbin,idropbin,2)
-                        nc(ix,iz,ipartbin,idropbin,1) = nc(ix,iz,ipartbin,idropbin,2)
+                        mld(ix,iz,ipartbin,idropbin,1) = mld(ix,iz,ipartbin,idropbin,2)
+                        mpd(ix,iz,ipartbin,idropbin,1) = mpd(ix,iz,ipartbin,idropbin,2)
+                        nd(ix,iz,ipartbin,idropbin,1) = nd(ix,iz,ipartbin,idropbin,2)
                     enddo
                 enddo
 
@@ -49,14 +49,14 @@ module timestep
                     mp(ix,iz,ipartbin,2) = mp(ix,iz,ipartbin,3)
                     
                     do idropbin=1,ndropbin
-                        mlc(ix,iz,ipartbin,idropbin,2) = mlc(ix,iz,ipartbin,idropbin,3)
-                        mpc(ix,iz,ipartbin,idropbin,2) = mpc(ix,iz,ipartbin,idropbin,3)
+                        mld(ix,iz,ipartbin,idropbin,2) = mld(ix,iz,ipartbin,idropbin,3)
+                        mpd(ix,iz,ipartbin,idropbin,2) = mpd(ix,iz,ipartbin,idropbin,3)
                         
-                        if (nc(ix,iz,ipartbin,idropbin,3)<0.) then
+                        if (nd(ix,iz,ipartbin,idropbin,3)<0.) then
                             print*,''
-                            nc(ix,iz,ipartbin,idropbin,2) = 0.
+                            nd(ix,iz,ipartbin,idropbin,2) = 0.
                         else
-                            nc(ix,iz,ipartbin,idropbin,2) = nc(ix,iz,ipartbin,idropbin,3)
+                            nd(ix,iz,ipartbin,idropbin,2) = nd(ix,iz,ipartbin,idropbin,3)
                         endif 
                     enddo
                 enddo

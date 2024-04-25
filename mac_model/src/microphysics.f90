@@ -19,8 +19,8 @@ module microphysics
         call condensation
         print*,'condensation'
 
-        !call check_negs
-        !print*,'check negs'
+        call check_negs
+        print*,'check negs'
 
         call collisioncoalescence 
         print*,'collision-coalescence'
@@ -40,7 +40,7 @@ module microphysics
     subroutine activation
         use constants, only: cp, rd, p00, lv
         use run_constants, only: nx,nz,npartbin,ndropbin, kappa, rhop
-        use model_vars, only: mdropbin_lims, thp, pip, rvp, thb, pib, rvb, np, mp,nc,mlc,mpc
+        use model_vars, only: mdropbin_lims, thp, pip, rvp, thb, pib, rvb, np, mp, nd, mld, mpd
         use thermo_functions, only: calc_rsat,calc_satfrac
         use aerosol, only: calc_mass, calc_dp, calc_scrit
 
@@ -66,7 +66,7 @@ module microphysics
                 if (Samb>1.) then
                     ! and there are fewer cloud droplets than available CCN locally
                     ! this is what HUCM does -- I don't think it is that well physically-justified, but ok for now
-                    if (SUM(nc(ix,iz,:,:,3)<SUM(np(ix,iz,:,3)))) then
+                    if (SUM(nd(ix,iz,:,:,3)<SUM(np(ix,iz,:,3)))) then
                         ! then we should activate particles! 
                         do ipartbin=1,npartbin
                             ! for each particle bin, check if there are any particles at all (saves us some time looping over bins that have no aerosol)
@@ -82,14 +82,14 @@ module microphysics
                                         idropbin = 1
                                     else
                                         ! else, find the appropriate bin where droplet size is just smaller than our activated particle
-                                        idropbin = COUNT(mdropbin_lims(:)<(5*mp_each))
+                                        idropbin = COUNT(mdropbin_lims(:ndropbin)<=(5*mp_each))
                                     endif
-                                    
+
                                     ! add liquid number & mass & aerosol mass
                                     ! we assume all the particles within a bin activate at the same time if they hit the mean critical supersat for the bin
-                                    nc(ix,iz,ipartbin,idropbin,3) = nc(ix,iz,ipartbin,idropbin,3) + np(ix,iz,ipartbin,3) 
-                                    mlc(ix,iz,ipartbin,idropbin,3) = mlc(ix,iz,ipartbin,idropbin,3) + (mdropbin_lims(idropbin)-mp_each)
-                                    mpc(ix,iz,ipartbin,idropbin,3) = mpc(ix,iz,ipartbin,idropbin,3) + (np(ix,iz,ipartbin,3)*mp_each)
+                                    nd(ix,iz,ipartbin,idropbin,3) = nd(ix,iz,ipartbin,idropbin,3) + np(ix,iz,ipartbin,3) 
+                                    mld(ix,iz,ipartbin,idropbin,3) = mld(ix,iz,ipartbin,idropbin,3) + (mdropbin_lims(idropbin)-mp_each)*np(ix,iz,ipartbin,3)
+                                    mpd(ix,iz,ipartbin,idropbin,3) = mpd(ix,iz,ipartbin,idropbin,3) + (np(ix,iz,ipartbin,3)*mp_each)
 
                                     ! add the equivalent amount of latent heating to THP
                                     thp(ix,iz,3) = thp(ix,iz,3) + (mdropbin_lims(idropbin)-mp_each)*(lv/(cp*pib(iz)))
@@ -111,8 +111,8 @@ module microphysics
     subroutine condensation
         use constants, only: cp, rd, p00, lv,rhol,MW_w,sigma_w,trigpi,dg,kair,R
         use run_constants, only: nx,nz,npartbin,ndropbin,dt,d2t,kappa,rhop
-        use model_vars, only: mdropbin_lims, thp, pip, rvp, thb, pib, rvb, np, mp,nc,mlc,mpc
-        use thermo_functions, only: calc_rsat, calc_esat
+        use model_vars, only: mdropbin_lims,mpartbin_lims, thp, pip, rvp, thb, pib, rvb, np, mp,nd,mld,mpd
+        use thermo_functions, only: calc_rsat, calc_esat, calc_satfrac
         use aerosol, only: calc_mass, calc_dp, calc_lambd, calc_dahneke
 
         implicit none
@@ -121,14 +121,14 @@ module microphysics
         integer :: jdropbin ! index of new bin after condensation
 
         real :: th, pi, rv, t, p, rvsat, Samb,Sc ! temporary variables for saturation calc
-        real :: md_each_i,ml_each_i,mp_each_i ! per droplet in bin, mass total, liquid mass, and particle mass
+        real :: md_each_i,mld_each_i,mpd_each_i ! per droplet in bin, mass total, liquid mass, and particle mass
         real :: md_each_j ! final mass per droplet after condensation
-        real :: dpd_each,dpw_each,dpp_each,lambd, Seq, G, Im,A,beta, condensed_water
+        real :: dpd_each_i,dpld_each_i,dppd_each_i,lambd, Seq, G, Im,A,beta, condensed_water
         real :: t1=0., t2=0., t3=0. !more temporary variables
         real :: minmass = 1.e-30
 
-        real :: nc_final(npartbin,ndropbin),mlc_final(npartbin,ndropbin),mpc_final(npartbin,ndropbin)
-
+        real :: nd_final(npartbin,ndropbin),mld_final(npartbin,ndropbin),mpd_final(npartbin,ndropbin)
+        real :: temp
         !first loop over all spatial points
         do iz=2,nz-1
             do ix=2,nx-1
@@ -138,7 +138,7 @@ module microphysics
                 p = p00 * (pi**(cp/rd))
                 rv = rvp(ix,iz,3) + rvb(iz)
                 rvsat = calc_rsat(t,p)
-                Samb = rv/rvsat
+                Samb = calc_satfrac(rv,rvsat)
 
                 ! calculate some terms for Kohler curve later -- these only depend on temp and pressure, so do them per spatial point
                 A=4*MW_w*sigma_w/(rd*t*rhol)
@@ -147,41 +147,44 @@ module microphysics
                 ! initialize the output arrays with zero
                 do ipartbin=1,npartbin
                     do idropbin=1,ndropbin
-                        nc_final(ipartbin,idropbin)  = 0.
-                        mlc_final(ipartbin,idropbin)  = 0.
-                        mpc_final(ipartbin,idropbin)  = 0.
+                        nd_final(ipartbin,idropbin)  = 0.
+                        mld_final(ipartbin,idropbin)  = 0.
+                        mpd_final(ipartbin,idropbin)  = 0.
                     enddo
                 enddo
 
                 do ipartbin=1,npartbin
                     do idropbin=1,ndropbin
-                        if ((nc(ix,iz,ipartbin,idropbin,3) > 0.) .and. (mlc(ix,iz,ipartbin,idropbin,3) > 0.)) then
-                            print*,mlc(ix,iz,ipartbin,idropbin,3),nc(ix,iz,ipartbin,idropbin,3)
-                            ml_each_i = mlc(ix,iz,ipartbin,idropbin,3)/nc(ix,iz,ipartbin,idropbin,3) !water mass per particle
-
-                            if (ml_each_i<0.) then
-                                print*,ml_each_i ! i don't understand why but if i comment this out it doens't work and gets fp error
+                        ! check if there are any droplets in this bin at all, if not we can skip it and save calculation time
+                        if ((nd(ix,iz,ipartbin,idropbin,3) > 0.) .and. ((mld(ix,iz,ipartbin,idropbin,3)+mpd(ix,iz,ipartbin,idropbin,3)) > 0.)) then
+                            ! mass of liquid in each particle/drop bin
+                            mld_each_i = mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) ! mass of liquid in droplet per particle/drop bin
+                            if (mld_each_i<0.) then
+                                print*,mld_each_i ! i don't understand why but if i comment this out it doesn't work and gets fp error
                             endif 
 
-                            print*,mpc(ix,iz,ipartbin,idropbin,3),nc(ix,iz,ipartbin,idropbin,3)
-                            mp_each_i = mpc(ix,iz,ipartbin,idropbin,3)/nc(ix,iz,ipartbin,idropbin,3) !dry mass per particle
+                            ! dry particle mass in each particle/drop bin
+                            mpd_each_i = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
 
-                            print*,ml_each_i,mp_each_i
-                                
-                            if ((ml_each_i<minmass) .or. (mp_each_i<minmass)) then
-                                print*,ml_each_i 
+                            if (mpd_each_i<0.) then
+                                print*,mpd_each_i ! i don't understand why but if i comment this out it doesn't work and gets fp error
+                            endif 
+  
+                            if ((mld_each_i<minmass) .or. (mpd_each_i<minmass)) then
+                                ! check that the mass is above some threshold, if not the calc_dp function returns 0 and there is a problem with saturation calc
+                                print*,'too small mass, skip this bin'
                             else
-                                md_each_i = ml_each_i + mp_each_i !total cloud droplet mass per particle
+                                ! total cloud mass in each particle/drop bin
+                                md_each_i = mld_each_i + mpd_each_i 
 
                                 ! calculate the equivalent diameter for the mass of water, mass of particle
                                 ! then calculate the resulting droplet diameter as cubed sum
-
-                                dpw_each = calc_dp(ml_each_i,rhol)
-                                dpp_each = calc_dp(mp_each_i,rhop)
-                                dpd_each = ((dpw_each**3.) + (dpp_each**3.))**(1/3.)
+                                dpld_each_i = calc_dp(mld_each_i,rhol)
+                                dppd_each_i = calc_dp(mpd_each_i,rhop)
+                                dpd_each_i = ((dpld_each_i**3.) + (dppd_each_i**3.))**(1/3.)
                                 
                                 ! now that we know droplet size, do full Kohler calculation for Seq 
-                                Seq = (dpd_each**3 - dpp_each**3)/(dpd_each**3 - (1-kappa)*dpp_each**3) * EXP(A/dpd_each)
+                                Seq = (dpd_each_i**3 - dppd_each_i**3)/(dpd_each_i**3 - ((1-kappa)*dppd_each_i**3)) * EXP(A/dpd_each_i)
                                 
                                 ! calculating the amount of condensation following Pruppracher & Klemt
                                 ! this is not elegant code but if I don't have this print statement then I get non-normal values
@@ -195,46 +198,45 @@ module microphysics
                                 G = t1 + (t2*t3)
                                 
                                 ! calculate dahneke parameter
-                                beta = calc_dahneke(dpd_each, lambd, 1.)
+                                beta = calc_dahneke(dpd_each_i, lambd, 1.)
 
                                 ! amount of water condensed this timestep
-                                Im = 2*trigpi*dpd_each*beta*(Samb-Seq)*(1/G)
+                                Im = 2.*trigpi*dpd_each_i*beta*(Samb-Seq)*(1/G)
 
-                                print*,'rate',Im
-                                ! the final amount of droplet mass will be the original mass + Im * timestep
+                                ! the final amount of droplet mass will be the original mass + Im * 2*dt
                                 md_each_j = md_each_i + (Im*d2t)
                                 
+                                ! TO DO:  add a check to say we can't condense more than available water vapor
+
                                 ! if the new mass per droplet is more than the smallest cloud bin
                                 if (md_each_j>mdropbin_lims(1)) then
-                                    ! then we need to find which bin to put the new droplet in 
-                                    condensed_water = (Im*d2t) * nc(ix,iz,ipartbin,idropbin,3) 
+                                    ! total amount of condensed water
+                                    condensed_water = (Im*d2t) * nd(ix,iz,ipartbin,idropbin,3) 
 
                                     ! what bin should newly grown (or shrunk) drop go to 
-                                    jdropbin = COUNT(mdropbin_lims(:)<md_each_j)
+                                    jdropbin = COUNT(mdropbin_lims(:ndropbin)<=md_each_j)
 
-                                    print*,'new bin',jdropbin
-
-                                    ! assign these post-condensation values to temporary arrays
-                                    nc_final(ipartbin,jdropbin) = nc_final(ipartbin,jdropbin)  +  nc(ix,iz,ipartbin,idropbin,3) 
-                                    mlc_final(ipartbin,jdropbin) = mlc_final(ipartbin,jdropbin)  + condensed_water
-                                    mpc_final(ipartbin,jdropbin) = mpc_final(ipartbin,jdropbin)  +  (mp_each_i * nc(ix,iz,ipartbin,idropbin,3))
                                     
+                                    if (jdropbin<ndropbin) then
+                                        ! assign these post-condensation values to their new bin
+                                        nd_final(ipartbin,jdropbin) = nd_final(ipartbin,jdropbin)  +  nd(ix,iz,ipartbin,idropbin,3) 
+                                        mld_final(ipartbin,jdropbin) = mld_final(ipartbin,jdropbin)  + mld(ix,iz,ipartbin,idropbin,3) + condensed_water
+                                        ! this works because condensation doesn't change the mass of dry particle, so we're just moving around the particle mass
+                                        mpd_final(ipartbin,jdropbin) = mpd_final(ipartbin,jdropbin)  +  (mpd_each_i * nd(ix,iz,ipartbin,idropbin,3))
+                                    endif
                                 else
                                     !otherwise the evaporation has made droplet smaller than smallest possible droplet, return aerosol to environment
-                                    condensed_water = md_each_i * nc(ix,iz,ipartbin,idropbin,3) 
+                                    condensed_water = -(md_each_i-mpd_each_i) * nd(ix,iz,ipartbin,idropbin,3) 
                                     
-                                    np(ix,iz,ipartbin,3) = np(ix,iz,ipartbin,3) + nc(ix,iz,ipartbin,idropbin,3)
-                                    mp(ix,iz,ipartbin,3) = mp(ix,iz,ipartbin,3) + (nc(ix,iz,ipartbin,idropbin,3)*mp_each_i)
+                                    np(ix,iz,ipartbin,3) = np(ix,iz,ipartbin,3) + nd(ix,iz,ipartbin,idropbin,3)
+                                    mp(ix,iz,ipartbin,3) = mp(ix,iz,ipartbin,3) + (nd(ix,iz,ipartbin,idropbin,3)*mpd_each_i)
                                 endif
-
-                                print*,'moved to new bin'
 
                                 ! add the equivalent amount of latent heating to THP
                                 thp(ix,iz,3) = thp(ix,iz,3) + condensed_water*(lv/(cp*pib(iz)))
                                 ! remove equivalent amount of water from RVP
                                 rvp(ix,iz,3) = rvp(ix,iz,3) - condensed_water
 
-                                print*,'adjust th and rv'
                             endif
                         endif   
                     enddo ! end droplet bin loop
@@ -243,58 +245,43 @@ module microphysics
                 ! move from temporary arrays to final
                 do ipartbin=1,npartbin
                     do idropbin=1,ndropbin
-                        nc(ix,iz,ipartbin,idropbin,3)  = nc_final(ipartbin,idropbin)
-                        mlc(ix,iz,ipartbin,idropbin,3)  = mlc_final(ipartbin,idropbin)
-                        mpc(ix,iz,ipartbin,idropbin,3)  = mpc_final(ipartbin,idropbin)
-                    enddo
-                enddo
-            
-            enddo
-        enddo
+                        nd(ix,iz,ipartbin,idropbin,3)  = nd_final(ipartbin,idropbin)
+                        mld(ix,iz,ipartbin,idropbin,3)  = mld_final(ipartbin,idropbin)
+                        mpd(ix,iz,ipartbin,idropbin,3)  = mpd_final(ipartbin,idropbin)
+                    enddo ! end droplet bin loop
+                enddo ! end particle bin loop
+    
+            enddo ! end x loop
+        enddo ! end z loop
 
-        print*,'done!'
-        do ix=2,nx-1
-            do iz=2,nz-1
-                do ipartbin=1,npartbin
-                    do idropbin=1,ndropbin
-                        if ((nc(ix,iz,ipartbin,idropbin,3)<0.) .or. (mlc(ix,iz,ipartbin,idropbin,3)<0.) .or. (mpc(ix,iz,ipartbin,idropbin,3)<0.)) then
-                            print*,nc(ix,iz,ipartbin,idropbin,3) ,mlc(ix,iz,ipartbin,idropbin,3) ,mpc(ix,iz,ipartbin,idropbin,3) 
-                            nc(ix,iz,ipartbin,idropbin,3) = 0.
-                            mlc(ix,iz,ipartbin,idropbin,3) = 0.
-                            mpc(ix,iz,ipartbin,idropbin,3) = 0.
-                            print*,nc(ix,iz,ipartbin,idropbin,3) ,mlc(ix,iz,ipartbin,idropbin,3) ,mpc(ix,iz,ipartbin,idropbin,3) 
-                        endif
-                    enddo
-                enddo
-            enddo
-        enddo
-
-        print*,'negs ok'
     end subroutine condensation
 
     subroutine collisioncoalescence 
         use constants, only: cp, rd, p00, lv,rhol,MW_w,sigma_w,trigpi,dg,kair,R
         use run_constants, only: nx,nz,npartbin,ndropbin,dt,d2t,rhop
-        use model_vars, only: mdropbin_lims, mpartbin_lims,thp, pip, thb, pib, np, mp,nc,mlc,mpc
+        use model_vars, only: mdropbin_lims, mpartbin_lims,thp, pip, thb, pib, np, mp,nd,mld,mpd
         use thermo_functions, only: calc_rhoair
         use aerosol, only: calc_mass, calc_dp
 
         implicit none
 
-        integer :: ix,iz,ipb,jpb,kpb,idb,jdb,kdb ! counters
+        integer :: ix,iz,idropbin,jdropbin,kdropbin,ipartbin,jpartbin,kpartbin ! counters
+        ! i and j are the bins doing the collision-coalescence (where j is the bigger drop)
+        ! k is the final bin they end up in after collision
         
         real :: rho_air, th, pi, t, p , rv, rvsat ! extra variables for calculations
 
-        real :: ncf(npartbin,ndropbin),mcf(npartbin,ndropbin),mpcf(npartbin,ndropbin) !final cloud arrays
-        real :: nct(ndropbin), mct(ndropbin), mpct(ndropbin) ! total cloud values 
-        real :: mw_each_i,mp_each_i,md_each_i,mw_each_j,mp_each_j,md_each_j &
-                ,frac_i(npartbin),frac_j(npartbin),vol_each_i,vol_each_j,dpd_each_j   &
-                ,pj,K,Jij,md_each_k,mp_each_k,mpc_i(npartbin),mpc_j(npartbin) !temporary variables for collision coalescence calc
+        real :: nd_final(npartbin,ndropbin),mld_final(npartbin,ndropbin),mpd_final(npartbin,ndropbin) !temporary cloud arrays
+        real :: nd_total(ndropbin), mld_total(ndropbin), mpd_total(ndropbin) ! total cloud values in each droplet bin
+        real :: mld_each_i,mpd_each_i,md_each_i,vol_each_i                  &
+                ,mld_each_j,mpd_each_j,md_each_j,vol_each_j,dpd_each_j      &
+                ,mld_each_k,mpd_each_k,md_each_k                            &
+                ,frac_n_i(npartbin),frac_n_j(npartbin),frac_mp_i(npartbin),frac_mp_j(npartbin),frac_ml_i(npartbin),frac_ml_j(npartbin)                          & ! fraction of droplets of this droplet size that are in each particle bin
+                ,pj,Kij,Jij                                               !temporary variables for collision coalescence calc
 
 
         real :: minmass = 1.e-30
 
-        print*,'start coagulation'
         !first loop over all spatial points
         do iz=2,nz-1
             do ix=2,nx-1
@@ -303,57 +290,75 @@ module microphysics
                 t = th*pi
                 p = p00 * (pi**(cp/rd))
                 rho_air = calc_rhoair(t,p)
-                print*,'initial temps calc'
+                !print*,'initial temps calc'
 
                 ! calculate total cloud number, water mass, aerosol mass in each cloud drop bin
-                do idb =1,ndropbin
-                    nct(idb) = SUM(nc(ix,iz,:,idb,3))
-                    mct(idb) = SUM(mlc(ix,iz,:,idb,3))
-                    mpct(idb) = SUM(mpc(ix,iz,:,idb,3))
+                do idropbin =1,ndropbin
+                    nd_total(idropbin) = SUM(nd(ix,iz,:,idropbin,3))
+                    mld_total(idropbin) = SUM(mld(ix,iz,:,idropbin,3))
+                    mpd_total(idropbin) = SUM(mpd(ix,iz,:,idropbin,3))
                 enddo 
-                print*,'total calc'
+                !print*,'total calc'
 
-                ! initially set the final variables to be same as initial (post-advection and condensation, but pre-collision coalescence)
-                ncf(:,:) = nc(ix,iz,:,:,3)
-                mcf(:,:) = mlc(ix,iz,:,:,3)
-                mpcf(:,:) = mpc(ix,iz,:,:,3)
+                ! initially set the final variables to values post-advection and condensation, but pre-collision coalescence
+                nd_final(:,:) = nd(ix,iz,:,:,3)
+                mld_final(:,:) = mld(ix,iz,:,:,3)
+                mpd_final(:,:) = mpd(ix,iz,:,:,3)
+                !print*,'set pre-coagulation values'
 
-                print*,'set pre-coagulation values'
                 
-                do idb = 1,ndropbin
-                    if (((mct(idb)+mpct(idb))> 0.) .and. (nct(idb)>0.)) then 
-                        do jdb = idb,ndropbin
-                            if (((mct(jdb)+mpct(jdb))>0.) .and. (nct(jdb)>0.)) then
-                                print*,nct(idb),nct(jdb)
+                !loop over first droplet (smaller) bins
+                do idropbin = 1,ndropbin
+                    ! do a check to see if there's any mass/nuber in this bin -- if not we can skip and save computations
+                    if (((mld_total(idropbin)+mpd_total(idropbin))> 0.) .and. (nd_total(idropbin)>0.)) then 
+                        mld_each_i = mld_total(idropbin)/nd_total(idropbin) !water mass per drop in bin i
+                        if (mld_each_i<0.) then
+                            print*,mld_each_i ! i don't understand why but if i comment this out it doesn't work and gets fp error
+                        endif 
+                        mpd_each_i = mpd_total(idropbin)/nd_total(idropbin) !dry mass per drop in bin i
+                        md_each_i = mld_each_i + mpd_each_i !total droplet mass per drop in bin i
 
-                                mw_each_i = mct(idb)/nct(idb) !water mass per drop in bin i
-                                if (mw_each_i<0.) then
-                                    print*,mw_each_i ! i don't understand why but if i comment this out it doens't work and gets fp error
-                                endif 
-                                mp_each_i = mpct(idb)/nct(idb) !dry mass per particle
-                                md_each_i = mw_each_i + mp_each_i !total cloud droplet mass per particle
+                        if (md_each_i<mdropbin_lims(idropbin)) then
+                            print*,'i drop is too small',md_each_i,mld_each_i,mpd_each_i,mdropbin_lims(idropbin:idropbin+1)
+                        else if (md_each_i>mdropbin_lims(idropbin+1)) then
+                            print*,'i drop is too big',md_each_i,mld_each_i,mpd_each_i,mdropbin_lims(idropbin:idropbin+1)
+                        endif
+
+                        print*,'i',idropbin,md_each_i,mld_each_i,mpd_each_i
+                        
+                        ! loop over second (bigger) droplet bin
+
+                        do jdropbin = idropbin,ndropbin
+                            ! do a check to see if there's any mass/nuber in this bin -- if not we can skip and save computations
+                            if (((mld_total(jdropbin)+mpd_total(jdropbin))>0.) .and. (nd_total(jdropbin)>0.)) then
                                 
-                                mw_each_j = mct(jdb)/nct(jdb) !water mass per drop in bin j
-                                if (mw_each_j<0.) then
-                                    print*,mw_each_j ! i don't understand why but if i comment this out it doens't work and gets fp error
+                                mld_each_j = mld_total(jdropbin)/nd_total(jdropbin) !water mass per drop in bin j
+                                if (mld_each_j<0.) then
+                                    print*,mld_each_j ! i don't understand why but if i comment this out it doesn't work and gets fp error
                                 endif 
-                                mp_each_j = mpct(jdb)/nct(jdb) !dry mass per particle
-                                md_each_j = mw_each_j + mp_each_j !total cloud droplet mass per particle
+                                mpd_each_j = mpd_total(jdropbin)/nd_total(jdropbin) !dry mass per drop in bin j
+                                md_each_j = mld_each_j + mpd_each_j !total droplet mass per drop in bin j
 
-                                print*,'initial droplet sizes calc'
+                                !print*,'initial droplet sizes calc'
+                                if (md_each_j<mdropbin_lims(jdropbin)) then
+                                    print*,'j drop is too small',md_each_j,mld_each_j,mpd_each_j,mdropbin_lims(jdropbin:jdropbin+1)
+                                else if (md_each_j>mdropbin_lims(jdropbin+1)) then
+                                    print*,'j drop is too big',md_each_j,mld_each_j,mpd_each_j,mdropbin_lims(jdropbin:jdropbin+1)
+                                endif
 
-                                if ((mw_each_i<minmass) .or. (mp_each_i<minmass) .or. (mw_each_j<minmass) .or. (mp_each_j<minmass)) then
-                                    print*,mw_each_i
+                                print*,'j',jdropbin,md_each_j,mld_each_j,mpd_each_j
+                                
+                                ! if any of the masses are too small, ignore these collisions
+                                if ((mld_each_i<minmass) .or. (mpd_each_i<minmass) .or. (mld_each_j<minmass) .or. (mpd_each_j<minmass)) then
+                                    print*,mld_each_i
                                 else
-                                    !calculate total volume of each particle
-                                    vol_each_i = ((mw_each_i/rhol) + (mp_each_i/rhop)) * 100.**3
-                                    vol_each_j = ((mw_each_j/rhol) + (mp_each_j/rhop)) * 100.**3
-
-
                                     ! calculate larger droplet diameter
-                                    dpd_each_j = (calc_dp(mw_each_j,rhol)**3 + calc_dp(mp_each_j,rhop)**3)**(1/3.)
+                                    ! collision-coalescence rate is parameterized different for small and big collector drops (below/above 100micron) 
+                                    dpd_each_j = (calc_dp(mld_each_j,rhol)**3 + calc_dp(mpd_each_j,rhop)**3)**(1/3.)
 
-                                    print*,'each size calc'
+                                    !calculate total volume of each particle
+                                    vol_each_i = ((mld_each_i/rhol) + (mpd_each_i/rhop)) * 100.**3
+                                    vol_each_j = ((mld_each_j/rhol) + (mpd_each_j/rhop)) * 100.**3
 
                                     if (dpd_each_j > 100.e-6) then
                                         pj = 5.78e3 * (vol_each_i + vol_each_j)
@@ -361,130 +366,132 @@ module microphysics
                                         pj = 9.44e9 * (vol_each_i**2 + vol_each_j**2)
                                     end if
 
-                                    K = pj * rho_air * (1/100.)**3
+                                    ! collision-coalescence rate constant
+                                    Kij = pj * rho_air * (1/100.)**3
 
-                                    ! calculate coagulation rate
-                                    Jij = K * nct(idb) * nct(jdb)
+                                    ! calculate coagulation rate between i and j bins
+                                    Jij = Kij * nd_total(idropbin) * nd_total(jdropbin)
 
-                                    print*,'rates calc'
+                                    !print*,'rates calc'
+                                    
+                                    do ipartbin=1,npartbin
+                                        ! calculate fraction of cloud number/particle mass that are in each particle bin (for a given droplet bin) for distributing later
+                                        frac_n_i(ipartbin) = nd(ix,iz,ipartbin,idropbin,3)/nd_total(idropbin)
 
-                                    ! calculate fraction of cloud in each aerosol bin for distributing later
-                                    frac_i(:) = nc(ix,iz,:,idb,3)/nct(idb)
-                                    frac_j(:) = nc(ix,iz,:,jdb,3)/nct(jdb)
-
-                                    do ipb=1,npartbin
-                                        if (nc(ix,iz,ipb,idb,3)>0.) then
-                                            mpc_i(ipb) = mpc(ix,iz,ipb,idb,3)/nc(ix,iz,ipb,idb,3)
+                                        if (nd(ix,iz,ipartbin,idropbin,3)>0.) then
+                                            frac_mp_i(ipartbin) = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
                                         else
-                                            mpc_i(ipb) = mpartbin_lims(ipb)
+                                            frac_mp_i(ipartbin) = mdropbin_lims(ipartbin)
                                         endif
-                                    enddo 
-
-                                    do jpb=1,npartbin
-                                        if (nc(ix,iz,jpb,idb,3)>0.) then
-                                            mpc_j(jpb) = mpc(ix,iz,jpb,idb,3)/nc(ix,iz,jpb,idb,3)
+                                        !frac_ml_i(ipartbin) = mld(ix,iz,ipartbin,idropbin,3)/nd_total(idropbin)
+                                        !frac_mp_i(ipartbin) = mpd(ix,iz,ipartbin,idropbin,3)/nd_total(idropbin)
+                                    
+                                        frac_n_j(ipartbin) = nd(ix,iz,ipartbin,jdropbin,3)/nd_total(jdropbin)
+                                        if (nd(ix,iz,ipartbin,jdropbin,3)>0.) then
+                                            frac_mp_j(ipartbin) = mpd(ix,iz,ipartbin,jdropbin,3)/nd(ix,iz,ipartbin,jdropbin,3)
                                         else
-                                            mpc_j(jpb) = mpartbin_lims(jpb)
+                                            frac_mp_j(ipartbin) = mdropbin_lims(ipartbin)
                                         endif
+                                            !frac_ml_j(ipartbin) = mld(ix,iz,ipartbin,jdropbin,3)/nd_total(jdropbin)
+                                        !frac_mp_j(ipartbin) = mpd(ix,iz,ipartbin,jdropbin,3)/nd_total(jdropbin)
+                                        
+                                        ! redistribute cloud number/mass based on collision-coalescence rate
+                                        nd_final(ipartbin,idropbin) = nd_final(ipartbin,idropbin) - (Jij*d2t*frac_n_i(ipartbin))
+                                        nd_final(ipartbin,jdropbin) = nd_final(ipartbin,idropbin) - (Jij*d2t*frac_n_j(ipartbin))
+
+                                        mld_final(ipartbin,idropbin) = mld_final(ipartbin,idropbin) - (Jij*d2t*frac_ml_i(ipartbin)*(md_each_i-frac_mp_i(ipartbin)))
+                                        mld_final(ipartbin,jdropbin) = mld_final(ipartbin,jdropbin) - (Jij*d2t*frac_ml_j(ipartbin)*(md_each_j-frac_mp_j(ipartbin)))
+
+                                        mpd_final(ipartbin,idropbin) = mpd_final(ipartbin,idropbin) - (Jij*d2t*frac_ml_i(ipartbin)*frac_mp_i(ipartbin))
+                                        mpd_final(ipartbin,jdropbin) = mpd_final(ipartbin,jdropbin) - (Jij*d2t*frac_ml_j(ipartbin)*frac_mp_j(ipartbin))
+
+                                        ! all our droplets in a droplet bin are assumed to be the same size, but total size = particle + liquid water
+                                        ! so the bigger the dry particle, the less liquid mass there is
+                                        !mld_final(ipartbin,idropbin) = mld_final(ipartbin,idropbin) - (Jij*d2t*((nd_total(idropbin)*frac_n_i(ipartbin)*md_each_i)-frac_mp_i(ipartbin)))
+                                        !mld_final(ipartbin,jdropbin) = mld_final(ipartbin,jdropbin) - (Jij*d2t*((nd_total(jdropbin)*frac_n_j(ipartbin)*md_each_j)-frac_mp_j(ipartbin)))
+
+                                        !mld_final(ipartbin,idropbin) = mld_final(ipartbin,idropbin) - (Jij*d2t*frac_ml_i(ipartbin))
+                                        !mld_final(ipartbin,jdropbin) = mld_final(ipartbin,jdropbin) - (Jij*d2t*frac_ml_j(ipartbin))
+                                        
+                                        !mpd_final(ipartbin,idropbin) = mpd_final(ipartbin,idropbin) - (Jij*d2t*frac_mp_i(ipartbin))
+                                        !mpd_final(ipartbin,jdropbin) = mpd_final(ipartbin,jdropbin) - (Jij*d2t*frac_mp_j(ipartbin))
                                     enddo 
-
-                                    ! redistribute cloud number/mass based on collision-coalescence rate
-                                    ncf(:,idb) = ncf(:,idb) - (Jij*d2t*frac_i(:))
-                                    ncf(:,jdb) = ncf(:,idb) - (Jij*d2t*frac_j(:))
-
-                                    mcf(:,idb) = mcf(:,idb) - (Jij*d2t*frac_i(:)*(md_each_i-mpc_i(:)))
-                                    mcf(:,jdb) = mcf(:,jdb) - (Jij*d2t*frac_j(:)*(md_each_j-mpc_j(:)))
-
-                                    mpcf(:,idb) = mpcf(:,idb) - (Jij*d2t*frac_i(:)*mpc_i(:))
-                                    mpcf(:,jdb) = mpcf(:,jdb) - (Jij*d2t*frac_j(:)*mpc_j(:))
-
-                                    print*,'subtract from old bins'
+                                    !print*,'subtract from old bins'
 
                                     ! find new droplet mass bin
-                                    md_each_k = md_each_j + md_each_j
-                                    kdb = COUNT(mdropbin_lims(:)<md_each_k) 
-                                    
-                                    if (md_each_k>mdropbin_lims(ndropbin)) then 
-                                        print*,'too big droplet!'
-                                    endif
+                                    md_each_k = md_each_i + md_each_j
+                                    kdropbin = COUNT(mdropbin_lims(:ndropbin)<=md_each_k) 
+                            
+                                    if (kdropbin>ndropbin) then
+                                        print*,'collision makes too big drop',kdropbin,ndropbin,md_each_k
+                                    else if ((kdropbin<idropbin) .or. (kdropbin<jdropbin)) then
+                                        print*,'something is wrong, new bin is smaller than original bin drops',idropbin,jdropbin,kdropbin,md_each_i,md_each_j,md_each_k
+                                    else
+                                        ! check to make sure the new droplet has not become bigger than the biggest droplet bin we have
+                                        if (md_each_k>mdropbin_lims(ndropbin+1)) then 
+                                            print*,'too big droplet!'
+                                        else
+                                            do ipartbin=1,npartbin
+                                                ! check that there are actually droplets in this bin
+                                                if ((frac_n_i(ipartbin)>0.) .and. (frac_mp_i(ipartbin)>0.)) then
+                                                    do jpartbin=1,npartbin 
+                                                        ! check that there are actually droplets in this bin
+                                                        if ((frac_n_j(jpartbin)>0.) .and. (frac_mp_j(jpartbin)>0.)) then
+                                                            mpd_each_k = frac_mp_i(ipartbin) + frac_mp_j(jpartbin)
 
-                                    print*,'calc new bin'
+                                                            ! will need to make particle bin dimension
+                                                            kpartbin = COUNT(mpartbin_lims(:npartbin)<=mpd_each_k)
 
-                                    do ipb=1,npartbin
-                                        if (frac_i(ipb)>0.) then
-                                            do jpb=1,npartbin 
-                                                if (frac_j(jpb)>0.) then
-                                                    mp_each_k = mpc_i(ipb) + mpc_j(jpb)
+                                                            if ((kpartbin < ipartbin) .or. (kpartbin < jpartbin)) then
+                                                                print*,'something wrong, part bin smaller than original bins',ipartbin,jpartbin,kpartbin,frac_mp_i(ipartbin) ,frac_mp_j(jpartbin),mpd_each_k
+                                                            endif
+                                                            
+                                                            if (mpd_each_k > md_each_k) then
+                                                                print*,'more aerosol than water! smth is wrong',mpd_each_k,md_each_k
+                                                            endif
 
-                                                    ! will need to make particle bin dimension
-                                                    kpb = COUNT(mpartbin_lims(:)<mp_each_k)
-
-                                                    if (mp_each_k > md_each_k) then
-                                                        print*,'more aerosol than water! smth is wrong'
-                                                    endif
-
-                                                    ncf(kpb,kdb) = ncf(kpb,kdb) + (Jij*d2t*frac_i(ipb)*frac_j(jpb))
-                                                    mcf(kpb,kdb) = mcf(kpb,kdb) + (Jij*d2t*frac_i(ipb)*frac_j(jpb)*(md_each_k-mp_each_k))
-                                                    mpcf(kpb,kdb) = mpcf(kpb,kdb) + (Jij*d2t*frac_i(ipb)*frac_j(jpb)*mp_each_k)
-                                                endif 
+                                                            nd_final(kpartbin,kdropbin) = nd_final(kpartbin,kdropbin) + (Jij*d2t*frac_n_i(ipartbin)*frac_n_j(jpartbin))
+                                                            mld_final(kpartbin,kdropbin) = mld_final(kpartbin,kdropbin) + (Jij*d2t*frac_n_i(ipartbin)*frac_n_j(jpartbin)*(md_each_k-mpd_each_k))
+                                                            mpd_final(kpartbin,kdropbin) = mpd_final(kpartbin,kdropbin) + (Jij*d2t*frac_n_i(ipartbin)*frac_n_j(jpartbin)*mpd_each_k)
+                                                        endif 
+                                                    enddo
+                                                endif
                                             enddo
                                         endif
-                                    enddo
+                                    endif
                                 endif
                             endif 
                         enddo
                     endif 
                 enddo
 
-                print*,'start negs check'
+                !print*,'start negs check'
 
+                ! move from temporary arrays to final
+                do ipartbin=1,npartbin
+                    do idropbin=1,ndropbin
+                        if ((nd_final(ipartbin,idropbin)<=0.) .or. (nd_final(ipartbin,idropbin)<=0.) .or. (nd_final(ipartbin,idropbin)<=0.)) then
+                            nd(ix,iz,ipartbin,idropbin,3) = 0.
+                            mld(ix,iz,ipartbin,idropbin,3) = 0.
+                            mpd(ix,iz,ipartbin,idropbin,3) = 0.
+                        else
+                            nd(ix,iz,ipartbin,idropbin,3)  = nd_final(ipartbin,idropbin)
+                            mld(ix,iz,ipartbin,idropbin,3)  = mld_final(ipartbin,idropbin)
+                            mpd(ix,iz,ipartbin,idropbin,3)  = mpd_final(ipartbin,idropbin)
+                        endif
+                    enddo ! end droplet bin loop
+                enddo ! end particle bin loop
+
+                !print*,'values in main arrays now'
                 
-
-                do ipb=1,npartbin
-                    do idb=1,ndropbin
-                        !print*,ncf(ipb,idb),mcf(ipb,idb),mpcf(ipb,idb)
-                        !negative values check
-                        if ((ncf(ipb,idb)<0.) .or. (mcf(ipb,idb)<0.) .or. (mpcf(ipb,idb)<0.)) then
-                            print*,ncf(ipb,idb) ,mcf(ipb,idb) ,mpcf(ipb,idb) 
-                        
-                            ncf(ipb,idb) = 0.
-                            mcf(ipb,idb) = 0.
-                            mpcf(ipb,idb) = 0.
-                            print*,ncf(ipb,idb) ,mcf(ipb,idb) ,mpcf(ipb,idb) 
-                        endif
-
-                        print*,'put in main arrays'
-                        ! move from temporary arrays to main data arrays
-                        nc(ix,iz,ipb,idb,3)  = ncf(ipb,idb)
-                        mlc(ix,iz,ipb,idb,3)  = mcf(ipb,idb)
-                        mpc(ix,iz,ipb,idb,3)  = mpcf(ipb,idb)
-
-                        print*,'main arrays ok'
-
-                        if ((nc(ix,iz,ipb,idb,3)<0.) .or. (mlc(ix,iz,ipb,idb,3)<0.) .or. (mpc(ix,iz,ipb,idb,3)<0.)) then
-                            print*,nc(ix,iz,ipb,idb,3) ,mlc(ix,iz,ipb,idb,3) ,mpc(ix,iz,ipb,idb,3) 
-                            nc(ix,iz,ipb,idb,3) = 0.
-                            mlc(ix,iz,ipb,idb,3) = 0.
-                            mpc(ix,iz,ipb,idb,3) = 0.
-                            print*,nc(ix,iz,ipb,idb,3) ,mlc(ix,iz,ipb,idb,3) ,mpc(ix,iz,ipb,idb,3) 
-                        endif
-
-                        !print*,nc(ix,iz,ipb,idb,3),mc(ix,iz,ipb,idb,3),mpc(ix,iz,ipb,idb,3)
-                    enddo
-                enddo
-
-                print*,'end negs check'
-            enddo
-        enddo
-
-        print*,'all collision done'
-
+            enddo ! end x loop
+        enddo ! end z loop
     end subroutine collisioncoalescence
     
 
     subroutine check_negs
         use run_constants, only: nx,nz,npartbin,ndropbin
-        use model_vars, only: np, mp,nc,mlc,mpc
+        use model_vars, only: np, mp,nd,mld,mpd
         
         implicit none
 
@@ -500,10 +507,10 @@ module microphysics
                     endif
 
                     do idb=1,ndropbin
-                        if ((nc(ix,iz,ipb,idb,3)<0.) .or. (mlc(ix,iz,ipb,idb,3)<minmass) .or. (mpc(ix,iz,ipb,idb,3)<minmass)) then
-                            nc(ix,iz,ipb,idb,3)=0.
-                            mlc(ix,iz,ipb,idb,3)=0.
-                            mpc(ix,iz,ipb,idb,3) = 0.
+                        if ((nd(ix,iz,ipb,idb,3)<0.) .or. (mld(ix,iz,ipb,idb,3)<minmass) .or. (mpd(ix,iz,ipb,idb,3)<minmass)) then
+                            nd(ix,iz,ipb,idb,3)=0.
+                            mld(ix,iz,ipb,idb,3)=0.
+                            mpd(ix,iz,ipb,idb,3) = 0.
                         endif
                     enddo
                 enddo

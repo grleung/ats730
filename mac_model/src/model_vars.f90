@@ -86,7 +86,7 @@ module model_vars
     
     ! water bin microphysics variables (array in nx,nz,na,nd,3 time dims)
     real, allocatable, dimension(:,:,:,:,:) :: &
-            nc, mlc, mpc  ! aerosol in cloud number and liquid mass and aerosol particle mass
+            nd, mld, mpd  ! aerosol in cloud number and liquid mass and aerosol particle mass
             !mlc is only the liquid mass
             ! but the axes go along the size of the particle only and the size of the total drop (liquid + particle)
 
@@ -96,8 +96,8 @@ module model_vars
     
     ! water bin microphysics variables (array in nx,nz,na,nd,3 time dims)
     real, allocatable, dimension(:,:,:,:) :: &
-            nc_tend_total, mlc_tend_total   & ! cloud number and mass
-        ,   mpc_tend_total  ! aerosol in cloud number and mass
+            nd_tend_total, mld_tend_total   & ! cloud number and mass
+        ,   mpd_tend_total  ! aerosol in cloud number and mass
     
     
     contains

@@ -51,9 +51,9 @@ module mem
         allocate(mpartbin_lims(npartbin+1))
         allocate(np(nx,nz,npartbin,3))
         allocate(mp(nx,nz,npartbin,3))
-        allocate(nc(nx,nz,npartbin,ndropbin,3))
-        allocate(mlc(nx,nz,npartbin,ndropbin,3))
-        allocate(mpc(nx,nz,npartbin,ndropbin,3))
+        allocate(nd(nx,nz,npartbin,ndropbin,3))
+        allocate(mld(nx,nz,npartbin,ndropbin,3))
+        allocate(mpd(nx,nz,npartbin,ndropbin,3))
 
         ! tendency arrays
         allocate (u_xadv(nx,nz))
@@ -83,9 +83,9 @@ module mem
 
         allocate(np_tend_total(nx,nz,npartbin))
         allocate(mp_tend_total(nx,nz,npartbin))
-        allocate(nc_tend_total(nx,nz,npartbin,ndropbin))
-        allocate(mlc_tend_total(nx,nz,npartbin,ndropbin))
-        allocate(mpc_tend_total(nx,nz,npartbin,ndropbin))
+        allocate(nd_tend_total(nx,nz,npartbin,ndropbin))
+        allocate(mld_tend_total(nx,nz,npartbin,ndropbin))
+        allocate(mpd_tend_total(nx,nz,npartbin,ndropbin))
         allocate (rvp_xadv(nx,nz))
         allocate (rvp_zadv(nx,nz))
         allocate (rvp_meanadv(nx,nz))
@@ -140,9 +140,9 @@ module mem
         deallocate(mpartbin_lims(npartbin+1))
         deallocate(np(nx,nz,npartbin,3))
         deallocate(mp(nx,nz,npartbin,3))
-        deallocate(nc(nx,nz,npartbin,ndropbin,3))
-        deallocate(mlc(nx,nz,npartbin,ndropbin,3))
-        deallocate(mpc(nx,nz,npartbin,ndropbin,3))
+        deallocate(nd(nx,nz,npartbin,ndropbin,3))
+        deallocate(mld(nx,nz,npartbin,ndropbin,3))
+        deallocate(mpd(nx,nz,npartbin,ndropbin,3))
 
         ! tendency arrays
         deallocate (u_xadv(nx,nz))
@@ -172,9 +172,9 @@ module mem
 
         deallocate(np_tend_total(nx,nz,npartbin))
         deallocate(mp_tend_total(nx,nz,npartbin))
-        deallocate(nc_tend_total(nx,nz,npartbin,ndropbin))
-        deallocate(mlc_tend_total(nx,nz,npartbin,ndropbin))
-        deallocate(mpc_tend_total(nx,nz,npartbin,ndropbin))
+        deallocate(nd_tend_total(nx,nz,npartbin,ndropbin))
+        deallocate(mld_tend_total(nx,nz,npartbin,ndropbin))
+        deallocate(mpd_tend_total(nx,nz,npartbin,ndropbin))
         deallocate (rvp_xadv(nx,nz))
         deallocate (rvp_zadv(nx,nz))
         deallocate (rvp_meanadv(nx,nz))

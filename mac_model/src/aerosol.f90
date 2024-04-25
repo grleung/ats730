@@ -42,7 +42,7 @@ module aerosol
 
         real:: p, t
 
-        calc_lambd = (2*mu)/(p*(8*MW_air)/(trigpi*R*t))
+        calc_lambd = (2*mu)/(p*((8*MW_air)/(trigpi*R*t))**0.5)
     end function calc_lambd
 
     real function calc_dahneke(dp, lambd,alpha)
@@ -56,7 +56,7 @@ module aerosol
     end function calc_dahneke
 
     subroutine init_aerosol
-        use model_vars, only: np, mp, mdropbin_lims, mpartbin_lims, nc, mlc, mpc 
+        use model_vars, only: np, mp, mdropbin_lims, mpartbin_lims, nd, mld, mpd 
         use run_constants, only: nx, nz, npartbin, ndropbin   &
                             , kappa,rhop,ntot,dpg,sigma
         use constants, only: trigpi,rhol
@@ -105,9 +105,9 @@ module aerosol
                         mp(ix,iz,ipb,it) = mp_c(ipb) * np(ix,iz,ipb,it)
 
                         do idb=1,ndropbin
-                            nc(ix,iz,ipb,idb,it) = 0. 
-                            mlc(ix,iz,ipb,idb,it) = 0. 
-                            mpc(ix,iz,ipb,idb,it) = 0. 
+                            nd(ix,iz,ipb,idb,it) = 0. 
+                            mld(ix,iz,ipb,idb,it) = 0. 
+                            mpd(ix,iz,ipb,idb,it) = 0. 
                         enddo
                     enddo
                 enddo
@@ -117,7 +117,7 @@ module aerosol
         print*,'dist ok'
 
         ! set up droplet bins
-        mdropbin_lims(1) = calc_mass(1.e-8,rhol) ! first bin has radius of 10nm
+        mdropbin_lims(1) = calc_mass(1.e-7,rhol) ! first bin has radius of 100nm
         print*,calc_dp(mdropbin_lims(1),rhol)
         do idb=2,ndropbin+1
             mdropbin_lims(idb) = mdropbin_lims(idb-1) * ratio !mass doubling bins

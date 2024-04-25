@@ -6,7 +6,7 @@ module boundaries
     contains
     
     subroutine enforce_bounds_x
-        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mlc,mpc
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nd,mld,mpd
         use run_constants, only: nz,nx,pbc_x,npartbin,ndropbin
 
         implicit none
@@ -44,14 +44,14 @@ module boundaries
                         mp(nx,iz,ipb,it) = mp(2,iz,ipb,it)
 
                         do idb=1,ndropbin
-                            nc(1,iz,ipb,idb,it) = nc(nx-1,iz,ipb,idb,it)
-                            nc(nx,iz,ipb,idb,it) = nc(2,iz,ipb,idb,it)
+                            nd(1,iz,ipb,idb,it) = nd(nx-1,iz,ipb,idb,it)
+                            nd(nx,iz,ipb,idb,it) = nd(2,iz,ipb,idb,it)
 
-                            mlc(1,iz,ipb,idb,it) = mlc(nx-1,iz,ipb,idb,it)
-                            mlc(nx,iz,ipb,idb,it) = mlc(2,iz,ipb,idb,it)
+                            mld(1,iz,ipb,idb,it) = mld(nx-1,iz,ipb,idb,it)
+                            mld(nx,iz,ipb,idb,it) = mld(2,iz,ipb,idb,it)
 
-                            mpc(1,iz,ipb,idb,it) = mpc(nx-1,iz,ipb,idb,it)
-                            mpc(nx,iz,ipb,idb,it) = mpc(2,iz,ipb,idb,it)
+                            mpd(1,iz,ipb,idb,it) = mpd(nx-1,iz,ipb,idb,it)
+                            mpd(nx,iz,ipb,idb,it) = mpd(2,iz,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
@@ -84,14 +84,14 @@ module boundaries
                         mp(nx,iz,ipb,it) = mp(nx-1,iz,ipb,it)
 
                         do idb=1,ndropbin
-                            nc(1,iz,ipb,idb,it) = nc(2,iz,ipb,idb,it)
-                            nc(nx,iz,ipb,idb,it) = nc(nx-1,iz,ipb,idb,it)
+                            nd(1,iz,ipb,idb,it) = nd(2,iz,ipb,idb,it)
+                            nd(nx,iz,ipb,idb,it) = nd(nx-1,iz,ipb,idb,it)
 
-                            mlc(1,iz,ipb,idb,it) = mlc(2,iz,ipb,idb,it)
-                            mlc(nx,iz,ipb,idb,it) = mlc(nx-1,iz,ipb,idb,it)
+                            mld(1,iz,ipb,idb,it) = mld(2,iz,ipb,idb,it)
+                            mld(nx,iz,ipb,idb,it) = mld(nx-1,iz,ipb,idb,it)
 
-                            mpc(1,iz,ipb,idb,it) = mpc(2,iz,ipb,idb,it)
-                            mpc(nx,iz,ipb,idb,it) = mpc(nx-1,iz,ipb,idb,it)
+                            mpd(1,iz,ipb,idb,it) = mpd(2,iz,ipb,idb,it)
+                            mpd(nx,iz,ipb,idb,it) = mpd(nx-1,iz,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
@@ -101,7 +101,7 @@ module boundaries
     end subroutine enforce_bounds_x
 
     subroutine enforce_bounds_z
-        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nc,mlc,mpc
+        use model_vars, only: thp,pip,pp,up,wp,rvp,np,mp,nd,mld,mpd
         use run_constants, only: nz,nx,pbc_z,npartbin,ndropbin
 
         implicit none
@@ -139,14 +139,14 @@ module boundaries
                         mp(ix,nz,ipb,it) = mp(ix,2,ipb,it)
 
                         do idb=1,ndropbin
-                            nc(ix,1,ipb,idb,it) = nc(ix,nz-1,ipb,idb,it)
-                            nc(ix,nz,ipb,idb,it) = nc(ix,2,ipb,idb,it)
+                            nd(ix,1,ipb,idb,it) = nd(ix,nz-1,ipb,idb,it)
+                            nd(ix,nz,ipb,idb,it) = nd(ix,2,ipb,idb,it)
 
-                            mlc(ix,1,ipb,idb,it) = mlc(ix,nz-1,ipb,idb,it)
-                            mlc(ix,nz,ipb,idb,it) = mlc(ix,2,ipb,idb,it)
+                            mld(ix,1,ipb,idb,it) = mld(ix,nz-1,ipb,idb,it)
+                            mld(ix,nz,ipb,idb,it) = mld(ix,2,ipb,idb,it)
 
-                            mpc(ix,1,ipb,idb,it) = mpc(ix,nz-1,ipb,idb,it)
-                            mpc(ix,nz,ipb,idb,it) = mpc(ix,2,ipb,idb,it)
+                            mpd(ix,1,ipb,idb,it) = mpd(ix,nz-1,ipb,idb,it)
+                            mpd(ix,nz,ipb,idb,it) = mpd(ix,2,ipb,idb,it)
                         enddo
                     enddo 
                 enddo
@@ -181,14 +181,14 @@ module boundaries
                         mp(ix,nz,ipb,it) = mp(ix,nz-1,ipb,it)
 
                         do idb=1,ndropbin
-                            nc(ix,1,ipb,idb,it) = nc(ix,2,ipb,idb,it)
-                            nc(ix,nz,ipb,idb,it) = nc(ix,nz-1,ipb,idb,it)
+                            nd(ix,1,ipb,idb,it) = nd(ix,2,ipb,idb,it)
+                            nd(ix,nz,ipb,idb,it) = nd(ix,nz-1,ipb,idb,it)
 
-                            mlc(ix,1,ipb,idb,it) = mlc(ix,2,ipb,idb,it)
-                            mlc(ix,nz,ipb,idb,it) = mlc(ix,nz-1,ipb,idb,it)
+                            mld(ix,1,ipb,idb,it) = mld(ix,2,ipb,idb,it)
+                            mld(ix,nz,ipb,idb,it) = mld(ix,nz-1,ipb,idb,it)
 
-                            mpc(ix,1,ipb,idb,it) = mpc(ix,2,ipb,idb,it)
-                            mpc(ix,nz,ipb,idb,it) = mpc(ix,nz-1,ipb,idb,it)
+                            mpd(ix,1,ipb,idb,it) = mpd(ix,2,ipb,idb,it)
+                            mpd(ix,nz,ipb,idb,it) = mpd(ix,nz-1,ipb,idb,it)
                         enddo
                     enddo 
                 enddo

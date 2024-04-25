@@ -98,7 +98,7 @@ module io
 
     subroutine write_current_micro
         use run_constants, only: nz,nx,npartbin,ndropbin,var_out, var_outpath
-        use model_vars, only: it,np,mp,nc,mlc,mpc
+        use model_vars, only: it,np,mp,nd,mld,mpd,mdropbin_lims,mpartbin_lims
 
         use, intrinsic :: ieee_arithmetic
 
@@ -112,6 +112,13 @@ module io
         if (var_out) then
             ! open the output file we want to write to
             open(unit = 1, file=trim(var_outpath)//'timestep_'//trim(adjustl(timechar))//'_micro.txt')
+
+            write(1,*) 'coord partbin'
+            write(1, '(1x, *(g0, :, ", "))') mpartbin_lims(:)
+
+            write(1,*) 'coord dropbin'
+            write(1, '(1x, *(g0, :, ", "))') mdropbin_lims(:)
+
 
             write(1,*) 'var NP'
             do iz=1,nz
@@ -127,29 +134,29 @@ module io
                 enddo 
             enddo
         
-            write(1,*) 'var NC'
+            write(1,*) 'var ND'
             do iz=1,nz
                 do ipb=1,npartbin
                     do idb=1,ndropbin
-                        write(1, '(1x, *(g0, :, ", "))') nc(:,iz,ipb,idb,2) 
+                        write(1, '(1x, *(g0, :, ", "))') nd(:,iz,ipb,idb,2) 
                     enddo
                 enddo 
             enddo
 
-            write(1,*) 'var MC'
+            write(1,*) 'var MLD'
             do iz=1,nz
                 do ipb=1,npartbin
                     do idb=1,ndropbin
-                        write(1, '(1x, *(g0, :, ", "))') mlc(:,iz,ipb,idb,2)
+                        write(1, '(1x, *(g0, :, ", "))') mld(:,iz,ipb,idb,2)
                     enddo
                 enddo 
             enddo
 
-            write(1,*) 'var MPC'
+            write(1,*) 'var MPD'
             do iz=1,nz
                 do ipb=1,npartbin
                     do idb=1,ndropbin
-                        write(1, '(1x, *(g0, :, ", "))') mpc(:,iz,ipb,idb,2)
+                        write(1, '(1x, *(g0, :, ", "))') mpd(:,iz,ipb,idb,2)
                     enddo
                 enddo 
             enddo
