@@ -166,10 +166,10 @@ module solve_prog
                 ! third term in w-tendency equation: pressure gradient term 
                 w_pgf(ix,iz) = -cp * rdz * 0.25 * (thvb(iz)+thvb(iz-1)) * (pip(ix,iz,2)-pip(ix,iz-1,2))
 
-                ! fourth term in w-tendency equation: pressure gradient term 
+                ! fourth term in w-tendency equation: buoyancy term 
                 w_buoy(ix,iz) = g * ((thp(ix,iz,2)+thp(ix,iz-1,2))/(thb(iz)+thb(iz-1))                  &
                                     + 0.61*0.5*(rvp(ix,iz,2)+rvp(ix,iz-1,2))                            &
-                                    - 0.5*(SUM(mld(ix,iz,:,:,2))+SUM(mld(ix,iz-1,:,:,2)))     &
+                                    - 0.5*(SUM(mld(ix,iz,:,:,2))+SUM(mld(ix,iz-1,:,:,2))+SUM(mpd(ix,iz,:,:,2))+SUM(mpd(ix,iz-1,:,:,2)))     &
                                     )
 
                 ! fifth term in w-tendency equation: horizontal diffusion
@@ -334,14 +334,6 @@ module solve_prog
                     if (mp(ix,iz,ipb,2)>0.) then
                         np_tend_total(ix,iz,ipb) = mp_tend_total(ix,iz,ipb) * (np(ix,iz,ipb,2)/mp(ix,iz,ipb,2))
                     endif
-                    !np_tend_total(ix,iz,ipb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(np(ix+1,iz,ipb,2)+np(ix,iz,ipb,2)))         &
-                    !                                        -(up(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix-1,iz,ipb,2)))) &
-                    !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(np(ix,iz+1,ipb,2)+np(ix,iz,ipb,2))) &
-                    !                                                    - (rhowb(iz)*wp(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix,iz-1,ipb,2)))) &
-                    !                        + (khx * rdx * rdx * (np(ix-1,iz,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix+1,iz,ipb,1))) &
-                    !                        + (khz * rdz * rdz * (np(ix,iz-1,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix,iz+1,ipb,1))) 
-
-                    
                 enddo
             enddo ! end x loop
         enddo ! end z loop
@@ -382,20 +374,6 @@ module solve_prog
                                 nd_tend_total(ix,iz,ipb,idb) = mld_tend_total(ix,iz,ipb,idb) * (nd(ix,iz,ipb,idb,2)/mld(ix,iz,ipb,idb,2))
                                 mpd_tend_total(ix,iz,ipb,idb) = mld_tend_total(ix,iz,ipb,idb) * (mpd(ix,iz,ipb,idb,2)/mld(ix,iz,ipb,idb,2))
                              endif
-                    !nd_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(nd(ix+1,iz,ipb,idb,2)+nd(ix,iz,ipb,idb,2)))         &
-                        !                                        -(up(ix,iz,2)*(nd(ix,iz,ipb,idb,2)+nd(ix-1,iz,ipb,idb,2)))) &
-                        !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(nd(ix,iz+1,ipb,idb,2)+nd(ix,iz,ipb,idb,2))) &
-                        !                                                    - (rhowb(iz)*wp(ix,iz,2)*(nd(ix,iz,ipb,idb,2)+nd(ix,iz-1,ipb,idb,2)))) &
-                        !                        + (khx * rdx * rdx * (nd(ix-1,iz,ipb,idb,1) - 2*nd(ix,iz,ipb,idb,1) + nd(ix+1,iz,ipb,idb,1))) &
-                        !                        + (khz * rdz * rdz * (nd(ix,iz-1,ipb,idb,1) - 2*nd(ix,iz,ipb,idb,1) + nd(ix,iz+1,ipb,idb,1))) 
-                        
-                        !mpd_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mpd(ix+1,iz,ipb,idb,2)+mpd(ix,iz,ipb,idb,2)))         &
-                        !                                        -(up(ix,iz,2)*(mpd(ix,iz,ipb,idb,2)+mpd(ix-1,iz,ipb,idb,2)))) &
-                        !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mpd(ix,iz+1,ipb,idb,2)+mpd(ix,iz,ipb,idb,2))) &
-                        !                                                    - (rhowb(iz)*wp(ix,iz,2)*(mpd(ix,iz,ipb,idb,2)+mpd(ix,iz-1,ipb,idb,2)))) &
-                        !                        + (khx * rdx * rdx * (mpd(ix-1,iz,ipb,idb,1) - 2*mpd(ix,iz,ipb,idb,1) + mpd(ix+1,iz,ipb,idb,1))) &
-                        !                        + (khz * rdz * rdz * (mpd(ix,iz-1,ipb,idb,1) - 2*mpd(ix,iz,ipb,idb,1) + mpd(ix,iz+1,ipb,idb,1))) 
-
                     enddo ! end drop loop
                 enddo ! end particle loop
             enddo ! end x loop
@@ -459,28 +437,10 @@ module solve_prog
                         np(ix,iz,ipartbin,3) = np(ix,iz,ipartbin,1) + (d2t * np_tend_total(ix,iz,ipartbin)) 
                         mp(ix,iz,ipartbin,3) = mp(ix,iz,ipartbin,1) + (d2t * mp_tend_total(ix,iz,ipartbin))
 
-                        !if (np(ix,iz,ipartbin,1)>0.) then
-                        !    temp1 = (mp(ix,iz,ipartbin,1)/np(ix,iz,ipartbin,1))
-
-                        !    if (np(ix,iz,ipartbin,3)>0.) then
-                        !        temp2 = mp(ix,iz,ipartbin,3)/np(ix,iz,ipartbin,3)
-
-                        !        if (temp1/=temp2) then 
-                        !            print*,ix,iz,ipartbin,temp1,temp2
-                        !        endif
-                        !    endif
-                        !endif 
-
                         do idropbin=1,ndropbin
                             nd(ix,iz,ipartbin,idropbin,3) = nd(ix,iz,ipartbin,idropbin,1) + (d2t * nd_tend_total(ix,iz,ipartbin,idropbin)) 
                             mld(ix,iz,ipartbin,idropbin,3) = mld(ix,iz,ipartbin,idropbin,1) + (d2t * mld_tend_total(ix,iz,ipartbin,idropbin))
                             mpd(ix,iz,ipartbin,idropbin,3) = mpd(ix,iz,ipartbin,idropbin,1) + (d2t * mpd_tend_total(ix,iz,ipartbin,idropbin))
-
-                            !if ((nd(ix,iz,ipartbin,idropbin,1)>0.) .and. (nd(ix,iz,ipartbin,idropbin,3)>0.)) then
-                            !    if ((mld(ix,iz,ipartbin,idropbin,1)/nd(ix,iz,ipartbin,idropbin,1)) /= (mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3))) then
-                            !        print*,ix,iz,ipartbin,idropbin,mld(ix,iz,ipartbin,idropbin,1)/nd(ix,iz,ipartbin,idropbin,1),mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
-                            !    endif
-                            !endif 
                         enddo
                     enddo 
                 endif

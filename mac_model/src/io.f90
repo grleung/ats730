@@ -13,7 +13,7 @@ module io
                                 ,wk_flag,dn_flag                                                                &
                                 ,pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs                                     &
                                 ,kmx,kmz,khx,khz                         &
-                                ,ntot,dpg,sigma,kappa,rhop,npartbin,ndropbin
+                                ,ntot,dpg,sigma,kappa,rhop,npartbin,ndropbin,ratio
 
         implicit none 
 
@@ -24,7 +24,7 @@ module io
         namelist /parcel/ rvpsurf
         namelist /pert/ pert_wind,radx,radz,amp,zcnt,xcnt,cx,cz,cs
         namelist /diff/ kmx,kmz,khx,khz
-        namelist /aero/ npartbin,ndropbin,ntot,dpg,sigma,kappa,rhop
+        namelist /aero/ npartbin,ndropbin,ratio,ntot,dpg,sigma,kappa,rhop
         
         open(unit=1, file='Namelist',action='read')
 

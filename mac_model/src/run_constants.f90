@@ -86,7 +86,8 @@ module run_constants
     ,   ndropbin = 40         ! number of drop/droplet bins
 
     real :: &
-        ntot    =   1000.   & ! total number of aerosol particles [#/kg]
+        ratio   =   2.      & ! bin doubling ratio
+    ,   ntot    =   1000.   & ! total number of aerosol particles [#/kg]
     ,   dpg     =   100.e-9 & ! median particle diameter [m]
     ,   sigma   =   1.8     & ! width of log-normal distribution
     ,   kappa   =   0.5     & ! particle hygroscopicity parameter, assume 0.5 which is pretty middle of the road

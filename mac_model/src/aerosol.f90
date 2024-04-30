@@ -57,7 +57,7 @@ module aerosol
 
     subroutine init_aerosol
         use model_vars, only: np, mp, mdropbin_lims, mpartbin_lims, nd, mld, mpd 
-        use run_constants, only: nx, nz, npartbin, ndropbin   &
+        use run_constants, only: nx, nz, npartbin, ndropbin,ratio   &
                             , kappa,rhop,ntot,dpg,sigma
         use constants, only: trigpi,rhol
 
@@ -70,7 +70,6 @@ module aerosol
         ! only going to use this in this function for set-up
         real :: mp_c(npartbin), dp_c(npartbin), dp_e(npartbin+1)
 
-        real :: ratio = 1.5 ! mass bin ratio, by default use mass doubling bins
         integer :: ipb,idb,ix,iz,it ! counter for aerosol bins 
         real :: a = 0.
 

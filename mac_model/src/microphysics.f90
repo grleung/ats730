@@ -140,54 +140,10 @@ module microphysics
                     np(ix,iz,ipartbin,3) = np_final(ipartbin) 
                     mp(ix,iz,ipartbin,3) = mp_final(ipartbin) 
 
-                    if (np(ix,iz,ipartbin,3)>0.) then 
-                        temp1 = mp(ix,iz,ipartbin,3)/np(ix,iz,ipartbin,3) 
-
-                        if ((temp1<mpartbin_lims(ipartbin)) .or. (temp1>mpartbin_lims(ipartbin+1))) then
-                            jpartbin = COUNT(mpartbin_lims(:npartbin)<=temp1)
-                            print*,'actv part size no match',ipartbin,jpartbin
-                            mp(ix,iz,jpartbin,3) = mp(ix,iz,jpartbin,3) + mp(ix,iz,ipartbin,3)
-                            mp(ix,iz,ipartbin,3) = 0.
-                            np(ix,iz,jpartbin,3) = np(ix,iz,jpartbin,3) + np(ix,iz,ipartbin,3)
-                            np(ix,iz,ipartbin,3) = 0.
-                        endif
-                    endif 
-
                     do idropbin=1,ndropbin
                         nd(ix,iz,ipartbin,idropbin,3) = nd_final(ipartbin,idropbin) 
                         mld(ix,iz,ipartbin,idropbin,3) = mld_final(ipartbin,idropbin)  
                         mpd(ix,iz,ipartbin,idropbin,3) = mpd_final(ipartbin,idropbin)  
-
-                        if (nd(ix,iz,ipartbin,idropbin,3)>0.) then 
-
-                            temp2 = mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
-                            if (temp2<0.) then
-                                print*,temp2
-                            endif 
-                            temp3 = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
-                            if (temp3<0.) then
-                                print*,temp3
-                            endif 
-                        
-
-                            if (((temp2+temp3)<mdropbin_lims(idropbin)) .or. ((temp2+temp3)>mdropbin_lims(idropbin+1)) .or. (temp3<mpartbin_lims(ipartbin)) .or. (temp3>mpartbin_lims(ipartbin+1))) then
-                                
-                                jdropbin = COUNT(mdropbin_lims(:ndropbin)<=(temp2+temp3))
-                                jpartbin = COUNT(mpartbin_lims(:npartbin)<=temp3)
-
-                                print*,'actv drop size no match',ix,iz,idropbin,jdropbin,temp2,temp3,temp2+temp3,ipartbin,jpartbin,temp3
-                        
-                                mpd(ix,iz,jpartbin,jdropbin,3) = mpd(ix,iz,jpartbin,jdropbin,3) + mpd(ix,iz,ipartbin,idropbin,3)
-                                mpd(ix,iz,ipartbin,idropbin,3) = 0.
-                                
-                                mld(ix,iz,jpartbin,jdropbin,3) = mld(ix,iz,jpartbin,jdropbin,3) + mld(ix,iz,ipartbin,idropbin,3)
-                                mld(ix,iz,ipartbin,idropbin,3) = 0.
-                        
-                                nd(ix,iz,jpartbin,jdropbin,3) = nd(ix,iz,jpartbin,jdropbin,3) + nd(ix,iz,ipartbin,idropbin,3)
-                                nd(ix,iz,ipartbin,idropbin,3) = 0.
-                            endif
-                    endif 
-
                     enddo
                 enddo
             enddo
@@ -328,35 +284,6 @@ module microphysics
                         nd(ix,iz,ipartbin,idropbin,3) = nd_final(ipartbin,idropbin) 
                         mld(ix,iz,ipartbin,idropbin,3) = mld_final(ipartbin,idropbin)  
                         mpd(ix,iz,ipartbin,idropbin,3) = mpd_final(ipartbin,idropbin)  
-
-                        if (nd(ix,iz,ipartbin,idropbin,3)>0.) then 
-
-                            temp2 = mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
-                            if (temp2<0.) then
-                                print*,temp2
-                            endif 
-                            temp3 = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
-                            if (temp3<0.) then
-                                print*,temp3
-                            endif 
-                            if (((temp2+temp3)<mdropbin_lims(idropbin)) .or. ((temp2+temp3)>mdropbin_lims(idropbin+1)) .or. (temp3<mpartbin_lims(ipartbin)) .or. (temp3>mpartbin_lims(ipartbin+1))) then
-                                
-                                jdropbin = COUNT(mdropbin_lims(:ndropbin)<=(temp2+temp3))
-                                jpartbin = COUNT(mpartbin_lims(:npartbin)<=temp3)
-
-                                print*,'cond drop size no match',idropbin,jdropbin,ipartbin,jpartbin
-                        
-                                mpd(ix,iz,jpartbin,jdropbin,3) = mpd(ix,iz,jpartbin,jdropbin,3) + mpd(ix,iz,ipartbin,idropbin,3)
-                                mpd(ix,iz,ipartbin,idropbin,3) = 0.
-                                
-                                mld(ix,iz,jpartbin,jdropbin,3) = mld(ix,iz,jpartbin,jdropbin,3) + mld(ix,iz,ipartbin,idropbin,3)
-                                mld(ix,iz,ipartbin,idropbin,3) = 0.
-                        
-                                nd(ix,iz,jpartbin,jdropbin,3) = nd(ix,iz,jpartbin,jdropbin,3) + nd(ix,iz,ipartbin,idropbin,3)
-                                nd(ix,iz,ipartbin,idropbin,3) = 0.
-                            endif
-                        endif 
-
                     enddo
                 enddo
                 
@@ -538,50 +465,10 @@ module microphysics
                             mpd(ix,iz,ipartbin,idropbin,3) = mpd_final(ipartbin,idropbin)
                         endif
 
-                        if (nd(ix,iz,ipartbin,idropbin,3)>0.) then 
-
-                            temp2 = mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
-                            if (temp2<0.) then
-                                print*,temp2
-                            endif 
-                            temp3 = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3) 
-                            if (temp3<0.) then
-                                print*,temp3
-                            endif 
-                            if (((temp2+temp3)<mdropbin_lims(idropbin)) .or. ((temp2+temp3)>mdropbin_lims(idropbin+1)) .or. (temp3<mpartbin_lims(ipartbin)) .or. (temp3>mpartbin_lims(ipartbin+1))) then
-                                
-                                jdropbin = COUNT(mdropbin_lims(:ndropbin)<=(temp2+temp3))
-                                if (jdropbin==0.) then
-                                    jdropbin = 1
-                                endif
-                                jpartbin = COUNT(mpartbin_lims(:npartbin)<=temp3)
-
-                                if (jpartbin==0.) then
-                                    jpartbin = 1
-                                endif
-
-                                print*,'coll drop size no match',idropbin,jdropbin,ipartbin,jpartbin
-                        
-                                mpd(ix,iz,jpartbin,jdropbin,3) = mpd(ix,iz,jpartbin,jdropbin,3) + mpd(ix,iz,ipartbin,idropbin,3)
-                                mpd(ix,iz,ipartbin,idropbin,3) = 0.
-                                
-                                mld(ix,iz,jpartbin,jdropbin,3) = mld(ix,iz,jpartbin,jdropbin,3) + mld(ix,iz,ipartbin,idropbin,3)
-                                mld(ix,iz,ipartbin,idropbin,3) = 0.
-                        
-                                nd(ix,iz,jpartbin,jdropbin,3) = nd(ix,iz,jpartbin,jdropbin,3) + nd(ix,iz,ipartbin,idropbin,3)
-                                nd(ix,iz,ipartbin,idropbin,3) = 0.
-                            endif
-                        endif 
                     enddo ! end part bin
                 enddo ! end drop bin
-
-
             enddo ! end x loop
         enddo  ! end z loop
-
-
-
-
     end subroutine collisioncoalescence
 
 
@@ -596,27 +483,31 @@ module microphysics
         real :: mp_each_p, mp_each_d, ml_each_d
         integer :: jpartbin,jdropbin
         
+
         do ix=2,nx-1
             do iz=2,nz-1
                 do ipartbin=1,npartbin
                     if ((np(ix,iz,ipartbin,3)<minnum) .or. (mp(ix,iz,ipartbin,3)<minmass)) then
                         np(ix,iz,ipartbin,3)=0.
                         mp(ix,iz,ipartbin,3)=0.
-                    !else if (np(ix,iz,ipartbin,3)>0.) then
-                        !print*,ix,iz,ipartbin,mp(ix,iz,ipartbin,3),np(ix,iz,ipartbin,3)
-                    !    mp_each_p = mp(ix,iz,ipartbin,3)/np(ix,iz,ipartbin,3)
+                    else if (np(ix,iz,ipartbin,3)>0.) then
+                        mp_each_p = mp(ix,iz,ipartbin,3)/np(ix,iz,ipartbin,3)
                         
                         !if the mass of each particle does not match with the bin, move it to the right bin
-                    !    if ((mp_each_p<mpartbin_lims(ipartbin)) .or. (mp_each_p>mpartbin_lims(ipartbin+1))) then
+                        if ((mp_each_p<mpartbin_lims(ipartbin)) .or. (mp_each_p>mpartbin_lims(ipartbin+1))) then
+                            jpartbin = COUNT(mpartbin_lims(:npartbin)<=mp_each_p)
 
-                    !        print*,'part mass no match'
-                    !        jpartbin = COUNT(mpartbin_lims(:npartbin)<=mp_each_p)
+                            if (jpartbin>0.) then
+                                mp(ix,iz,jpartbin,3) = mp(ix,iz,jpartbin,3) + mp(ix,iz,ipartbin,3)
+                                np(ix,iz,jpartbin,3) = np(ix,iz,jpartbin,3) + np(ix,iz,ipartbin,3)
+                            else if (jpartbin>npartbin) then
+                                print*,'particle too big for bins!', jpartbin, mp_each_p, mpartbin_lims(npartbin+1)
+                            endif 
 
-                    !        mp(ix,iz,jpartbin,3) = mp(ix,iz,jpartbin,3) + mp(ix,iz,ipartbin,3)
-                    !        mp(ix,iz,ipartbin,3) = 0.
-                    !        np(ix,iz,jpartbin,3) = np(ix,iz,jpartbin,3) + np(ix,iz,ipartbin,3)
-                    !        np(ix,iz,ipartbin,3) = 0.
-                    !    endif  
+                            mp(ix,iz,ipartbin,3) = 0.
+                            np(ix,iz,ipartbin,3) = 0.
+
+                        endif  
                     endif
 
                     do idropbin=1,ndropbin
@@ -624,40 +515,40 @@ module microphysics
                             nd(ix,iz,ipartbin,idropbin,3)=0.
                             mld(ix,iz,ipartbin,idropbin,3)=0.
                             mpd(ix,iz,ipartbin,idropbin,3) = 0.
-                        !else if (nd(ix,iz,ipartbin,idropbin,3)>0.) then
-                            !print*,mpd(ix,iz,ipartbin,idropbin,3),nd(ix,iz,ipartbin,idropbin,3)
-                        !    mp_each_d = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
-                        !    if (mp_each_d<0.) then
-                        !        print*,mp_each_d
-                        !    endif
-                        !    ml_each_d = mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
-                           
-                        !    if (ml_each_d<0.) then
-                        !        print*,ml_each_d
-                        !    endif
+                        else if (nd(ix,iz,ipartbin,idropbin,3)>0.) then
+                            mp_each_d = mpd(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
+                            if (mp_each_d<0.) then
+                                print*,mp_each_d
+                            endif
+
+                            ml_each_d = mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
+                            if (ml_each_d<0.) then
+                                print*,ml_each_d
+                            endif
                         
-                        !    if (((mp_each_d+ml_each_d)<mdropbin_lims(idropbin)) .or. ((mp_each_d+ml_each_d)>mdropbin_lims(idropbin+1))) then
-                        !        print*,'droplet mass no match'
-                        !        jdropbin = COUNT(mdropbin_lims(:ndropbin)<=(mp_each_d+ml_each_d))
-                        !        jpartbin = COUNT(mpartbin_lims(:npartbin)<=mp_each_d)
-                        
-                        !        mpd(ix,iz,jpartbin,jdropbin,3) = mpd(ix,iz,jpartbin,jdropbin,3) + mpd(ix,iz,ipartbin,idropbin,3)
-                        !        mpd(ix,iz,ipartbin,idropbin,3) = 0.
-                                
-                        !        mld(ix,iz,jpartbin,jdropbin,3) = mld(ix,iz,jpartbin,jdropbin,3) + mld(ix,iz,ipartbin,idropbin,3)
-                        !        mld(ix,iz,ipartbin,idropbin,3) = 0.
-                        
-                        !        nd(ix,iz,jpartbin,jdropbin,3) = nd(ix,iz,jpartbin,jdropbin,3) + nd(ix,iz,ipartbin,idropbin,3)
-                        !        nd(ix,iz,ipartbin,idropbin,3) = 0.
-                        !    endif
+                            if (((mp_each_d+ml_each_d)<mdropbin_lims(idropbin)) .or. ((mp_each_d+ml_each_d)>mdropbin_lims(idropbin+1))) then
+                                jdropbin = COUNT(mdropbin_lims(:ndropbin)<=(mp_each_d+ml_each_d))
+                                jpartbin = COUNT(mpartbin_lims(:npartbin)<=mp_each_d)
+
+                                if ((jdropbin>0) .and. (jpartbin>0.)) then          
+                                    mpd(ix,iz,jpartbin,jdropbin,3) = mpd(ix,iz,jpartbin,jdropbin,3) + mpd(ix,iz,ipartbin,idropbin,3)
+                                    mld(ix,iz,jpartbin,jdropbin,3) = mld(ix,iz,jpartbin,jdropbin,3) + mld(ix,iz,ipartbin,idropbin,3)
+                                    nd(ix,iz,jpartbin,jdropbin,3) = nd(ix,iz,jpartbin,jdropbin,3) + nd(ix,iz,ipartbin,idropbin,3)
+                                else if (jpartbin>npartbin) then
+                                    print*,'particle too big for bins!', jpartbin, mp_each_d, mpartbin_lims(npartbin+1)
+                                else if (jdropbin>ndropbin) then
+                                    print*,'drop too big for bins!', jdropbin, mp_each_d+ml_each_d, mdropbin_lims(ndropbin+1)   
+                                endif 
+
+                                mpd(ix,iz,ipartbin,idropbin,3) = 0.
+                                mld(ix,iz,ipartbin,idropbin,3) = 0.
+                                nd(ix,iz,ipartbin,idropbin,3) = 0.
+                                    
+                            endif
                         endif
                     enddo
                 enddo
             enddo
         enddo
-
-        ! also check that they are in the right bins depending on mld/nd, mpd/nd, etc.
-        ! (mld+mpd)/nd should be in mdbin_lims(idropbin:idropbin+1) and mpd/nd should be in mpdbins(ipartbin:ipartbin+1)
-
     end subroutine check_negs
 end module microphysics 
