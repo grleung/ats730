@@ -26,9 +26,7 @@ module solve_prog
         print*,'liquid tend'
 
         call apply_tends
-
-        
-        !add advection/diffusion for aerosol,cloud,rain
+        print*,'tend'
 
     end subroutine tendencies
 
@@ -333,12 +331,15 @@ module solve_prog
                                             + (khz * rdz * rdz * (mp(ix,iz-1,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix,iz+1,ipb,1))) 
 
 
-                    np_tend_total(ix,iz,ipb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(np(ix+1,iz,ipb,2)+np(ix,iz,ipb,2)))         &
-                                                            -(up(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix-1,iz,ipb,2)))) &
-                                            - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(np(ix,iz+1,ipb,2)+np(ix,iz,ipb,2))) &
-                                                                        - (rhowb(iz)*wp(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix,iz-1,ipb,2)))) &
-                                            + (khx * rdx * rdx * (np(ix-1,iz,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix+1,iz,ipb,1))) &
-                                            + (khz * rdz * rdz * (np(ix,iz-1,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix,iz+1,ipb,1))) 
+                    if (mp(ix,iz,ipb,2)>0.) then
+                        np_tend_total(ix,iz,ipb) = mp_tend_total(ix,iz,ipb) * (np(ix,iz,ipb,2)/mp(ix,iz,ipb,2))
+                    endif
+                    !np_tend_total(ix,iz,ipb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(np(ix+1,iz,ipb,2)+np(ix,iz,ipb,2)))         &
+                    !                                        -(up(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix-1,iz,ipb,2)))) &
+                    !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(np(ix,iz+1,ipb,2)+np(ix,iz,ipb,2))) &
+                    !                                                    - (rhowb(iz)*wp(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix,iz-1,ipb,2)))) &
+                    !                        + (khx * rdx * rdx * (np(ix-1,iz,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix+1,iz,ipb,1))) &
+                    !                        + (khz * rdz * rdz * (np(ix,iz-1,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix,iz+1,ipb,1))) 
 
                     
                 enddo
@@ -362,7 +363,7 @@ module solve_prog
         integer :: ipb ! counter for particle bins
         integer :: idb !counter for droplet bins
 
-        real :: mp_each
+        real :: mld_each,mpd_each
 
 
         do ix = 2, nx-1
@@ -375,20 +376,25 @@ module solve_prog
                                                                             - (rhowb(iz)*wp(ix,iz,2)*(mld(ix,iz,ipb,idb,2)+mld(ix,iz-1,ipb,idb,2)))) &
                                                 + (khx * rdx * rdx * (mld(ix-1,iz,ipb,idb,1) - 2*mld(ix,iz,ipb,idb,1) + mld(ix+1,iz,ipb,idb,1))) &
                                                 + (khz * rdz * rdz * (mld(ix,iz-1,ipb,idb,1) - 2*mld(ix,iz,ipb,idb,1) + mld(ix,iz+1,ipb,idb,1))) 
-
-                        nd_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(nd(ix+1,iz,ipb,idb,2)+nd(ix,iz,ipb,idb,2)))         &
-                                                                -(up(ix,iz,2)*(nd(ix,iz,ipb,idb,2)+nd(ix-1,iz,ipb,idb,2)))) &
-                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(nd(ix,iz+1,ipb,idb,2)+nd(ix,iz,ipb,idb,2))) &
-                                                                            - (rhowb(iz)*wp(ix,iz,2)*(nd(ix,iz,ipb,idb,2)+nd(ix,iz-1,ipb,idb,2)))) &
-                                                + (khx * rdx * rdx * (nd(ix-1,iz,ipb,idb,1) - 2*nd(ix,iz,ipb,idb,1) + nd(ix+1,iz,ipb,idb,1))) &
-                                                + (khz * rdz * rdz * (nd(ix,iz-1,ipb,idb,1) - 2*nd(ix,iz,ipb,idb,1) + nd(ix,iz+1,ipb,idb,1))) 
-
-                        mpd_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mpd(ix+1,iz,ipb,idb,2)+mpd(ix,iz,ipb,idb,2)))         &
-                                                                -(up(ix,iz,2)*(mpd(ix,iz,ipb,idb,2)+mpd(ix-1,iz,ipb,idb,2)))) &
-                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mpd(ix,iz+1,ipb,idb,2)+mpd(ix,iz,ipb,idb,2))) &
-                                                                            - (rhowb(iz)*wp(ix,iz,2)*(mpd(ix,iz,ipb,idb,2)+mpd(ix,iz-1,ipb,idb,2)))) &
-                                                + (khx * rdx * rdx * (mpd(ix-1,iz,ipb,idb,1) - 2*mpd(ix,iz,ipb,idb,1) + mpd(ix+1,iz,ipb,idb,1))) &
-                                                + (khz * rdz * rdz * (mpd(ix,iz-1,ipb,idb,1) - 2*mpd(ix,iz,ipb,idb,1) + mpd(ix,iz+1,ipb,idb,1))) 
+                                                
+                        
+                            if (mld(ix,iz,ipb,idb,2)>0.) then
+                                nd_tend_total(ix,iz,ipb,idb) = mld_tend_total(ix,iz,ipb,idb) * (nd(ix,iz,ipb,idb,2)/mld(ix,iz,ipb,idb,2))
+                                mpd_tend_total(ix,iz,ipb,idb) = mld_tend_total(ix,iz,ipb,idb) * (mpd(ix,iz,ipb,idb,2)/mld(ix,iz,ipb,idb,2))
+                             endif
+                    !nd_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(nd(ix+1,iz,ipb,idb,2)+nd(ix,iz,ipb,idb,2)))         &
+                        !                                        -(up(ix,iz,2)*(nd(ix,iz,ipb,idb,2)+nd(ix-1,iz,ipb,idb,2)))) &
+                        !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(nd(ix,iz+1,ipb,idb,2)+nd(ix,iz,ipb,idb,2))) &
+                        !                                                    - (rhowb(iz)*wp(ix,iz,2)*(nd(ix,iz,ipb,idb,2)+nd(ix,iz-1,ipb,idb,2)))) &
+                        !                        + (khx * rdx * rdx * (nd(ix-1,iz,ipb,idb,1) - 2*nd(ix,iz,ipb,idb,1) + nd(ix+1,iz,ipb,idb,1))) &
+                        !                        + (khz * rdz * rdz * (nd(ix,iz-1,ipb,idb,1) - 2*nd(ix,iz,ipb,idb,1) + nd(ix,iz+1,ipb,idb,1))) 
+                        
+                        !mpd_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mpd(ix+1,iz,ipb,idb,2)+mpd(ix,iz,ipb,idb,2)))         &
+                        !                                        -(up(ix,iz,2)*(mpd(ix,iz,ipb,idb,2)+mpd(ix-1,iz,ipb,idb,2)))) &
+                        !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mpd(ix,iz+1,ipb,idb,2)+mpd(ix,iz,ipb,idb,2))) &
+                        !                                                    - (rhowb(iz)*wp(ix,iz,2)*(mpd(ix,iz,ipb,idb,2)+mpd(ix,iz-1,ipb,idb,2)))) &
+                        !                        + (khx * rdx * rdx * (mpd(ix-1,iz,ipb,idb,1) - 2*mpd(ix,iz,ipb,idb,1) + mpd(ix+1,iz,ipb,idb,1))) &
+                        !                        + (khz * rdz * rdz * (mpd(ix,iz-1,ipb,idb,1) - 2*mpd(ix,iz,ipb,idb,1) + mpd(ix,iz+1,ipb,idb,1))) 
 
                     enddo ! end drop loop
                 enddo ! end particle loop
@@ -412,9 +418,11 @@ module solve_prog
 
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
-        integer :: iab,idb
+        integer :: ipartbin,idropbin
 
         real :: rdx,rdz,d2t
+
+        real:: temp1, temp2
         
         d2t       = (dt+dt)         ! 2*dt
         
@@ -429,14 +437,14 @@ module solve_prog
                     pip(ix,iz,3) = pip(ix,iz,2) + (dt * pip_tend_total(ix,iz))
                     rvp(ix,iz,3) = rvp(ix,iz,2) + (dt * rvp_tend_total(ix,iz))
 
-                    do iab=1,npartbin
-                        np(ix,iz,iab,3) = np(ix,iz,iab,2) + (dt * np_tend_total(ix,iz,iab)) 
-                        mp(ix,iz,iab,3) = mp(ix,iz,iab,2) + (dt * mp_tend_total(ix,iz,iab))
+                    do ipartbin=1,npartbin
+                        np(ix,iz,ipartbin,3) = np(ix,iz,ipartbin,2) + (dt * np_tend_total(ix,iz,ipartbin)) 
+                        mp(ix,iz,ipartbin,3) = mp(ix,iz,ipartbin,2) + (dt * mp_tend_total(ix,iz,ipartbin))
 
-                        do idb=1,ndropbin
-                            nd(ix,iz,iab,idb,3) = nd(ix,iz,iab,idb,2) + (dt * nd_tend_total(ix,iz,iab,idb)) 
-                            mld(ix,iz,iab,idb,3) = mld(ix,iz,iab,idb,2) + (dt * mld_tend_total(ix,iz,iab,idb))                        
-                            mpd(ix,iz,iab,idb,3) = mpd(ix,iz,iab,idb,2) + (dt * mpd_tend_total(ix,iz,iab,idb))
+                        do idropbin=1,ndropbin
+                            nd(ix,iz,ipartbin,idropbin,3) = nd(ix,iz,ipartbin,idropbin,2) + (dt * nd_tend_total(ix,iz,ipartbin,idropbin)) 
+                            mld(ix,iz,ipartbin,idropbin,3) = mld(ix,iz,ipartbin,idropbin,2) + (dt * mld_tend_total(ix,iz,ipartbin,idropbin))                        
+                            mpd(ix,iz,ipartbin,idropbin,3) = mpd(ix,iz,ipartbin,idropbin,2) + (dt * mpd_tend_total(ix,iz,ipartbin,idropbin))
                             
                         enddo
                     enddo 
@@ -447,14 +455,32 @@ module solve_prog
                     pip(ix,iz,3) = pip(ix,iz,1) + (d2t * pip_tend_total(ix,iz))
                     rvp(ix,iz,3) = rvp(ix,iz,1) + (d2t * rvp_tend_total(ix,iz))
 
-                    do iab=1,npartbin
-                        np(ix,iz,iab,3) = np(ix,iz,iab,1) + (d2t * np_tend_total(ix,iz,iab)) 
-                        mp(ix,iz,iab,3) = mp(ix,iz,iab,1) + (d2t * mp_tend_total(ix,iz,iab))
+                    do ipartbin=1,npartbin
+                        np(ix,iz,ipartbin,3) = np(ix,iz,ipartbin,1) + (d2t * np_tend_total(ix,iz,ipartbin)) 
+                        mp(ix,iz,ipartbin,3) = mp(ix,iz,ipartbin,1) + (d2t * mp_tend_total(ix,iz,ipartbin))
 
-                        do idb=1,ndropbin
-                            nd(ix,iz,iab,idb,3) = nd(ix,iz,iab,idb,1) + (d2t * nd_tend_total(ix,iz,iab,idb)) 
-                            mld(ix,iz,iab,idb,3) = mld(ix,iz,iab,idb,1) + (d2t * mld_tend_total(ix,iz,iab,idb))
-                            mpd(ix,iz,iab,idb,3) = mpd(ix,iz,iab,idb,1) + (d2t * mpd_tend_total(ix,iz,iab,idb))
+                        !if (np(ix,iz,ipartbin,1)>0.) then
+                        !    temp1 = (mp(ix,iz,ipartbin,1)/np(ix,iz,ipartbin,1))
+
+                        !    if (np(ix,iz,ipartbin,3)>0.) then
+                        !        temp2 = mp(ix,iz,ipartbin,3)/np(ix,iz,ipartbin,3)
+
+                        !        if (temp1/=temp2) then 
+                        !            print*,ix,iz,ipartbin,temp1,temp2
+                        !        endif
+                        !    endif
+                        !endif 
+
+                        do idropbin=1,ndropbin
+                            nd(ix,iz,ipartbin,idropbin,3) = nd(ix,iz,ipartbin,idropbin,1) + (d2t * nd_tend_total(ix,iz,ipartbin,idropbin)) 
+                            mld(ix,iz,ipartbin,idropbin,3) = mld(ix,iz,ipartbin,idropbin,1) + (d2t * mld_tend_total(ix,iz,ipartbin,idropbin))
+                            mpd(ix,iz,ipartbin,idropbin,3) = mpd(ix,iz,ipartbin,idropbin,1) + (d2t * mpd_tend_total(ix,iz,ipartbin,idropbin))
+
+                            !if ((nd(ix,iz,ipartbin,idropbin,1)>0.) .and. (nd(ix,iz,ipartbin,idropbin,3)>0.)) then
+                            !    if ((mld(ix,iz,ipartbin,idropbin,1)/nd(ix,iz,ipartbin,idropbin,1)) /= (mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3))) then
+                            !        print*,ix,iz,ipartbin,idropbin,mld(ix,iz,ipartbin,idropbin,1)/nd(ix,iz,ipartbin,idropbin,1),mld(ix,iz,ipartbin,idropbin,3)/nd(ix,iz,ipartbin,idropbin,3)
+                            !    endif
+                            !endif 
                         enddo
                     enddo 
                 endif

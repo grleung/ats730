@@ -17,8 +17,7 @@ program MAC
     use timestep, only: step_time
     use aerosol, only: init_aerosol
     use microphysics, only: microphysics_driv
-
-
+    
     implicit none
 
     integer :: nt !  total number of timesteps

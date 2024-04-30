@@ -40,6 +40,8 @@ module base_state
                     rvb(iz) = 0.
                 endif 
 
+                rvb(iz) = rvb(iz)*0.99
+
             enddo ! end z loop
         else if (dn_flag==.True.) then
             !set base state sounding to be dry and neutral

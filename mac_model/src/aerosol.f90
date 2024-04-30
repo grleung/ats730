@@ -94,6 +94,8 @@ module aerosol
 
         print*,'bins ok'
 
+
+
         ! set up lognormal distribution
         ! for now this is based on unimodal distribution with a peak at dpg (hard coded), but should be easy to change this to be Namelist param
         do it =1,3
@@ -124,7 +126,7 @@ module aerosol
         enddo
 
         print*,'drops',ndropbin,calc_dp(mdropbin_lims(1),rhol),calc_dp(mdropbin_lims(ndropbin+1),rhol)
-        print*,'particles',npartbin,calc_dp(mpartbin_lims(1),rhop),calc_dp(mpartbin_lims(npartbin+1),rhop)
+        print*,'particles',npartbin,calc_dp(mpartbin_lims(1),rhop),calc_dp(mpartbin_lims(npartbin+1),rhop),dpg
 
     end subroutine init_aerosol
 
