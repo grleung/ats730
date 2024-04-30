@@ -1,27 +1,27 @@
 $output
 base_out = .True.
-base_outpath = 'hw4_base_state.txt'
+base_outpath = 'base_state.txt'
 parcel_out = .False.
 parcel_outpath = ''
 var_out = .True.
-var_outpath = 'hw4_output_'
-outfreq=1
+var_outpath = 'full/output_'
+outfreq=10
 /
 
 $grid
-nz=42,
-nx=83,
-dz0=400.,
-dx=400.,
+nz=132,
+nx=110,
+dz0=100.,
+dx=300.,
 pbc_x=.True.,
 pbc_z=.False.,
-dt = 2.,
-endt =1200.,
+dt = 1.,
+endt =400.,
 /
 
 $base
-wk_flag = .False.,
-dn_flag = .True.,
+wk_flag = .True.,
+dn_flag = .False.,
 /
 
 $parcel
@@ -30,11 +30,28 @@ rvpsurf = 0.,
 
 $pert
 pert_wind = .False.,
-radx=4000.,
-radz=4000.,
-amp=3.,
-zcnt=3000.,
+radx=1600.,
+radz=1000.,
+amp=1.5,
+zcnt=1500.,
 xcnt=16200.,
 cx = 15.,
 cz = 15.,
+/
+
+$diff
+kmx=0.,
+kmz=0.,
+khx=0.,
+khz=0.,
+/
+
+$aero
+npartbin = 70,
+ndropbin = 80,
+ntot = 1000.,
+dpg = 100.e-9,
+sigma = 1.8,
+kappa = 0.6,
+rhop = 1400.,
 /

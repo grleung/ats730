@@ -99,7 +99,9 @@ module model_vars
             nd_tend_total, mld_tend_total   & ! cloud number and mass
         ,   mpd_tend_total  ! aerosol in cloud number and mass
     
-    
-    contains
+    real, allocatable, dimension(:,:) :: &
+            rvsat, samb,t,p
+
+     contains
 
 end module model_vars

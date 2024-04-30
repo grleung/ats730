@@ -70,7 +70,7 @@ module aerosol
         ! only going to use this in this function for set-up
         real :: mp_c(npartbin), dp_c(npartbin), dp_e(npartbin+1)
 
-        real :: ratio = 2. ! mass bin ratio, by default use mass doubling bins
+        real :: ratio = 1.5 ! mass bin ratio, by default use mass doubling bins
         integer :: ipb,idb,ix,iz,it ! counter for aerosol bins 
         real :: a = 0.
 
