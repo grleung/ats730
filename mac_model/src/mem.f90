@@ -48,6 +48,7 @@ module mem
         allocate (thvp(nx,nz))
         allocate (p(nx,nz))
         allocate (t(nx,nz))
+        allocate (rv(nx,nz))
         allocate (samb(nx,nz))
 
         allocate(mdropbin_lims(ndropbin+1))
@@ -139,6 +140,7 @@ module mem
         deallocate (thvp(nx,nz))
         deallocate (p(nx,nz))
         deallocate (t(nx,nz))
+        deallocate (rv(nx,nz))
         deallocate (samb(nx,nz))
 
         ! bin microphysics arrays

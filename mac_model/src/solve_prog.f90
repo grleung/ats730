@@ -139,8 +139,8 @@ module solve_prog
     subroutine calc_w_tend
         use run_constants, only: nz,nx,kmx,kmz,rdx,rdz,d2t
         use constants, only: cp,g
-        use model_vars, only:thvb,thb,rhoub,rhowb,pip,up,wp,thp,rvp,mld &
-                            ,w_xadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_zdiff,w_tend_total    
+        use model_vars, only:thvb,thb,rhoub,rhowb,pip,up,wp,thp,rvp,mld,mpd &
+                            ,w_xadv,w_zadv,w_pgf,w_buoy,w_xdiff,w_zdiff,w_tend_total   
 
         implicit none
 
@@ -318,6 +318,8 @@ module solve_prog
 
         real :: mp_each
 
+        real :: minmass = 1.e-30
+
 
         do ix = 2, nx-1
             do iz = 2, nz-1
@@ -330,67 +332,133 @@ module solve_prog
                                             + (khx * rdx * rdx * (mp(ix-1,iz,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix+1,iz,ipb,1))) &
                                             + (khz * rdz * rdz * (mp(ix,iz-1,ipb,1) - 2*mp(ix,iz,ipb,1) + mp(ix,iz+1,ipb,1))) 
 
+                    !np_tend_total(ix,iz,ipb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(np(ix+1,iz,ipb,2)+np(ix,iz,ipb,2)))         &
+                    !                                        -(up(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix-1,iz,ipb,2)))) &
+                    !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(np(ix,iz+1,ipb,2)+np(ix,iz,ipb,2))) &
+                    !                                                    - (rhowb(iz)*wp(ix,iz,2)*(np(ix,iz,ipb,2)+np(ix,iz-1,ipb,2)))) &
+                    !                        + (khx * rdx * rdx * (np(ix-1,iz,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix+1,iz,ipb,1))) &
+                    !                        + (khz * rdz * rdz * (np(ix,iz-1,ipb,1) - 2*np(ix,iz,ipb,1) + np(ix,iz+1,ipb,1))) 
 
-                    if (mp(ix,iz,ipb,2)>0.) then
+                    if (mp(ix,iz,ipb,2)>minmass) then
                         np_tend_total(ix,iz,ipb) = mp_tend_total(ix,iz,ipb) * (np(ix,iz,ipb,2)/mp(ix,iz,ipb,2))
+                    else
+                        np_tend_total(ix,iz,ipb) =0.
                     endif
+
                 enddo
             enddo ! end x loop
         enddo ! end z loop
 
     end subroutine calc_aero_tend
 
-    
 
     subroutine calc_liquid_tend
-        use run_constants, only: nz,nx,npartbin,ndropbin,khx,khz,rdx,rdz,cs
-        use constants, only: cp
-        use model_vars, only:rvb,rhoub,rhowb,up,wp,nd,mld,mpd &
+        use run_constants, only: nz,nx,npartbin,ndropbin,khx,khz,rdx,rdz,cs,rhop
+        use constants, only: cp,p00,rd,rhol
+        use model_vars, only:rvb,rhoub,rhowb,up,wp,nd,mld,mpd           &
+                        ,thp,thb,pip,pib                                &
                         ,nd_tend_total,mld_tend_total,mpd_tend_total
+        use aerosol, only: calc_vt,calc_dp
 
         implicit none
 
         integer :: iz ! counter for z-coordinate
         integer :: ix ! counter for x-coordinate
-        integer :: ipb ! counter for particle bins
-        integer :: idb !counter for droplet bins
+        integer :: ipartbin ! counter for particle bins
+        integer :: idropbin !counter for droplet bins
 
         real :: mld_each,mpd_each
+        real :: dpd_each,dpld_each,dppd_each
 
+        real :: th, pi, t, p, vt(nx,nz,ndropbin)
 
         do ix = 2, nx-1
             do iz = 2, nz-1
-                do ipb=1,npartbin
-                    do idb=1,ndropbin
-                        mld_tend_total(ix,iz,ipb,idb) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mld(ix+1,iz,ipb,idb,2)+mld(ix,iz,ipb,idb,2)))         &
-                                                                -(up(ix,iz,2)*(mld(ix,iz,ipb,idb,2)+mld(ix-1,iz,ipb,idb,2)))) &
-                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*wp(ix,iz+1,2)*(mld(ix,iz+1,ipb,idb,2)+mld(ix,iz,ipb,idb,2))) &
-                                                                            - (rhowb(iz)*wp(ix,iz,2)*(mld(ix,iz,ipb,idb,2)+mld(ix,iz-1,ipb,idb,2)))) &
-                                                + (khx * rdx * rdx * (mld(ix-1,iz,ipb,idb,1) - 2*mld(ix,iz,ipb,idb,1) + mld(ix+1,iz,ipb,idb,1))) &
-                                                + (khz * rdz * rdz * (mld(ix,iz-1,ipb,idb,1) - 2*mld(ix,iz,ipb,idb,1) + mld(ix,iz+1,ipb,idb,1))) 
-                                                
-                        
-                            if (mld(ix,iz,ipb,idb,2)>0.) then
-                                nd_tend_total(ix,iz,ipb,idb) = mld_tend_total(ix,iz,ipb,idb) * (nd(ix,iz,ipb,idb,2)/mld(ix,iz,ipb,idb,2))
-                                mpd_tend_total(ix,iz,ipb,idb) = mld_tend_total(ix,iz,ipb,idb) * (mpd(ix,iz,ipb,idb,2)/mld(ix,iz,ipb,idb,2))
-                             endif
+                th = thp(ix,iz,2) + thb(iz)
+                pi = pip(ix,iz,2) + pib(iz)
+                t = th*pi
+                p = p00 * (pi**(cp/rd))
+
+                !print*,ix,iz,th,pi,t,p
+
+                do idropbin=1,ndropbin
+                    if (SUM(nd(ix,iz,:,idropbin,2))>0.) then
+                        mld_each = SUM(mld(ix,iz,:,idropbin,2))/SUM(nd(ix,iz,:,idropbin,2))
+
+                        if (mld_each<0.) then
+                            print*,mld_each ! i don't understand why but if i comment this out it doesn't work and gets fp error
+                        endif 
+
+                        mpd_each = SUM(mpd(ix,iz,:,idropbin,2))/SUM(nd(ix,iz,:,idropbin,2))
+
+                        if (mpd_each<0.) then
+                            print*,mpd_each ! i don't understand why but if i comment this out it doesn't work and gets fp error
+                        endif 
+
+                        !print*,'each mass ok'
+
+                        dpld_each = calc_dp(mld_each, rhol)
+                        dppd_each = calc_dp(mpd_each, rhop)
+
+                        !print*,'each dp ok'
+
+                        dpd_each = (dpld_each**3 + dppd_each**3)**(1./3.)
+                        vt(ix,iz,idropbin) = calc_vt(dpd_each, p, t)
+
+                        !print*,vt(ix,iz,idropbin)
+
+                    else
+                        vt(ix,iz,idropbin) = 0.
+                    endif
+                enddo
+            enddo
+        enddo
+
+        print*,'per drop done'
+                    
+
+        do ix = 2, nx-1
+            do iz = 2, nz-1
+                do idropbin=1,ndropbin
+                    do ipartbin=1,npartbin
+                        mld_tend_total(ix,iz,ipartbin,idropbin) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mld(ix+1,iz,ipartbin,idropbin,2)+mld(ix,iz,ipartbin,idropbin,2)))         &
+                                                                -(up(ix,iz,2)*(mld(ix,iz,ipartbin,idropbin,2)+mld(ix-1,iz,ipartbin,idropbin,2)))) &
+                                                - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*(wp(ix,iz+1,2)-0.5*(vt(ix,iz+1,idropbin)+vt(ix,iz,idropbin)))*(mld(ix,iz+1,ipartbin,idropbin,2)+mld(ix,iz,ipartbin,idropbin,2))) &
+                                                                            - (rhowb(iz)*(wp(ix,iz,2)-0.5*(vt(ix,iz,idropbin)+vt(ix,iz-1,idropbin)))*(mld(ix,iz,ipartbin,idropbin,2)+mld(ix,iz-1,ipartbin,idropbin,2)))) &
+                                                + (khx * rdx * rdx * (mld(ix-1,iz,ipartbin,idropbin,1) - 2*mld(ix,iz,ipartbin,idropbin,1) + mld(ix+1,iz,ipartbin,idropbin,1))) &
+                                                + (khz * rdz * rdz * (mld(ix,iz-1,ipartbin,idropbin,1) - 2*mld(ix,iz,ipartbin,idropbin,1) + mld(ix,iz+1,ipartbin,idropbin,1))) 
+
+                        !mpd_tend_total(ix,iz,ipartbin,idropbin) = -rdx * 0.5 * ((up(ix+1,iz,2)*(mpd(ix+1,iz,ipartbin,idropbin,2)+mpd(ix,iz,ipartbin,idropbin,2)))         &
+                        !                                        -(up(ix,iz,2)*(mpd(ix,iz,ipartbin,idropbin,2)+mpd(ix-1,iz,ipartbin,idropbin,2)))) &
+                        !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*(wp(ix,iz+1,2)-0.5*(vt(ix,iz+1,idropbin)+vt(ix,iz,idropbin)))*(mpd(ix,iz+1,ipartbin,idropbin,2)+mpd(ix,iz,ipartbin,idropbin,2))) &
+                        !                                                    - (rhowb(iz)*(wp(ix,iz,2)-0.5*(vt(ix,iz,idropbin)+vt(ix,iz-1,idropbin)))*(mpd(ix,iz,ipartbin,idropbin,2)+mpd(ix,iz-1,ipartbin,idropbin,2)))) &
+                        !                        + (khx * rdx * rdx * (mpd(ix-1,iz,ipartbin,idropbin,1) - 2*mpd(ix,iz,ipartbin,idropbin,1) + mpd(ix+1,iz,ipartbin,idropbin,1))) &
+                        !                        + (khz * rdz * rdz * (mpd(ix,iz-1,ipartbin,idropbin,1) - 2*mpd(ix,iz,ipartbin,idropbin,1) + mpd(ix,iz+1,ipartbin,idropbin,1))) 
+
+                        !nd_tend_total(ix,iz,ipartbin,idropbin) = -rdx * 0.5 * ((up(ix+1,iz,2)*(nd(ix+1,iz,ipartbin,idropbin,2)+nd(ix,iz,ipartbin,idropbin,2)))         &
+                        !                                        -(up(ix,iz,2)*(nd(ix,iz,ipartbin,idropbin,2)+nd(ix-1,iz,ipartbin,idropbin,2)))) &
+                        !                        - (rdz/rhoub(iz)) * 0.5 * ((rhowb(iz+1)*(wp(ix,iz+1,2)-0.5*(vt(ix,iz+1,idropbin)+vt(ix,iz,idropbin)))*(nd(ix,iz+1,ipartbin,idropbin,2)+nd(ix,iz,ipartbin,idropbin,2))) &
+                        !                                                    - (rhowb(iz)*(wp(ix,iz,2)-0.5*(vt(ix,iz,idropbin)+vt(ix,iz-1,idropbin)))*(nd(ix,iz,ipartbin,idropbin,2)+nd(ix,iz-1,ipartbin,idropbin,2)))) &
+                        !                        + (khx * rdx * rdx * (nd(ix-1,iz,ipartbin,idropbin,1) - 2*nd(ix,iz,ipartbin,idropbin,1) + nd(ix+1,iz,ipartbin,idropbin,1))) &
+                        !                        + (khz * rdz * rdz * (nd(ix,iz-1,ipartbin,idropbin,1) - 2*nd(ix,iz,ipartbin,idropbin,1) + nd(ix,iz+1,ipartbin,idropbin,1))) 
+                                                                    
+                        if (mld(ix,iz,ipartbin,idropbin,2)>0.) then
+                            nd_tend_total(ix,iz,ipartbin,idropbin) = mld_tend_total(ix,iz,ipartbin,idropbin) * (nd(ix,iz,ipartbin,idropbin,2)/mld(ix,iz,ipartbin,idropbin,2))
+                            mpd_tend_total(ix,iz,ipartbin,idropbin) = mld_tend_total(ix,iz,ipartbin,idropbin) * (mpd(ix,iz,ipartbin,idropbin,2)/mld(ix,iz,ipartbin,idropbin,2))
+                        endif
                     enddo ! end drop loop
                 enddo ! end particle loop
             enddo ! end x loop
         enddo ! end z loop
 
     end subroutine calc_liquid_tend
-
-    
-
-
     
     subroutine apply_tends
         use run_constants, only: nz,nx,dt,npartbin,ndropbin
         use model_vars, only:it,thp,pip,up,wp,rvp,np,mp,nd,mld,mpd                                &
                             ,u_tend_total,w_tend_total,thp_tend_total,pip_tend_total,rvp_tend_total &
                             ,np_tend_total,mp_tend_total,nd_tend_total,mld_tend_total        &
-                            ,mpd_tend_total
+                            ,mpd_tend_total,thb
 
         implicit none
 
@@ -399,8 +467,6 @@ module solve_prog
         integer :: ipartbin,idropbin
 
         real :: rdx,rdz,d2t
-
-        real:: temp1, temp2
         
         d2t       = (dt+dt)         ! 2*dt
         
@@ -430,6 +496,10 @@ module solve_prog
                     up(ix,iz,3) = up(ix,iz,1) + (d2t * u_tend_total(ix,iz))
                     wp(ix,iz,3) = wp(ix,iz,1) + (d2t * w_tend_total(ix,iz))
                     thp(ix,iz,3) = thp(ix,iz,1) + (d2t * thp_tend_total(ix,iz))
+
+                    if ((thp(ix,iz,3)+thb(iz))<0.) then
+                        print*,'negative theta!!!',thp_tend_total(ix,iz),thp(ix,iz,1)
+                    endif 
                     pip(ix,iz,3) = pip(ix,iz,1) + (d2t * pip_tend_total(ix,iz))
                     rvp(ix,iz,3) = rvp(ix,iz,1) + (d2t * rvp_tend_total(ix,iz))
 

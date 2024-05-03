@@ -100,7 +100,7 @@ module model_vars
         ,   mpd_tend_total  ! aerosol in cloud number and mass
     
     real, allocatable, dimension(:,:) :: &
-            rvsat, samb,t,p
+            rvsat, samb,t,p,rv
 
      contains
 
